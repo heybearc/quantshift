@@ -5,6 +5,7 @@ __version__ = "0.1.0"
 from quantshift_core.config import Settings, get_settings
 from quantshift_core.database import DatabaseManager, get_db
 from quantshift_core.models import Trade, Position, BotHealth
+from quantshift_core.state_manager import StateManager
 
 __all__ = [
     "Settings",
@@ -14,4 +15,5 @@ __all__ = [
     "Trade",
     "Position",
     "BotHealth",
+    "StateManager",
 ]
