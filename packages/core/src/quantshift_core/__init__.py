@@ -6,6 +6,9 @@ from quantshift_core.config import Settings, get_settings
 from quantshift_core.database import DatabaseManager, get_db
 from quantshift_core.models import Trade, Position, BotHealth
 from quantshift_core.state_manager import StateManager
+from quantshift_core.backtesting import BacktestEngine, WalkForwardOptimizer
+from quantshift_core.position_sizing import PositionSizer, RiskManager
+from quantshift_core.indicators import TechnicalIndicators, MultiTimeframeAnalyzer
 
 __all__ = [
     "Settings",
@@ -16,4 +19,10 @@ __all__ = [
     "Position",
     "BotHealth",
     "StateManager",
+    "BacktestEngine",
+    "WalkForwardOptimizer",
+    "PositionSizer",
+    "RiskManager",
+    "TechnicalIndicators",
+    "MultiTimeframeAnalyzer",
 ]

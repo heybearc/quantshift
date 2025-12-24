@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantshift-crypto"
+version = "0.1.0"
+description = "QuantShift Crypto Trading Bot - Coinbase Advanced Trade API"
+requires-python = ">=3.11"
+
+dependencies = [
+    "coinbase-advanced-py>=1.3.0",
+    "pandas>=2.1.0",
+    "numpy>=1.26.0",
+    "ta>=0.11.0",
+    "websocket-client>=1.6.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+    "psycopg2-binary>=2.9.9",
+    "redis>=5.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.7.1",
+    "ruff>=0.1.7",
+    "black>=23.11.0",
+]
+
+[project.scripts]
+quantshift-crypto = "quantshift_crypto.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["quantshift_crypto*"]
