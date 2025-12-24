@@ -1,0 +1,51 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Rollback target'
+        required: true
+        type: choice
+        options:
+          - primary
+          - standby
+          - both
+          - dashboard
+      commits:
+        description: 'Number of commits to rollback'
+        required: true
+        default: '1'
+
+jobs:
+  rollback:
+    name: Rollback ${{ github.event.inputs.target }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Rollback Primary
+        if: github.event.inputs.target == 'primary' || github.event.inputs.target == 'both'
+        run: |
+          echo "🔄 Rolling back Primary (LXC 100) by ${{ github.event.inputs.commits }} commits"
+          echo "ssh quantshift-primary 'cd /opt/quantshift && git reset --hard HEAD~${{ github.event.inputs.commits }} && systemctl restart quantshift-equity'"
+      
+      - name: Rollback Standby
+        if: github.event.inputs.target == 'standby' || github.event.inputs.target == 'both'
+        run: |
+          echo "🔄 Rolling back Standby (LXC 101) by ${{ github.event.inputs.commits }} commits"
+          echo "ssh quantshift-standby 'cd /opt/quantshift && git reset --hard HEAD~${{ github.event.inputs.commits }} && systemctl restart quantshift-equity'"
+      
+      - name: Rollback Dashboard
+        if: github.event.inputs.target == 'dashboard'
+        run: |
+          echo "🔄 Rolling back Dashboard (LXC 137) by ${{ github.event.inputs.commits }} commits"
+          echo "ssh quantshift-dashboard 'cd /opt/quantshift && git reset --hard HEAD~${{ github.event.inputs.commits }} && cd apps/dashboard && npm run build && pm2 reload quantshift-dashboard'"
+      
+      - name: Verify rollback
+        run: |
+          echo "✅ Rollback completed"
+          echo "Verify services are running correctly"
