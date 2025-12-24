@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantshift-core"
+version = "0.1.0"
+description = "QuantShift Core - Shared libraries for trading system"
+requires-python = ">=3.11"
+
+dependencies = [
+    "psycopg2-binary>=2.9.9",
+    "sqlalchemy>=2.0.23",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+    "redis>=5.0.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["quantshift_core*"]

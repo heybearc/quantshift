@@ -1,0 +1,18 @@
+[Unit]
+Description=QuantShift Equity Trading Bot
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/quantshift
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/opt/quantshift/.env
+ExecStart=/usr/bin/python3 -m alpaca_trading.scripts.run_paper_trader
+Restart=always
+RestartSec=10
+StandardOutput=append:/opt/quantshift/logs/equity-bot.log
+StandardError=append:/opt/quantshift/logs/equity-bot-error.log
+
+[Install]
+WantedBy=multi-user.target

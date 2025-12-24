@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantshift-equity"
+version = "0.1.0"
+description = "QuantShift Equity Trading Bot - Alpaca API"
+requires-python = ">=3.11"
+
+dependencies = [
+    "alpaca-trade-api>=3.0.0",
+    "pandas>=2.1.0",
+    "numpy>=1.26.0",
+    "ta>=0.11.0",
+    "yfinance>=0.2.32",
+    "schedule>=1.2.0",
+    "APScheduler>=3.10.4",
+    "streamlit>=1.18.0",
+    "plotly>=5.13.0",
+    "psycopg2-binary>=2.9.9",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+]
+
+[project.scripts]
+quantshift-equity = "alpaca_trading.scripts.run_paper_trader:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alpaca_trading*"]
