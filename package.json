@@ -1,0 +1,13 @@
+{
+  "name": "quantshift",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/dashboard"
+  ],
+  "scripts": {
+    "dev:dashboard": "cd apps/dashboard && npm run dev",
+    "build:dashboard": "cd apps/dashboard && npm run build",
+    "start:dashboard": "cd apps/dashboard && npm start"
+  }
+}
