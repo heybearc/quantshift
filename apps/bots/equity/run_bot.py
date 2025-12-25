@@ -25,12 +25,7 @@ logger = logging.getLogger(__name__)
 class QuantShiftEquityBot:
     def __init__(self):
         self.bot_name = "equity-bot"
-        self.state_manager = StateManager(
-            bot_name=self.bot_name,
-            redis_host=os.getenv('REDIS_HOST', 'localhost'),
-            redis_port=int(os.getenv('REDIS_PORT', 6379)),
-            redis_password=os.getenv('REDIS_PASSWORD', 'Cloudy_92!')
-        )
+        self.state_manager = StateManager(bot_name=self.bot_name)
         self.running = True
         
         # Set up signal handlers for graceful shutdown
