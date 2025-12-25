@@ -27,16 +27,24 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [botsRes, statsRes] = await Promise.all([
-          fetch('/api/bots'),
-          fetch('/api/stats')
-        ]);
-        
+        // Fetch bots data
+        const botsRes = await fetch('/api/bots');
         const botsData = await botsRes.json();
-        const statsData = await statsRes.json();
-        
         setBots(botsData.bots || []);
-        setStats(statsData);
+        
+        // Fetch stats data separately with error handling
+        try {
+          const statsRes = await fetch('/api/stats');
+          if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            if (!statsData.error) {
+              setStats(statsData);
+            }
+          }
+        } catch (statsError) {
+          console.error('Error fetching stats:', statsError);
+          // Keep existing stats or use defaults
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
