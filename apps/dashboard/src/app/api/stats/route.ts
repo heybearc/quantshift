@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { getBotPositions } from '@/lib/redis';
+import { getBotPositions, getBotState } from '@/lib/redis';
 
 const prisma = new PrismaClient();
+
+// Disable caching for real-time data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -42,13 +46,19 @@ export async function GET() {
     const winRate = 0; // TODO: Implement proper win rate calculation
     const realizedPnl = 0; // TODO: Implement proper P&L calculation
 
+    // Get real account balance from bot state
+    const equityBotState = await getBotState('equity-bot');
+    const accountBalance = equityBotState?.account_balance || 0;
+    const portfolioValue = equityBotState?.portfolio_value || accountBalance;
+
     return NextResponse.json({
       totalPositions,
       unrealizedPnl,
       todayTrades,
       winRate,
       realizedPnl,
-      accountBalance: 10000.00 // TODO: Get from actual account
+      accountBalance,
+      portfolioValue
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

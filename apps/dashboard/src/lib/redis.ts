@@ -1,21 +1,28 @@
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://:Cloudy_92!@10.92.3.27:6379/0',
-  socket: {
-    reconnectStrategy: (retries) => Math.min(retries * 50, 500)
-  }
-});
+let redisClient: RedisClientType | null = null;
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+async function getRedisClient() {
+  if (!redisClient) {
+    redisClient = createClient({
+      url: process.env.REDIS_URL || 'redis://:Cloudy_92!@10.92.3.27:6379/0',
+      socket: {
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+        connectTimeout: 10000
+      }
+    });
 
-let isConnected = false;
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
 
-export async function getRedisClient() {
-  if (!isConnected) {
+    redisClient.on('connect', () => {
+      console.log('Redis client connected');
+    });
+
     await redisClient.connect();
-    isConnected = true;
   }
+
   return redisClient;
 }
 

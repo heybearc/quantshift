@@ -3,6 +3,10 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Disable caching for real-time data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
