@@ -1,28 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    <linearGradient id="qGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
     </linearGradient>
+    <radialGradient id="qGlow">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0" />
+    </radialGradient>
   </defs>
   
   <!-- Background -->
-  <rect width="100" height="100" fill="#1e293b" rx="15"/>
+  <rect width="100" height="100" fill="#0f172a" rx="18"/>
   
-  <!-- Candlestick bars (simplified) -->
-  <rect x="15" y="45" width="6" height="25" fill="#10b981" rx="1"/>
-  <rect x="16.5" y="40" width="3" height="35" fill="#10b981"/>
+  <!-- Quantum atom core -->
+  <circle cx="50" cy="50" r="8" fill="url(#qGrad)"/>
+  <circle cx="50" cy="50" r="12" fill="url(#qGlow)"/>
   
-  <rect x="35" y="35" width="6" height="30" fill="#ef4444" rx="1"/>
-  <rect x="36.5" y="30" width="3" height="40" fill="#ef4444"/>
+  <!-- Orbital rings -->
+  <ellipse cx="50" cy="50" rx="28" ry="16" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6" transform="rotate(30 50 50)"/>
+  <ellipse cx="50" cy="50" rx="28" ry="16" fill="none" stroke="#3b82f6" stroke-width="1.2" opacity="0.6" transform="rotate(90 50 50)"/>
+  <ellipse cx="50" cy="50" rx="28" ry="16" fill="none" stroke="#8b5cf6" stroke-width="1.2" opacity="0.6" transform="rotate(150 50 50)"/>
   
-  <rect x="55" y="30" width="6" height="35" fill="#10b981" rx="1"/>
-  <rect x="56.5" y="25" width="3" height="45" fill="#10b981"/>
+  <!-- Quantum particles -->
+  <circle cx="78" cy="50" r="3" fill="#06b6d4">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="22" cy="50" r="3" fill="#3b82f6">
+    <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="50" cy="34" r="3" fill="#8b5cf6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+  </circle>
   
-  <!-- Upward arrow -->
-  <path d="M 65 55 L 85 30" stroke="url(#grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M 85 30 L 80 33 L 82 38 Z" fill="url(#grad)"/>
+  <!-- Neural nodes -->
+  <circle cx="35" cy="30" r="2" fill="#06b6d4" opacity="0.7"/>
+  <circle cx="65" cy="30" r="2" fill="#3b82f6" opacity="0.7"/>
+  <circle cx="35" cy="70" r="2" fill="#8b5cf6" opacity="0.7"/>
+  <circle cx="65" cy="70" r="2" fill="#06b6d4" opacity="0.7"/>
   
-  <!-- QS text -->
-  <text x="50" y="90" font-size="24" font-weight="bold" fill="url(#grad)" text-anchor="middle" font-family="Arial, sans-serif">QS</text>
+  <!-- Neural connections -->
+  <line x1="35" y1="30" x2="50" y2="50" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="65" y1="30" x2="50" y2="50" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="35" y1="70" x2="50" y2="50" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="65" y1="70" x2="50" y2="50" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
 </svg>
