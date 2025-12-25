@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "QuantShift Trading Platform",
   description: "Real-time monitoring and management for trading bots",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
