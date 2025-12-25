@@ -8,18 +8,23 @@ datasource db {
 }
 
 model Trade {
-  id         Int      @id @default(autoincrement())
-  symbol     String
-  action     String
-  quantity   Float
-  price      Float
-  timestamp  DateTime @default(now())
-  bot_name   String?
-  strategy   String?
-  pnl        Float?
-  pnl_pct    Float?
+  id          Int      @id @default(autoincrement())
+  bot_name    String   @db.VarChar(50)
+  symbol      String   @db.VarChar(20)
+  side        String   @db.VarChar(10)
+  quantity    Decimal  @db.Decimal(20, 8)
+  price       Decimal  @db.Decimal(20, 8)
+  total_value Decimal  @db.Decimal(20, 2)
+  commission  Decimal? @default(0) @db.Decimal(20, 8)
+  order_id    String?  @db.VarChar(100)
+  status      String   @db.VarChar(20)
+  timestamp   DateTime @default(now())
+  metadata    Json?
 
   @@map("trades")
+  @@index([bot_name, symbol], name: "idx_trades_bot_symbol")
+  @@index([status], name: "idx_trades_status")
+  @@index([timestamp(sort: Desc)], name: "idx_trades_timestamp")
 }
 
 model Position {

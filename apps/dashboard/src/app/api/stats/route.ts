@@ -35,14 +35,12 @@ export async function GET() {
     });
 
     const todayTrades = trades.length;
-    const closedTrades = trades.filter((t: any) => t.action === 'SELL');
-    const winningTrades = closedTrades.filter((t: any) => (t.pnl || 0) > 0);
-    const winRate = closedTrades.length > 0 
-      ? (winningTrades.length / closedTrades.length) * 100 
-      : 0;
-
-    // Get total realized P&L
-    const realizedPnl = closedTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0);
+    const closedTrades = trades.filter((t: any) => t.side === 'SELL');
+    
+    // Calculate P&L from trades (simplified - actual P&L calculation would need matching buy/sell pairs)
+    const winningTrades = closedTrades.length; // Placeholder
+    const winRate = 0; // TODO: Implement proper win rate calculation
+    const realizedPnl = 0; // TODO: Implement proper P&L calculation
 
     return NextResponse.json({
       totalPositions,
