@@ -133,9 +133,6 @@ print(f"\n{'='*80}")
 print("Step 3: Running Backtest")
 print("="*80)
 
-# Add symbol attribute for strategy
-df.symbol = SYMBOL
-
 # Track progress
 total_bars = len(df)
 signals_generated = 0
@@ -147,6 +144,9 @@ for i in range(STRATEGY_CONFIG['long_window'], len(df)):
     # Get market data up to current point
     current_date = df.index[i]
     market_data = df.iloc[:i+1].copy()
+    
+    # Add symbol attribute for strategy to access
+    market_data.symbol = SYMBOL
     
     # Get current account state
     account = Account(
