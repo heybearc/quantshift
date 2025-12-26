@@ -1,0 +1,76 @@
+# Email Notification Configuration
+
+email:
+  enabled: true
+  
+  # SMTP Configuration (Gmail)
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    use_tls: true
+    username: ${EMAIL_USERNAME}  # Set via environment variable
+    password: ${EMAIL_PASSWORD}  # Gmail App Password (not regular password)
+  
+  # Email Recipients
+  recipients:
+    alerts: []  # Trade execution alerts
+    daily_summary: []  # Daily performance summaries
+    weekly_report: []  # Weekly performance reports
+    errors: []  # Error notifications
+  
+  # Notification Settings
+  notifications:
+    # Trade Alerts
+    trade_alerts:
+      enabled: true
+      send_on_entry: true
+      send_on_exit: true
+      send_on_stop_hit: true
+      include_chart: false  # Future: attach price chart
+    
+    # Daily Summary
+    daily_summary:
+      enabled: true
+      send_time: "16:30"  # 4:30 PM ET (after market close)
+      include_open_positions: true
+      include_closed_trades: true
+      include_performance_metrics: true
+    
+    # Weekly Report
+    weekly_report:
+      enabled: true
+      send_day: "sunday"
+      send_time: "18:00"  # 6:00 PM ET
+      include_charts: true
+      include_trade_breakdown: true
+      include_comparison: true  # Compare to previous week
+    
+    # Error Alerts
+    error_alerts:
+      enabled: true
+      send_immediately: true
+      include_stack_trace: true
+      throttle_minutes: 15  # Don't spam if multiple errors
+
+# Email Templates
+templates:
+  trade_alert:
+    subject: "🔔 Trade Alert: {action} {symbol}"
+    from_name: "QuantShift Trading Bot"
+  
+  daily_summary:
+    subject: "📊 Daily Summary: {date}"
+    from_name: "QuantShift Trading Bot"
+  
+  weekly_report:
+    subject: "📈 Weekly Report: Week of {week_start}"
+    from_name: "QuantShift Trading Bot"
+  
+  error_alert:
+    subject: "⚠️ Bot Error: {error_type}"
+    from_name: "QuantShift Trading Bot"
+
+# Rate Limiting
+rate_limits:
+  max_emails_per_hour: 50
+  max_emails_per_day: 200
