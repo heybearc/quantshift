@@ -5,18 +5,24 @@ import { getBotPositions } from '@/lib/redis';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const debug = searchParams.get('debug') === 'true';
+  
   try {
     const bots = ['equity-bot', 'crypto-bot'];
     const allPositions = [];
+    const debugInfo: any = { bots: {} };
 
     for (const botName of bots) {
       try {
         const positions = await getBotPositions(botName);
-        console.log(`Fetched positions for ${botName}:`, Object.keys(positions).length, 'positions');
+        debugInfo.bots[botName] = {
+          positionCount: Object.keys(positions).length,
+          symbols: Object.keys(positions)
+        };
         
         for (const [symbol, data] of Object.entries(positions)) {
-          console.log(`Position ${symbol}:`, data);
           allPositions.push({
             bot: botName,
             symbol,
@@ -24,14 +30,22 @@ export async function GET() {
           });
         }
       } catch (botError) {
-        console.error(`Error fetching positions for ${botName}:`, botError);
+        debugInfo.bots[botName] = {
+          error: botError instanceof Error ? botError.message : 'Unknown error'
+        };
       }
     }
 
-    console.log('Total positions:', allPositions.length);
+    if (debug) {
+      return NextResponse.json({ 
+        positions: allPositions,
+        debug: debugInfo,
+        totalPositions: allPositions.length
+      });
+    }
+
     return NextResponse.json({ positions: allPositions });
   } catch (error) {
-    console.error('Error fetching positions:', error);
     return NextResponse.json(
       { error: 'Failed to fetch positions', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
