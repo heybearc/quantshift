@@ -76,11 +76,18 @@ class QuantShiftEquityBotV2:
         
         # Initialize Alpaca executor
         symbols = self.config.get('strategy', {}).get('symbols', ['SPY'])
+        
+        # Get simulated capital if configured
+        simulated_capital = None
+        if self.config.get('risk_management', {}).get('use_simulated_capital', False):
+            simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
+        
         self.executor = AlpacaExecutor(
             strategy=self.strategy,
             alpaca_client=self.alpaca_client,
             data_client=self.data_client,
-            symbols=symbols
+            symbols=symbols,
+            simulated_capital=simulated_capital
         )
         
         # Trading cost assumptions
@@ -219,6 +226,14 @@ class QuantShiftEquityBotV2:
             account = self.executor.get_account()
             positions = self.executor.get_positions()
             
+            # Use simulated capital if configured
+            if self.config.get('risk_management', {}).get('use_simulated_capital', False):
+                simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
+                account.equity = simulated_capital
+                account.cash = simulated_capital
+                account.buying_power = simulated_capital
+                account.portfolio_value = simulated_capital
+            
             # Calculate total unrealized P&L
             total_unrealized_pl = sum(p.unrealized_pl for p in positions)
             
@@ -272,6 +287,12 @@ class QuantShiftEquityBotV2:
                 return
             
             logger.info("Running strategy cycle...")
+            
+            # Override account equity with simulated capital if configured
+            if self.config.get('risk_management', {}).get('use_simulated_capital', False):
+                simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
+                logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
+            
             results = self.executor.run_strategy_cycle()
             
             # Log results

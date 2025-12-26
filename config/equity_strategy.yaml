@@ -27,6 +27,10 @@ strategy:
     
 # Risk Management Configuration
 risk_management:
+  # Capital Configuration
+  simulated_capital: 1000.0      # Simulate $1,000 starting capital (realistic)
+  use_simulated_capital: true    # Use simulated capital instead of actual account equity
+  
   # Position Sizing
   risk_per_trade: 0.01           # 1% risk per trade (validated in backtest)
   max_position_size: 0.20        # Max 20% of portfolio per position

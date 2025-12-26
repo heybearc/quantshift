@@ -42,7 +42,8 @@ class AlpacaExecutor:
         strategy: BaseStrategy,
         alpaca_client: TradingClient,
         data_client: Optional[StockHistoricalDataClient] = None,
-        symbols: Optional[List[str]] = None
+        symbols: Optional[List[str]] = None,
+        simulated_capital: Optional[float] = None
     ):
         """
         Initialize Alpaca executor.
@@ -52,22 +53,37 @@ class AlpacaExecutor:
             alpaca_client: Alpaca trading client
             data_client: Alpaca data client (optional, will create if not provided)
             symbols: List of symbols to trade
+            simulated_capital: Optional simulated capital for position sizing
         """
         self.strategy = strategy
         self.alpaca_client = alpaca_client
         self.data_client = data_client
         self.symbols = symbols or ['SPY']
+        self.simulated_capital = simulated_capital
         
         logger.info(
             f"AlpacaExecutor initialized with {strategy.name} strategy for symbols: {self.symbols}"
         )
+        if simulated_capital:
+            logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
     
     def get_account(self) -> Account:
         """
         Fetch account information from Alpaca and convert to broker-agnostic format.
+        Uses simulated capital if configured.
         """
         try:
             alpaca_account = self.alpaca_client.get_account()
+            
+            # Use simulated capital if configured
+            if self.simulated_capital:
+                return Account(
+                    equity=self.simulated_capital,
+                    cash=self.simulated_capital,
+                    buying_power=self.simulated_capital,
+                    portfolio_value=self.simulated_capital,
+                    positions_count=0
+                )
             
             return Account(
                 equity=float(alpaca_account.equity),
