@@ -131,12 +131,16 @@ class AlpacaExecutor:
                 secret_key = os.getenv('APCA_API_SECRET_KEY')
                 self.data_client = StockHistoricalDataClient(api_key, secret_key)
             
-            # Fetch data using data client
+            # Fetch data using data client (use IEX feed for paper trading)
+            from alpaca.data.requests import StockBarsRequest
+            from alpaca.data.enums import DataFeed
+            
             request = StockBarsRequest(
                 symbol_or_symbols=symbol,
                 timeframe=timeframe,
                 start=datetime.utcnow() - timedelta(days=days),
-                end=datetime.utcnow()
+                end=datetime.utcnow(),
+                feed=DataFeed.IEX  # Use IEX feed for paper trading (free)
             )
             bars = self.data_client.get_stock_bars(request)
             df = bars.df
