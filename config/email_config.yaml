@@ -13,10 +13,10 @@ email:
   
   # Email Recipients
   recipients:
-    alerts: []  # Trade execution alerts
-    daily_summary: []  # Daily performance summaries
-    weekly_report: []  # Weekly performance reports
-    errors: []  # Error notifications
+    alerts: ['corya1992@gmail.com']  # Trade execution alerts
+    daily_summary: ['corya1992@gmail.com']  # Daily performance summaries
+    weekly_report: ['corya1992@gmail.com']  # Weekly performance reports
+    errors: ['corya1992@gmail.com']  # Error notifications
   
   # Notification Settings
   notifications:
