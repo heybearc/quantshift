@@ -1,0 +1,20 @@
+[Unit]
+Description=QuantShift Equity Trading Bot
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/quantshift
+Environment="APCA_API_KEY_ID=PKUNCOV2CO3Y7XBI47CWOPCTBX"
+Environment="APCA_API_SECRET_KEY=739TxLJoKbvSyV1yvioZxVkWZxdJSnXCPFPaN6ZdQjjL"
+Environment="APCA_API_BASE_URL=https://paper-api.alpaca.markets"
+Environment="REDIS_PASSWORD=Cloudy_92!"
+ExecStart=/opt/quantshift/venv/bin/python3 /opt/quantshift/apps/bots/equity/run_bot_v2.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/quantshift/equity-bot.log
+StandardError=append:/var/log/quantshift/equity-bot-error.log
+
+[Install]
+WantedBy=multi-user.target
