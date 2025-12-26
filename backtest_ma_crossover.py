@@ -49,16 +49,16 @@ INITIAL_CAPITAL = 10000.0
 COMMISSION = 0.0  # Alpaca zero commission
 SLIPPAGE = 0.0005  # 5 basis points
 
-# Strategy parameters
+# Strategy parameters (Using user's proven MA 5/20 from previous bot)
 STRATEGY_CONFIG = {
-    'short_window': 20,
-    'long_window': 50,
+    'short_window': 5,   # Fast MA (was 20)
+    'long_window': 20,   # Slow MA (was 50)
     'atr_period': 14,
-    'risk_per_trade': 0.02,
+    'risk_per_trade': 0.01,  # 1% risk (user's previous config)
     'max_positions': 5,
-    'volume_confirmation': False,  # DISABLED - Testing pure MA crossover
-    'trend_confirmation': False,    # DISABLED - Testing pure MA crossover
-    'support_resistance_filter': False  # DISABLED - Testing pure MA crossover
+    'volume_confirmation': False,  # Testing pure MA crossover first
+    'trend_confirmation': False,
+    'support_resistance_filter': False
 }
 
 print(f"\nBacktest Configuration:")
