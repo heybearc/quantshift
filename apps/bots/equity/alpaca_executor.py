@@ -123,30 +123,22 @@ class AlpacaExecutor:
             DataFrame with OHLCV data
         """
         try:
-            # Use data client if available, otherwise use trading client
-            if self.data_client:
-                request = StockBarsRequest(
-                    symbol_or_symbols=symbol,
-                    timeframe=timeframe,
-                    start=datetime.utcnow() - timedelta(days=days),
-                    end=datetime.utcnow()
-                )
-                bars = self.data_client.get_stock_bars(request)
-                df = bars.df
-            else:
-                # Fallback to trading client's get_bars method
-                bars = self.alpaca_client.get_bars(
-                    symbol,
-                    timeframe='1Day',
-                    limit=days,
-                    adjustment='all',
-                    feed='iex'
-                )
-                
-                if hasattr(bars, 'df'):
-                    df = bars.df
-                else:
-                    df = pd.DataFrame(bars)
+            # Create data client if not provided
+            if not self.data_client:
+                from alpaca.data.historical import StockHistoricalDataClient
+                api_key = self.alpaca_client.api_key
+                secret_key = self.alpaca_client.secret_key
+                self.data_client = StockHistoricalDataClient(api_key, secret_key)
+            
+            # Fetch data using data client
+            request = StockBarsRequest(
+                symbol_or_symbols=symbol,
+                timeframe=timeframe,
+                start=datetime.utcnow() - timedelta(days=days),
+                end=datetime.utcnow()
+            )
+            bars = self.data_client.get_stock_bars(request)
+            df = bars.df
             
             # Normalize DataFrame structure
             if hasattr(df.index, 'get_level_values'):
