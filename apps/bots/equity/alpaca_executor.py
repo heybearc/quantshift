@@ -126,8 +126,9 @@ class AlpacaExecutor:
             # Create data client if not provided
             if not self.data_client:
                 from alpaca.data.historical import StockHistoricalDataClient
-                api_key = self.alpaca_client.api_key
-                secret_key = self.alpaca_client.secret_key
+                import os
+                api_key = os.getenv('APCA_API_KEY_ID')
+                secret_key = os.getenv('APCA_API_SECRET_KEY')
                 self.data_client = StockHistoricalDataClient(api_key, secret_key)
             
             # Fetch data using data client
