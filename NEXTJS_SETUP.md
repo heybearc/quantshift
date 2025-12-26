@@ -9,7 +9,7 @@
 
 **Single Next.js Application:**
 ```
-Next.js (Port 3000)
+Next.js (Port 3001)
 ├─ Frontend Pages (React)
 ├─ API Routes (/app/api/*)
 ├─ Prisma ORM
@@ -62,13 +62,13 @@ npm run db:init
 npm run dev
 ```
 
-**Server will start on:** http://localhost:3000
+**Server will start on:** http://localhost:3001
 
 ---
 
 ## 🧪 Testing
 
-1. **Open Browser:** http://localhost:3000
+1. **Open Browser:** http://localhost:3001
    - Should redirect to `/login`
 
 2. **Login:**
@@ -259,4 +259,4 @@ After successful testing:
 
 ---
 
-**Ready to test!** Just run `npm run dev` and open http://localhost:3000
+**Ready to test!** Just run `npm run dev` and open http://localhost:3001
