@@ -1,0 +1,183 @@
+# QuantShift Equity Trading Strategy Configuration
+# Moving Average Crossover with ATR-based Position Sizing
+
+strategy:
+  name: "MA Crossover"
+  type: "trend_following"
+  enabled: true
+  
+  # Strategy Parameters
+  parameters:
+    short_window: 20      # Short-term moving average (days)
+    long_window: 50       # Long-term moving average (days)
+    atr_period: 14        # ATR calculation period
+    
+  # Symbol Watchlist (Stocks Only)
+  symbols:
+    - SPY   # S&P 500 ETF
+    - QQQ   # Nasdaq 100 ETF
+    - AAPL  # Apple Inc.
+    - MSFT  # Microsoft Corp.
+    - GOOGL # Alphabet Inc.
+    
+  # Trading Schedule
+  schedule:
+    check_interval: 300   # Check for signals every 5 minutes
+    market_hours_only: true
+    
+# Risk Management Configuration
+risk_management:
+  # Position Sizing
+  risk_per_trade: 0.02           # 2% risk per trade
+  max_position_size: 0.20        # Max 20% of portfolio per position
+  max_portfolio_heat: 0.10       # Max 10% total portfolio risk
+  
+  # Stop Loss Configuration
+  stop_loss:
+    type: "atr_trailing"         # ATR-based trailing stop
+    atr_multiplier: 2.0          # 2x ATR for stop distance
+    min_stop_percent: 0.02       # Minimum 2% stop
+    max_stop_percent: 0.10       # Maximum 10% stop
+    
+  # Take Profit Configuration
+  take_profit:
+    enabled: true
+    risk_reward_ratio: 2.0       # 2:1 reward-to-risk
+    
+  # Portfolio Limits
+  limits:
+    max_positions: 5             # Maximum concurrent positions
+    max_daily_trades: 10         # Maximum trades per day
+    max_daily_loss: 0.05         # Max 5% daily loss (circuit breaker)
+    max_drawdown: 0.15           # Max 15% drawdown (circuit breaker)
+    
+  # Kelly Criterion
+  kelly:
+    enabled: true
+    fraction: 0.25               # Use 25% Kelly for safety
+    min_win_rate: 0.50           # Minimum win rate to use Kelly
+    min_trades: 30               # Minimum trades before using Kelly
+
+# Execution Configuration
+execution:
+  order_type: "market"           # Market orders for immediate execution
+  time_in_force: "day"           # Day orders (cancel at market close)
+  
+  # Slippage & Costs
+  costs:
+    commission: 0.0              # Alpaca zero commission
+    slippage_bps: 5              # Estimated 5 bps slippage
+    
+  # Order Validation
+  validation:
+    min_price: 1.0               # Minimum stock price
+    max_spread_percent: 0.01     # Max 1% bid-ask spread
+    min_volume: 100000           # Minimum daily volume
+    
+# Signal Filters
+filters:
+  # Volume Confirmation
+  volume:
+    enabled: true
+    min_volume_ratio: 1.2        # Volume must be 1.2x 20-day average
+    
+  # Trend Confirmation
+  trend:
+    enabled: true
+    use_weekly_trend: true       # Confirm with weekly timeframe
+    
+  # Support/Resistance
+  support_resistance:
+    enabled: true
+    lookback_periods: 20         # Look back 20 periods
+    proximity_threshold: 0.01    # 1% buffer from resistance
+    
+# Backtesting Configuration
+backtesting:
+  start_date: "2022-01-01"       # Start date for backtests
+  end_date: "2024-12-31"         # End date for backtests
+  initial_capital: 10000.0       # Starting capital
+  
+  # Walk-Forward Optimization
+  walk_forward:
+    enabled: true
+    in_sample_periods: 252       # 1 year in-sample
+    out_sample_periods: 63       # 3 months out-of-sample
+    
+  # Performance Targets
+  targets:
+    min_sharpe_ratio: 1.5
+    max_drawdown: 0.15
+    min_win_rate: 0.50
+    min_profit_factor: 1.5
+    min_annual_return: 0.15
+
+# Monitoring & Alerts
+monitoring:
+  # Performance Tracking
+  track_metrics:
+    - sharpe_ratio
+    - max_drawdown
+    - win_rate
+    - profit_factor
+    - total_return
+    
+  # Alert Thresholds
+  alerts:
+    drawdown_warning: 0.10       # Alert at 10% drawdown
+    drawdown_critical: 0.15      # Critical at 15% drawdown
+    daily_loss_warning: 0.03     # Alert at 3% daily loss
+    daily_loss_critical: 0.05    # Critical at 5% daily loss
+    
+  # Notification Channels
+  notifications:
+    email: true
+    slack: false                 # TODO: Configure Slack webhook
+    discord: false               # TODO: Configure Discord webhook
+
+# Paper Trading Configuration
+paper_trading:
+  enabled: true                  # Start with paper trading
+  validation_period_days: 30     # Validate for 30 days
+  
+  # Graduation Criteria (to move to live)
+  graduation:
+    min_trades: 20               # Minimum 20 trades
+    min_sharpe: 1.0              # Minimum Sharpe ratio
+    max_drawdown: 0.20           # Maximum drawdown
+    no_critical_bugs: true       # No execution failures
+    
+# Live Trading Configuration (Disabled until paper validation complete)
+live_trading:
+  enabled: false                 # MUST validate in paper first
+  max_capital: 10000.0           # Maximum capital to deploy
+  
+  # Safety Checks
+  safety:
+    require_approval: true       # Require manual approval for live
+    max_first_trade: 0.10        # Max 10% on first live trade
+    gradual_ramp: true           # Gradually increase position sizes
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  log_trades: true
+  log_signals: true
+  log_performance: true
+  
+  # Trade Logging
+  trade_log:
+    path: "logs/trades.csv"
+    fields:
+      - timestamp
+      - symbol
+      - side
+      - quantity
+      - price
+      - reason
+      - pnl
+      
+  # Performance Logging
+  performance_log:
+    path: "logs/performance.csv"
+    frequency: "daily"
