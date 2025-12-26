@@ -56,9 +56,9 @@ STRATEGY_CONFIG = {
     'atr_period': 14,
     'risk_per_trade': 0.02,
     'max_positions': 5,
-    'volume_confirmation': True,
-    'trend_confirmation': True,
-    'support_resistance_filter': True
+    'volume_confirmation': False,  # DISABLED - Testing pure MA crossover
+    'trend_confirmation': False,    # DISABLED - Testing pure MA crossover
+    'support_resistance_filter': False  # DISABLED - Testing pure MA crossover
 }
 
 print(f"\nBacktest Configuration:")
