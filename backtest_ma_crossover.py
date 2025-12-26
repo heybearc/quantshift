@@ -149,11 +149,14 @@ for i in range(STRATEGY_CONFIG['long_window'], len(df)):
     market_data.symbol = SYMBOL
     
     # Get current account state
+    current_price = df.iloc[i]['close']
+    total_position_value = sum(p['quantity'] * current_price for p in engine.positions.values())
+    
     account = Account(
-        equity=engine.capital + sum(p['market_value'] for p in engine.positions.values()),
+        equity=engine.capital + total_position_value,
         cash=engine.capital,
         buying_power=engine.capital,
-        portfolio_value=engine.capital + sum(p['market_value'] for p in engine.positions.values()),
+        portfolio_value=engine.capital + total_position_value,
         positions_count=len(engine.positions)
     )
     
