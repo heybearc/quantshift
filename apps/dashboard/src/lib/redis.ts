@@ -38,33 +38,31 @@ export async function getBotPositions(botName: string) {
     const client = await getRedisClient();
     const pattern = `bot:${botName}:position:*`;
     
-    console.log(`[Redis] Scanning for positions with pattern: ${pattern}`);
     const positions: Record<string, any> = {};
     
-    let keyCount = 0;
-    for await (const keyStr of client.scanIterator({ MATCH: pattern, COUNT: 100 })) {
-      keyCount++;
-      const key = String(keyStr);
-      console.log(`[Redis] Found position key: ${key}`);
-      
+    // Use KEYS command for now (works better in some Redis client versions)
+    // Note: SCAN is preferred for production but KEYS works for small datasets
+    const keys = await client.keys(pattern);
+    
+    for (const key of keys) {
       const parts = key.split(':');
       const symbol = parts[parts.length - 1];
       if (symbol) {
         const data = await client.get(key);
         if (data) {
-          positions[symbol] = JSON.parse(data);
-          console.log(`[Redis] Loaded position for ${symbol}`);
-        } else {
-          console.log(`[Redis] No data for key: ${key}`);
+          try {
+            positions[symbol] = JSON.parse(data);
+          } catch (parseError) {
+            console.error(`[Redis] Failed to parse position data for ${symbol}:`, parseError);
+          }
         }
       }
     }
     
-    console.log(`[Redis] Total keys found: ${keyCount}, positions loaded: ${Object.keys(positions).length}`);
     return positions;
   } catch (error) {
     console.error(`[Redis] Error in getBotPositions for ${botName}:`, error);
-    return {};
+    throw error; // Re-throw to see the actual error
   }
 }
 
