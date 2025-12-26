@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/auth/me', {
+      const response = await fetch('/api/auth/me', {
         credentials: 'include',
       });
 
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:8000/api/auth/login', {
+    const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:8000/api/auth/logout', {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAuth = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/auth/refresh', {
+      const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'include',
       });

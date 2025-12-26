@@ -15,8 +15,17 @@ Complete authentication system with:
 
 ## 🚀 How to Test
 
+### Architecture Overview
+
+**Single Container Setup (like LDC Construction Tools):**
+- Next.js frontend: Port 3000
+- FastAPI backend: Port 8000
+- Next.js proxies `/api/*` requests to FastAPI
+- Both run in same container/environment
+
 ### Step 1: Start the Backend (FastAPI)
 
+**Terminal 1:**
 ```bash
 # Navigate to backend
 cd apps/admin-api
@@ -51,14 +60,15 @@ Admin credentials:
   Password: admin123
 ```
 
-**Backend will be running at:** http://localhost:8000
+**Backend running at:** http://localhost:8000
 
 ---
 
 ### Step 2: Start the Frontend (Next.js)
 
+**Terminal 2:**
 ```bash
-# Navigate to frontend (new terminal)
+# Navigate to frontend
 cd apps/admin-web
 
 # Install dependencies (if not done)
@@ -68,7 +78,9 @@ npm install
 npm run dev
 ```
 
-**Frontend will be running at:** http://localhost:3000
+**Frontend running at:** http://localhost:3000
+
+**API Proxy:** Next.js automatically proxies `/api/*` to `http://localhost:8000/api/*`
 
 ---
 
