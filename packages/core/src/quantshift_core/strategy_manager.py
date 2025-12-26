@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import structlog
 
-from quantshift_core.strategies import Strategy, Signal
+from quantshift_core.strategies import BaseStrategy, Signal, SignalType
 from quantshift_core.position_sizing import PositionSizer, RiskManager
 
 logger = structlog.get_logger()
@@ -15,7 +15,7 @@ class StrategyManager:
 
     def __init__(
         self,
-        strategies: List[Strategy],
+        strategies: List[BaseStrategy],
         account_balance: float,
         max_positions: int = 10
     ):
@@ -125,7 +125,7 @@ class StrategyManager:
     def calculate_position_size(
         self,
         symbol: str,
-        strategy: Strategy,
+        strategy: BaseStrategy,
         entry_price: float,
         stop_loss: float
     ) -> int:
@@ -180,7 +180,7 @@ class StrategyManager:
     def open_position(
         self,
         symbol: str,
-        strategy: Strategy,
+        strategy: BaseStrategy,
         entry_price: float,
         quantity: int,
         stop_loss: float,
