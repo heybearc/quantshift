@@ -1,6 +1,17 @@
 # QuantShift Trading System
 
-Production-grade trading bot system with hot-standby failover and real-time dashboard.
+**Algorithmic Trading Platform** - Production-grade automated trading system with backtested strategies, risk management, and hot-standby failover.
+
+## 🎯 Project Mission
+
+Build a **profitable, automated trading system** that:
+- Executes proven, backtested trading strategies
+- Manages risk systematically (position sizing, stops, portfolio limits)
+- Operates 24/7 with zero-downtime failover
+- Provides real-time monitoring and analytics
+- Validates strategies before live deployment
+
+**This is NOT a monitoring-only platform** - it's a complete algorithmic trading system designed to generate consistent returns through systematic strategy execution.
 
 ## 🏗️ Architecture
 
