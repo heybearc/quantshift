@@ -13,6 +13,20 @@ Build a **profitable, automated trading system** that:
 
 **This is NOT a monitoring-only platform** - it's a complete algorithmic trading system designed to generate consistent returns through systematic strategy execution.
 
+## 🏛️ Architectural Principles
+
+**Broker-Agnostic Design:**
+- Strategy logic separated from broker execution
+- Reusable strategies across Alpaca, Coinbase, and future brokers
+- Clean abstraction layers enable easy backtesting and testing
+- Single strategy implementation works for stocks, crypto, and other assets
+
+**Core Philosophy:**
+- **Strategies** = Pure logic (no broker dependencies)
+- **Executors** = Broker-specific implementation (API calls, order management)
+- **Backtesting** = Uses same strategy code as live trading
+- **Scalability** = Add new brokers/assets without rewriting strategies
+
 ## 🏗️ Architecture
 
 **Monorepo Structure** - Optimized for Agentic AI development (Windsurf + Claude Sonnet) on LXC containers.
