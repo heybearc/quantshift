@@ -19,6 +19,9 @@ from quantshift_core.state_manager import StateManager
 from quantshift_core.database import get_db
 from quantshift_core.models import Trade
 
+# Admin platform integration
+from database_writer import DatabaseWriter
+
 # Alpaca SDK
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
@@ -44,6 +47,15 @@ class QuantShiftEquityBot:
             paper=True  # Paper trading mode
         )
         
+        # Initialize database writer for admin platform
+        self.db_writer = DatabaseWriter(bot_name=self.bot_name)
+        try:
+            self.db_writer.connect()
+            logger.info("Connected to admin platform database")
+        except Exception as e:
+            logger.warning(f"Could not connect to admin platform database: {e}")
+            self.db_writer = None
+        
         # Trading cost assumptions for live trading simulation
         self.commission_per_trade = 0.0  # Alpaca has zero commissions
         self.slippage_bps = 5  # 5 basis points (0.05%) slippage estimate
@@ -64,6 +76,8 @@ class QuantShiftEquityBot:
         """Handle graceful shutdown"""
         logger.info(f"Received signal {signum}, shutting down gracefully...")
         self.running = False
+        if self.db_writer:
+            self.db_writer.disconnect()
         
     def get_account_info(self):
         """Fetch real account information from Alpaca"""
@@ -109,6 +123,17 @@ class QuantShiftEquityBot:
         except Exception as e:
             logger.error(f"Error fetching positions: {e}")
             return []
+            
+    def get_total_trades_count(self):
+        """Get total number of trades from database"""
+        try:
+            db = next(get_db())
+            count = db.query(Trade).filter(Trade.bot_name == self.bot_name).count()
+            db.close()
+            return count
+        except Exception as e:
+            logger.error(f"Error getting trades count: {e}")
+            return 0
             
     def sync_trades_to_database(self):
         """Sync recent trades from Alpaca to PostgreSQL"""
@@ -212,6 +237,18 @@ class QuantShiftEquityBot:
                 self.state_manager.save_state(state)
                 logger.info(f"State updated - Balance: ${account_info['balance']:,.2f}, "
                           f"Positions: {len(positions)}, Unrealized P&L: ${total_unrealized_pl:,.2f}")
+                
+                # Update admin platform database
+                if self.db_writer:
+                    try:
+                        self.db_writer.update_status(
+                            account_info=account_info,
+                            positions=positions,
+                            trades_count=self.get_total_trades_count()
+                        )
+                        self.db_writer.update_positions(positions)
+                    except Exception as e:
+                        logger.error(f"Error updating admin platform: {e}")
             else:
                 # Fallback state if API call fails
                 state = {
@@ -277,6 +314,9 @@ class QuantShiftEquityBot:
                 logger.error(f"Error in main loop: {e}", exc_info=True)
                 time.sleep(5)
         
+        # Cleanup
+        if self.db_writer:
+            self.db_writer.disconnect()
         logger.info("Bot stopped")
 
 if __name__ == '__main__':
