@@ -10,11 +10,10 @@ from quantshift_core.backtesting import BacktestEngine, WalkForwardOptimizer
 from quantshift_core.position_sizing import PositionSizer, RiskManager
 from quantshift_core.indicators import TechnicalIndicators, MultiTimeframeAnalyzer
 from quantshift_core.strategies import (
-    Strategy,
+    BaseStrategy,
     Signal,
-    MovingAverageCrossover,
-    MeanReversion,
-    Breakout
+    SignalType,
+    MACrossoverStrategy
 )
 from quantshift_core.strategy_manager import StrategyManager
 
@@ -33,10 +32,9 @@ __all__ = [
     "RiskManager",
     "TechnicalIndicators",
     "MultiTimeframeAnalyzer",
-    "Strategy",
+    "BaseStrategy",
     "Signal",
-    "MovingAverageCrossover",
-    "MeanReversion",
-    "Breakout",
+    "SignalType",
+    "MACrossoverStrategy",
     "StrategyManager",
 ]
