@@ -1,6 +1,7 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/protected-route';
+import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
 import { Settings, Save, PlayCircle, PauseCircle, AlertCircle, CheckCircle } from 'lucide-react';
@@ -93,9 +94,11 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LayoutWrapper>
+        <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
+        </LayoutWrapper>
       </ProtectedRoute>
     );
   }
@@ -103,19 +106,22 @@ export default function SettingsPage() {
   if (!config) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LayoutWrapper>
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-yellow-600 mb-4" />
             <h3 className="text-lg font-medium text-gray-900">No Configuration Found</h3>
             <p className="text-gray-600 mt-2">Bot configuration could not be loaded.</p>
           </div>
         </div>
+        </LayoutWrapper>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
+      <LayoutWrapper>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
@@ -373,6 +379,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      </LayoutWrapper>
     </ProtectedRoute>
   );
 }

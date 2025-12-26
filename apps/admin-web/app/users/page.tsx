@@ -1,6 +1,7 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/protected-route';
+import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
 import { Users, UserPlus, Edit, Trash2, Shield, User } from 'lucide-react';
@@ -115,15 +116,18 @@ export default function UsersPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LayoutWrapper>
+        <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
+        </LayoutWrapper>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
+      <LayoutWrapper>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
@@ -313,6 +317,7 @@ export default function UsersPage() {
           )}
         </div>
       </div>
+      </LayoutWrapper>
     </ProtectedRoute>
   );
 }
