@@ -11,6 +11,10 @@ import signal
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add the core package to the path
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
@@ -25,7 +29,7 @@ from database_writer import DatabaseWriter
 # Alpaca SDK
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.enums import OrderSide, QueryOrderStatus
+from alpaca.trading.enums import OrderSide, OrderStatus
 
 # Configure logging
 logging.basicConfig(
@@ -138,9 +142,9 @@ class QuantShiftEquityBot:
     def sync_trades_to_database(self):
         """Sync recent trades from Alpaca to PostgreSQL"""
         try:
-            # Get orders from last 24 hours
+            # Get closed orders from last 24 hours (includes filled orders)
             request = GetOrdersRequest(
-                status=QueryOrderStatus.FILLED,
+                status='closed',
                 limit=100,
                 after=datetime.utcnow() - timedelta(days=1)
             )

@@ -3,6 +3,7 @@
 Database Writer for QuantShift Admin Platform Integration
 Writes bot data to PostgreSQL for the Next.js admin dashboard
 """
+import os
 import asyncio
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -17,7 +18,8 @@ class DatabaseWriter:
     
     def __init__(self, bot_name: str = 'equity-bot', db_url: str = None):
         self.bot_name = bot_name
-        self.db_url = db_url or "postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift"
+        # Use localhost for local testing, production will use LXC 131
+        self.db_url = db_url or os.getenv('DATABASE_URL', "postgresql://postgres:postgres@localhost:5432/quantshift")
         self.conn = None
         
     def connect(self):
