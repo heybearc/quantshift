@@ -57,3 +57,132 @@ enum UserRole {
   ADMIN
   VIEWER
 }
+
+// Trading Bot Models
+
+model BotConfig {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  strategy          String
+  symbols           String[] // Array of symbols to trade
+  enabled           Boolean  @default(true)
+  paperTrading      Boolean  @default(true) @map("paper_trading")
+  riskPerTrade      Float    @map("risk_per_trade")
+  maxPositionSize   Float    @map("max_position_size")
+  maxPortfolioHeat  Float    @map("max_portfolio_heat")
+  simulatedCapital  Float?   @map("simulated_capital")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_config")
+}
+
+model BotStatus {
+  id              String   @id @default(uuid())
+  botName         String   @unique @map("bot_name")
+  status          String   // RUNNING, STOPPED, ERROR
+  lastHeartbeat   DateTime @map("last_heartbeat")
+  accountEquity   Float    @map("account_equity")
+  accountCash     Float    @map("account_cash")
+  buyingPower     Float    @map("buying_power")
+  portfolioValue  Float    @map("portfolio_value")
+  unrealizedPl    Float    @map("unrealized_pl")
+  realizedPl      Float    @map("realized_pl")
+  positionsCount  Int      @map("positions_count")
+  tradesCount     Int      @map("trades_count")
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_status")
+}
+
+model Trade {
+  id              String    @id @default(uuid())
+  botName         String    @map("bot_name")
+  symbol          String
+  side            String    // BUY, SELL
+  quantity        Float
+  entryPrice      Float     @map("entry_price")
+  exitPrice       Float?    @map("exit_price")
+  stopLoss        Float?    @map("stop_loss")
+  takeProfit      Float?    @map("take_profit")
+  status          String    // OPEN, CLOSED, CANCELLED
+  pnl             Float?
+  pnlPercent      Float?    @map("pnl_percent")
+  commission      Float?
+  strategy        String
+  signalType      String?   @map("signal_type")
+  entryReason     String?   @map("entry_reason")
+  exitReason      String?   @map("exit_reason")
+  enteredAt       DateTime  @map("entered_at")
+  exitedAt        DateTime? @map("exited_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([symbol])
+  @@index([status])
+  @@index([enteredAt])
+  @@map("trades")
+}
+
+model Position {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  symbol          String
+  quantity        Float
+  entryPrice      Float    @map("entry_price")
+  currentPrice    Float    @map("current_price")
+  marketValue     Float    @map("market_value")
+  costBasis       Float    @map("cost_basis")
+  unrealizedPl    Float    @map("unrealized_pl")
+  unrealizedPlPct Float    @map("unrealized_pl_pct")
+  stopLoss        Float?   @map("stop_loss")
+  takeProfit      Float?   @map("take_profit")
+  strategy        String
+  enteredAt       DateTime @map("entered_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([botName, symbol])
+  @@index([botName])
+  @@map("positions")
+}
+
+model PerformanceMetrics {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  date            DateTime @unique
+  totalTrades     Int      @map("total_trades")
+  winningTrades   Int      @map("winning_trades")
+  losingTrades    Int      @map("losing_trades")
+  winRate         Float    @map("win_rate")
+  profitFactor    Float?   @map("profit_factor")
+  sharpeRatio     Float?   @map("sharpe_ratio")
+  maxDrawdown     Float?   @map("max_drawdown")
+  totalPnl        Float    @map("total_pnl")
+  totalPnlPct     Float    @map("total_pnl_pct")
+  avgWin          Float?   @map("avg_win")
+  avgLoss         Float?   @map("avg_loss")
+  largestWin      Float?   @map("largest_win")
+  largestLoss     Float?   @map("largest_loss")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([date])
+  @@map("performance_metrics")
+}
+
+model EmailNotification {
+  id              String   @id @default(uuid())
+  email           String
+  notificationType String  @map("notification_type") // TRADE_ALERT, DAILY_SUMMARY, WEEKLY_REPORT, ERROR
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@map("email_notifications")
+}
