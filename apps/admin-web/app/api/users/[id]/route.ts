@@ -60,7 +60,7 @@ export async function DELETE(
     }
 
     // Prevent deleting own account
-    if (params.id === payload.userId) {
+    if (params.id === payload.sub) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
     }
 
