@@ -10,7 +10,8 @@ import {
   BarChart3, 
   Mail, 
   Users, 
-  Settings, 
+  Settings,
+  FileText,
   LogOut,
   Menu,
   X
@@ -28,7 +29,9 @@ export function Navigation() {
     { name: 'Positions', href: '/positions', icon: Activity },
     { name: 'Performance', href: '/performance', icon: BarChart3 },
     { name: 'Email', href: '/email', icon: Mail },
+    { name: 'Release Notes', href: '/release-notes', icon: FileText },
     { name: 'Users', href: '/users', icon: Users, adminOnly: true },
+    { name: 'Release Notes (Admin)', href: '/admin/release-notes', icon: FileText, adminOnly: true },
     { name: 'Admin Settings', href: '/admin/settings', icon: Settings, adminOnly: true },
   ];
 
