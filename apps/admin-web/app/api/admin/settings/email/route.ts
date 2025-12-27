@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
         create: {
           key: setting.key,
           value: setting.value,
+          category: 'EMAIL',
         },
       });
     }

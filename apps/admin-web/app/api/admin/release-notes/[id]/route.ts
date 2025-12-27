@@ -27,9 +27,9 @@ export async function PUT(
         version: body.version,
         title: body.title,
         description: body.description,
+        type: body.type || 'patch',
         changes: body.changes,
         releaseDate: new Date(body.releaseDate),
-        type: body.type,
       },
     });
 

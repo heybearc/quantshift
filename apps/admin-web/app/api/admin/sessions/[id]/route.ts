@@ -19,7 +19,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Mark session as inactive
+    // Mark session as inactive (terminate it)
     await prisma.session.update({
       where: { id },
       data: { isActive: false },

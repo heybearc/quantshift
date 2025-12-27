@@ -20,13 +20,13 @@ export async function GET(request: NextRequest) {
         user: {
           select: {
             email: true,
-            full_name: true,
+            fullName: true,
             role: true,
           },
         },
       },
       orderBy: {
-        lastActivityAt: 'desc',
+        createdAt: 'desc',
       },
     });
 
