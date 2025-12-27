@@ -29,7 +29,7 @@ export function Navigation() {
     { name: 'Performance', href: '/performance', icon: BarChart3 },
     { name: 'Email', href: '/email', icon: Mail },
     { name: 'Users', href: '/users', icon: Users, adminOnly: true },
-    { name: 'Settings', href: '/settings', icon: Settings, adminOnly: true },
+    { name: 'Admin Settings', href: '/admin/settings', icon: Settings, adminOnly: true },
   ];
 
   const filteredNav = navigation.filter(item => 
