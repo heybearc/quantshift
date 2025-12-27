@@ -11,6 +11,7 @@ datasource db {
 
 model User {
   id           String    @id @default(uuid())
+  username     String?   @unique
   email        String    @unique
   passwordHash String    @map("password_hash")
   fullName     String?   @map("full_name")
@@ -185,4 +186,35 @@ model EmailNotification {
 
   @@index([email])
   @@map("email_notifications")
+}
+
+model PlatformSettings {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           String
+  description     String?
+  category        String   // EMAIL, GENERAL, NOTIFICATIONS, etc.
+  updatedBy       String?  @map("updated_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+model ReleaseNote {
+  id              String   @id @default(uuid())
+  version         String   @unique
+  title           String
+  description     String
+  changes         Json     // Array of change objects with type and description
+  releaseDate     DateTime @map("release_date")
+  isPublished     Boolean  @default(false) @map("is_published")
+  isDismissed     Boolean  @default(false) @map("is_dismissed")
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([version])
+  @@index([releaseDate])
+  @@map("release_notes")
 }
