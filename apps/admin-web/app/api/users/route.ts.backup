@@ -53,22 +53,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, username, fullName, password, role } = body;
+    const { email, fullName, password, role } = body;
 
     // Validate input
-    if (!email || !username || !fullName || !password) {
+    if (!email || !fullName || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Check if user already exists
-    // Check if user already exists (email or username)
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          { username }
-        ]
-      }
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
@@ -82,7 +76,6 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
         fullName,
         passwordHash: hashedPassword,
         role: role || 'VIEWER',
