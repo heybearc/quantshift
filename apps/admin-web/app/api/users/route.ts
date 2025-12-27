@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         fullName,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: role || 'VIEWER',
         isActive: true,
       },
