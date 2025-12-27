@@ -376,19 +376,36 @@ risk_management:
      - ✅ User CRUD operations
      - ✅ Platform settings infrastructure
      - ✅ Release notes system infrastructure
-   - 🔄 Week 2: Settings & Release Notes UI (IN PROGRESS)
-     - ⏳ Build functional Settings page with email/SMTP config
-     - ⏳ Implement release notes banner and display
-     - ⏳ Restructure navigation (Admin vs Platform sections)
-   - ⏳ Week 3: Trading pages integration
+     - ✅ Comprehensive admin functionality analysis (Theoshift + LDC Tools)
+   - 🔄 Week 2: Core Admin Features (IN PROGRESS - Dec 27)
+     - ⏳ Settings page with email/SMTP config (Gmail + Custom SMTP)
+     - ⏳ Release notes system with banner notification
+     - ⏳ Navigation restructure (Admin Control Center vs Trading Platform)
+     - ⏳ Session management page
+     - ⏳ Audit logs viewer
+   - ⏳ Week 3: Enhanced Admin Dashboard & Monitoring
+     - ⏳ Statistics cards (users, trades, positions, sessions)
+     - ⏳ Health monitor dashboard
+     - ⏳ API status monitoring
+     - ⏳ System operations page
+   - ⏳ Week 4: Trading Pages Integration
      - ⏳ Connect to admin-api backend
      - ⏳ Build functional Trades page
      - ⏳ Build functional Positions page
      - ⏳ Build functional Performance page
-   - ⏳ Week 4: Bot monitoring dashboard & /bump workflow
+     - ⏳ Bot monitoring dashboard
+     - ⏳ /bump workflow integration
 3. ⏳ After Admin Platform: Golden Cross scanner
 4. ⏳ After Admin Platform: Scale-out strategy & trailing stops
 5. ⏳ After Paper Trading: Live trading decision
+
+**Admin Platform Features (Detailed):**
+- See `apps/admin-web/ADMIN_FEATURES_ROADMAP.md` for complete feature list
+- See `apps/admin-web/ADMIN_FUNCTIONALITY_ANALYSIS.md` for implementation patterns
+- Phase 2 (Week 2): Settings, Release Notes, Navigation, Sessions, Audit Logs
+- Phase 3 (Week 3): Dashboard Stats, Health Monitor, API Status, System Ops
+- Phase 4 (Week 4): Trading Integration, Bot Monitoring, /bump Workflow
+- Phase 5 (Future): Email Templates, Import/Export, Analytics
 
 ---
 
