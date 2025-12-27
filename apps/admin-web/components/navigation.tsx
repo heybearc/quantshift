@@ -168,6 +168,16 @@ export function Navigation() {
               <LogOut className="h-5 w-5 mr-3" />
               Logout
             </button>
+            
+            {/* Version Display */}
+            <div className="mt-4 px-4 text-center">
+              <p className="text-xs text-gray-500">
+                QuantShift v0.2.0
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Week 2 Complete
+              </p>
+            </div>
           </div>
         </div>
       </div>

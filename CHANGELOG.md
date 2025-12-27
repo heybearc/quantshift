@@ -9,24 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Comprehensive admin functionality analysis from Theoshift and LDC Tools
-- Admin features roadmap with phased implementation plan
-- Roadmap management best practices document
-- Single source of truth structure for all roadmap tracking
-
-### In Progress
-- Settings page with email/SMTP configuration
-- Release notes system with banner notification
-- Navigation restructure (Admin Control Center vs Trading Platform)
-- Session management page
-- Audit logs viewer
+### Planned
+- Enhanced admin dashboard with statistics cards
+- Health monitor dashboard
+- API status monitoring
+- System operations page
 
 ---
 
-## [0.2.0] - 2025-12-27
+## [0.2.0] - 2025-12-27 - **Week 2 Complete**
 
-### Added
+### Added - Admin Platform Core Features
+- **Settings Page**: Email/SMTP configuration with Gmail App Password and Custom SMTP support
+- **Release Notes System**: Database-stored releases with banner notifications on login
+- **Session Management**: Real-time session monitoring with termination capability
+- **Audit Logs Viewer**: Comprehensive audit log display with search and filtering
+- **Navigation Restructure**: Clear separation between Trading Platform (green) and Admin Control Center (blue)
 - Username-based authentication (login with username OR email)
 - Default admin accounts (quantadmin, coryallen)
 - User CRUD operations via API
@@ -35,15 +33,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit log model in Prisma schema
 - Database migration for username field and new tables
 - Seed script for default users and platform settings
+- nodemailer dependency for email functionality
 
 ### Changed
+- Navigation now has two distinct sections with visual dividers and color coding
 - Login form now accepts username or email
 - User model includes username field (unique, optional)
+- User model includes lastSeenReleaseVersion for banner tracking
 - Authentication API supports both username and email lookup
 
 ### Fixed
 - User authentication flow to support multiple login methods
 - Prisma schema field naming (passwordHash vs password)
+
+### API Endpoints Added
+- `GET/POST /api/admin/settings/email` - Email configuration management
+- `POST /api/admin/settings/email/test` - Test email functionality
+- `GET /api/release-notes` - Public release notes
+- `GET /api/release-notes/latest` - Check for new releases
+- `POST /api/release-notes/dismiss` - Dismiss banner notification
+- `GET/POST /api/admin/release-notes` - Admin release management
+- `PUT/DELETE /api/admin/release-notes/:id` - Update/delete releases
+- `POST /api/admin/release-notes/:id/publish` - Toggle publish status
+- `GET /api/admin/sessions` - View all user sessions
+- `DELETE /api/admin/sessions/:id` - Terminate session
+- `GET /api/admin/audit-logs` - View audit logs (last 500)
 
 ---
 
