@@ -23,21 +23,22 @@ export function Navigation() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigation = [
+  // Trading Platform Section
+  const platformNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Trades', href: '/trades', icon: TrendingUp },
     { name: 'Positions', href: '/positions', icon: Activity },
     { name: 'Performance', href: '/performance', icon: BarChart3 },
-    { name: 'Email', href: '/email', icon: Mail },
+    { name: 'Email Notifications', href: '/email', icon: Mail },
     { name: 'Release Notes', href: '/release-notes', icon: FileText },
-    { name: 'Users', href: '/users', icon: Users, adminOnly: true },
-    { name: 'Release Notes (Admin)', href: '/admin/release-notes', icon: FileText, adminOnly: true },
-    { name: 'Admin Settings', href: '/admin/settings', icon: Settings, adminOnly: true },
   ];
 
-  const filteredNav = navigation.filter(item => 
-    !item.adminOnly || user?.role === 'ADMIN'
-  );
+  // Admin Control Center Section (admin only)
+  const adminNav = [
+    { name: 'User Management', href: '/users', icon: Users },
+    { name: 'Manage Releases', href: '/admin/release-notes', icon: FileText },
+    { name: 'Platform Settings', href: '/admin/settings', icon: Settings },
+  ];
 
   const handleLogout = async () => {
     await logout();
@@ -87,28 +88,72 @@ export function Navigation() {
           </div>
 
           {/* Navigation links */}
-          <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-            {filteredNav.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`
-                    flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-gray-800 text-white' 
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }
-                  `}
-                >
-                  <Icon className="h-5 w-5 mr-3" />
-                  {item.name}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 px-2 py-4 overflow-y-auto">
+            {/* Trading Platform Section */}
+            <div className="mb-6">
+              <div className="px-4 mb-2">
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Trading Platform
+                </h3>
+              </div>
+              <div className="space-y-1">
+                {platformNav.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`
+                        flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
+                        ${isActive 
+                          ? 'bg-green-900/50 text-green-100 border-l-4 border-green-500' 
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }
+                      `}
+                    >
+                      <Icon className="h-5 w-5 mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Admin Control Center Section (only for admins) */}
+            {user?.role === 'ADMIN' && (
+              <div>
+                <div className="px-4 mb-2 pt-4 border-t border-gray-700">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Admin Control Center
+                  </h3>
+                </div>
+                <div className="space-y-1">
+                  {adminNav.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`
+                          flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
+                          ${isActive 
+                            ? 'bg-blue-900/50 text-blue-100 border-l-4 border-blue-500' 
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          }
+                        `}
+                      >
+                        <Icon className="h-5 w-5 mr-3" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </nav>
 
           {/* Logout button */}
