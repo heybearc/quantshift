@@ -12,6 +12,7 @@ import {
   Users, 
   Settings,
   FileText,
+  Shield,
   LogOut,
   Menu,
   X
@@ -36,6 +37,8 @@ export function Navigation() {
   // Admin Control Center Section (admin only)
   const adminNav = [
     { name: 'User Management', href: '/users', icon: Users },
+    { name: 'Session Management', href: '/admin/sessions', icon: Shield },
+    { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
     { name: 'Manage Releases', href: '/admin/release-notes', icon: FileText },
     { name: 'Platform Settings', href: '/admin/settings', icon: Settings },
   ];
