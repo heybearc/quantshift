@@ -380,7 +380,7 @@ risk_management:
    - 🔄 Week 2: Core Admin Features (IN PROGRESS - Dec 27)
      - ✅ Settings page with email/SMTP config (Gmail + Custom SMTP)
      - ✅ Release notes system with banner notification
-     - ⏳ Navigation restructure (Admin Control Center vs Trading Platform)
+     - ✅ Navigation restructure (Admin Control Center vs Trading Platform)
      - ⏳ Session management page
      - ⏳ Audit logs viewer
    - ⏳ Week 3: Enhanced Admin Dashboard & Monitoring
