@@ -284,41 +284,23 @@ export default function UsersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
+                    {/* Email Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
                           <User className="h-5 w-5 text-gray-600" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm text-gray-900">{user.email}</div>
+                          <div className="text-xs text-gray-500">{user.username}</div>
                         </div>
                       </div>
                     </td>
+                    {/* Full Name Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-1">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
-                          user.emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {user.emailVerified ? '✓ Verified' : '⏳ Pending'}
-                        </span>
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-1">
-                        {user.requiresApproval ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 w-fit">
-                            🔒 Needs Approval
-                          </span>
-                        ) : (
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
-                            user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {user.isActive ? '✓ Active' : '❌ Inactive'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
+                    {/* Role Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         user.role === 'ADMIN' 
@@ -329,18 +311,27 @@ export default function UsersPage() {
                         {user.role}
                       </span>
                     </td>
+                    {/* Verification Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleActive(user.id, user.isActive)}
-                        disabled={user.id === currentUser?.id}
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        } ${user.id === currentUser?.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-80'}`}
-                      >
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </button>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
+                        user.emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {user.emailVerified ? '✓ Verified' : '⏳ Pending'}
+                      </span>
+                    </td>
+                    {/* Status Column */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.requiresApproval ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 w-fit">
+                          🔒 Needs Approval
+                        </span>
+                      ) : (
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
+                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.isActive ? '✓ Active' : '❌ Inactive'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(user.createdAt)}
