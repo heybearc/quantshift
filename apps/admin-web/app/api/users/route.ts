@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch all users
+    // Fetch all users with security fields
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
         fullName: true,
         role: true,
         isActive: true,
+        emailVerified: true,
+        requiresApproval: true,
+        approvedBy: true,
+        approvedAt: true,
         createdAt: true,
         lastLogin: true,
       },
@@ -61,7 +65,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if user already exists
     // Check if user already exists (email or username)
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -73,13 +76,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'User with this email or username already exists' }, { status: 409 });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user - admins created through this endpoint are pre-approved
     const user = await prisma.user.create({
       data: {
         email,
@@ -88,6 +91,8 @@ export async function POST(request: NextRequest) {
         passwordHash: hashedPassword,
         role: role || 'VIEWER',
         isActive: true,
+        emailVerified: true,
+        requiresApproval: false,
       },
       select: {
         id: true,
@@ -96,6 +101,10 @@ export async function POST(request: NextRequest) {
         fullName: true,
         role: true,
         isActive: true,
+        emailVerified: true,
+        requiresApproval: true,
+        approvedBy: true,
+        approvedAt: true,
         createdAt: true,
         lastLogin: true,
       },
