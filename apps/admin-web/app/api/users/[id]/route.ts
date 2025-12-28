@@ -19,15 +19,23 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { isActive } = body;
+    const { isActive, fullName, username, role } = body;
+
+    // Build update data object
+    const updateData: any = {};
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (username !== undefined) updateData.username = username;
+    if (role !== undefined) updateData.role = role;
 
     // Update user
     const user = await prisma.user.update({
       where: { id: params.id },
-      data: { isActive },
+      data: updateData,
       select: {
         id: true,
         email: true,
+        username: true,
         fullName: true,
         role: true,
         isActive: true,
