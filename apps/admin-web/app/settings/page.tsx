@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
-import { Settings, Save, PlayCircle, PauseCircle, AlertCircle, CheckCircle } from 'lucide-react';
+import { Settings, Save, PlayCircle, PauseCircle, AlertCircle, CheckCircle, Mail, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface BotConfig {
@@ -159,6 +159,24 @@ export default function SettingsPage() {
               </p>
             </div>
           )}
+
+          {/* Email Configuration Link */}
+          <Link href="/settings/email" className="block mb-6">
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Mail className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Email Configuration</h3>
+                    <p className="text-sm text-gray-600">Configure SMTP settings for notifications</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </Link>
 
           {/* Bot Status */}
           <div className="bg-white rounded-lg shadow p-6 mb-6">
