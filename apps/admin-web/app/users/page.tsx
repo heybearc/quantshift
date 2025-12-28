@@ -134,6 +134,8 @@ export default function UsersPage() {
           fullName: editingUser.fullName,
           username: editingUser.username,
           role: editingUser.role,
+          emailVerified: editingUser.emailVerified,
+          requiresApproval: editingUser.requiresApproval,
         }),
       });
 
@@ -535,6 +537,49 @@ export default function UsersPage() {
                       <option value="VIEWER">Viewer</option>
                       <option value="ADMIN">Admin</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Verified
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editingUser.emailVerified}
+                        onChange={(e) => setEditingUser({ ...editingUser, emailVerified: e.target.checked })}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-600">
+                        {editingUser.emailVerified ? "✓ Email is verified" : "⏳ Email not verified"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Account Approval
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!editingUser.requiresApproval}
+                        onChange={(e) => setEditingUser({ ...editingUser, requiresApproval: !e.target.checked })}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-600">
+                        {editingUser.requiresApproval ? "🔒 Requires approval" : "✓ Approved"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Login
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.lastLogin ? new Date(editingUser.lastLogin).toLocaleString() : "Never"}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
+                    />
                   </div>
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
