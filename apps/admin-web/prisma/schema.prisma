@@ -22,6 +22,19 @@ model User {
   updatedAt               DateTime  @updatedAt @map("updated_at")
   lastLogin               DateTime? @map("last_login")
   
+  // Security fields
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerificationToken  String?   @unique @map("email_verification_token")
+  emailVerificationExpiry DateTime? @map("email_verification_expiry")
+  failedLoginAttempts     Int       @default(0) @map("failed_login_attempts")
+  accountLockedUntil      DateTime? @map("account_locked_until")
+  lastPasswordChange      DateTime  @default(now()) @map("last_password_change")
+  passwordResetToken      String?   @unique @map("password_reset_token")
+  passwordResetExpiry     DateTime? @map("password_reset_expiry")
+  requiresApproval        Boolean   @default(true) @map("requires_approval")
+  approvedBy              String?   @map("approved_by")
+  approvedAt              DateTime? @map("approved_at")
+  
   sessions     Session[]
   auditLogs    AuditLog[]
 
