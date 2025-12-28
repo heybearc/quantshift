@@ -36,7 +36,7 @@ export default function UsersPage() {
       return;
     }
     fetchUsers();
-  }, [currentUser]);
+  }, [currentUser?.role]);
 
   const fetchUsers = async () => {
     try {
