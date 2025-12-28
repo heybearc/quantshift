@@ -10,6 +10,7 @@ import Link from 'next/link';
 interface UserData {
   id: string;
   email: string;
+  username: string;
   fullName: string;
   role: 'ADMIN' | 'VIEWER';
   isActive: boolean;
@@ -40,8 +41,10 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users');
+      console.log('Fetch response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('Users data received:', data);
         setUsers(data.users || []);
       }
     } catch (error) {
