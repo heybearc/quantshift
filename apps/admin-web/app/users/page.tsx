@@ -40,7 +40,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users', { credentials: 'include' });
       console.log('Fetch response status:', response.status);
       if (response.ok) {
         const data = await response.json();
