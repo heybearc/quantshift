@@ -32,6 +32,10 @@ export default function UsersPage() {
     role: 'VIEWER', 
     password: '' 
   });
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+  const [checkingUsername, setCheckingUsername] = useState(false);
 
   useEffect(() => {
     if (currentUser?.role !== 'ADMIN') {
@@ -73,8 +77,51 @@ export default function UsersPage() {
     }
   };
 
+  const checkUsernameAvailability = async (username: string, email: string, excludeUserId?: string) => {
+    if (!username && !email) return;
+    
+    setCheckingUsername(true);
+    try {
+      const response = await fetch('/api/users/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, excludeUserId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (username && !data.usernameAvailable) {
+          setUsernameError('Username is already taken');
+          setUsernameSuggestions(data.suggestions || []);
+        } else {
+          setUsernameError('');
+          setUsernameSuggestions([]);
+        }
+
+        if (email && !data.emailAvailable) {
+          setEmailError('Email is already registered');
+        } else {
+          setEmailError('');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
   const handleEditUser = async () => {
     if (!editingUser) return;
+    
+    // Check username availability before saving
+    await checkUsernameAvailability(editingUser.username, '', editingUser.id);
+    
+    if (usernameError) {
+      return; // Don't save if username is taken
+    }
+
     try {
       const response = await fetch(`/api/users/${editingUser.id}`, {
         method: 'PATCH',
@@ -89,6 +136,8 @@ export default function UsersPage() {
       if (response.ok) {
         setShowEditModal(false);
         setEditingUser(null);
+        setUsernameError('');
+        setUsernameSuggestions([]);
         fetchUsers();
       }
     } catch (error) {
@@ -369,7 +418,7 @@ export default function UsersPage() {
                       type="text"
                       value={editingUser.fullName}
                       onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -379,9 +428,45 @@ export default function UsersPage() {
                     <input
                       type="text"
                       value={editingUser.username}
-                      onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => {
+                        setEditingUser({ ...editingUser, username: e.target.value });
+                        setUsernameError('');
+                        setUsernameSuggestions([]);
+                      }}
+                      onBlur={() => checkUsernameAvailability(editingUser.username, '', editingUser.id)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                        usernameError ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {checkingUsername && (
+                      <p className="text-xs text-gray-500 mt-1">Checking availability...</p>
+                    )}
+                    {usernameError && (
+                      <div className="mt-2">
+                        <p className="text-xs text-red-600">{usernameError}</p>
+                        {usernameSuggestions.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-600 mb-1">Suggestions:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {usernameSuggestions.map((suggestion) => (
+                                <button
+                                  key={suggestion}
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingUser({ ...editingUser, username: suggestion });
+                                    setUsernameError('');
+                                    setUsernameSuggestions([]);
+                                  }}
+                                  className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -401,7 +486,7 @@ export default function UsersPage() {
                     <select
                       value={editingUser.role}
                       onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as 'ADMIN' | 'VIEWER' })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
                       <option value="VIEWER">Viewer</option>
                       <option value="ADMIN">Admin</option>
