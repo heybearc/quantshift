@@ -5,7 +5,6 @@ import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication
     const token = request.cookies.get('access_token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,21 +15,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch all users with security fields
     const users = await prisma.user.findMany({
       select: {
         id: true,
         email: true,
         username: true,
         fullName: true,
+        phoneNumber: true,
+        timeZone: true,
         role: true,
         isActive: true,
+        accountStatus: true,
         emailVerified: true,
+        phoneVerified: true,
+        mfaEnabled: true,
         requiresApproval: true,
         approvedBy: true,
         approvedAt: true,
+        kycStatus: true,
+        alpacaAccountId: true,
+        riskTolerance: true,
+        canPlaceOrders: true,
+        subscriptionTier: true,
         createdAt: true,
         lastLogin: true,
+        lastLoginIp: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -46,7 +55,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
     const token = request.cookies.get('access_token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -58,14 +66,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, username, fullName, password, role } = body;
+    const { 
+      email, 
+      username, 
+      fullName, 
+      password, 
+      role,
+      phoneNumber,
+      timeZone,
+      accountStatus,
+      emailVerified,
+      requiresApproval,
+      kycStatus,
+      riskTolerance,
+      canPlaceOrders,
+      subscriptionTier
+    } = body;
 
-    // Validate input
     if (!email || !username || !fullName || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if user already exists (email or username)
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -79,10 +100,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User with this email or username already exists' }, { status: 409 });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user - admins created through this endpoint are pre-approved
     const user = await prisma.user.create({
       data: {
         email,
@@ -90,23 +109,41 @@ export async function POST(request: NextRequest) {
         fullName,
         passwordHash: hashedPassword,
         role: role || 'VIEWER',
+        phoneNumber: phoneNumber || null,
+        timeZone: timeZone || 'America/New_York',
         isActive: true,
-        emailVerified: true,
-        requiresApproval: false,
+        accountStatus: accountStatus || 'ACTIVE',
+        emailVerified: emailVerified !== undefined ? emailVerified : true,
+        requiresApproval: requiresApproval !== undefined ? requiresApproval : false,
+        kycStatus: kycStatus || 'NOT_STARTED',
+        riskTolerance: riskTolerance || null,
+        canPlaceOrders: canPlaceOrders || false,
+        subscriptionTier: subscriptionTier || 'FREE',
       },
       select: {
         id: true,
         email: true,
         username: true,
         fullName: true,
+        phoneNumber: true,
+        timeZone: true,
         role: true,
         isActive: true,
+        accountStatus: true,
         emailVerified: true,
+        phoneVerified: true,
+        mfaEnabled: true,
         requiresApproval: true,
         approvedBy: true,
         approvedAt: true,
+        kycStatus: true,
+        alpacaAccountId: true,
+        riskTolerance: true,
+        canPlaceOrders: true,
+        subscriptionTier: true,
         createdAt: true,
         lastLogin: true,
+        lastLoginIp: true,
       },
     });
 
