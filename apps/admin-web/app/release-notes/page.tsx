@@ -1,22 +1,45 @@
 'use client';
 
-import { ProtectedRoute } from '@/components/protected-route';
-import { LayoutWrapper } from '@/components/layout-wrapper';
-import { useState, useEffect } from 'react';
-import { FileText, Calendar, Tag } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface ReleaseNote {
   id: string;
   version: string;
   title: string;
   description: string;
+  type: string;
   changes: Array<{
-    type: 'added' | 'changed' | 'fixed' | 'removed' | 'security';
-    items: string[];
+    type: string;
+    description: string;
   }>;
   releaseDate: string;
-  type: 'major' | 'minor' | 'patch';
-  isPublished: boolean;
+}
+
+function getTypeColor(type: string) {
+  switch (type) {
+    case 'major':
+      return 'bg-red-100 text-red-800';
+    case 'minor':
+      return 'bg-blue-100 text-blue-800';
+    case 'patch':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function getTypeIcon(type: string) {
+  switch (type) {
+    case 'feature':
+      return '✨';
+    case 'fix':
+      return '🐛';
+    case 'improvement':
+      return '🚀';
+    default:
+      return '📝';
+  }
 }
 
 export default function ReleaseNotesPage() {
@@ -24,171 +47,168 @@ export default function ReleaseNotesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadReleases();
-  }, []);
-
-  const loadReleases = async () => {
-    try {
-      const response = await fetch('/api/release-notes');
-      const data = await response.json();
-      if (data.success) {
-        setReleases(data.data);
+    async function fetchReleases() {
+      try {
+        const response = await fetch('/api/release-notes', {
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setReleases(data.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching release notes:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading release notes:', error);
-    } finally {
-      setLoading(false);
     }
-  };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'major':
-        return 'bg-red-100 text-red-800';
-      case 'minor':
-        return 'bg-blue-100 text-blue-800';
-      case 'patch':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getChangeTypeColor = (type: string) => {
-    switch (type) {
-      case 'added':
-        return 'text-green-700';
-      case 'changed':
-        return 'text-blue-700';
-      case 'fixed':
-        return 'text-orange-700';
-      case 'removed':
-        return 'text-red-700';
-      case 'security':
-        return 'text-purple-700';
-      default:
-        return 'text-gray-700';
-    }
-  };
-
-  const getChangeTypeIcon = (type: string) => {
-    switch (type) {
-      case 'added':
-        return '✨';
-      case 'changed':
-        return '🔄';
-      case 'fixed':
-        return '🐛';
-      case 'removed':
-        return '🗑️';
-      case 'security':
-        return '🔒';
-      default:
-        return '📝';
-    }
-  };
+    fetchReleases();
+  }, []);
 
   if (loading) {
     return (
-      <ProtectedRoute>
-        <LayoutWrapper>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading release notes...</p>
-            </div>
-          </div>
-        </LayoutWrapper>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading release notes...</div>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <FileText className="h-8 w-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900">Release Notes</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <h1 className="text-3xl font-bold">Release Notes</h1>
               </div>
-              <p className="text-gray-600">
+              <p className="text-blue-100 ml-13">
                 Stay updated with the latest features, improvements, and fixes
               </p>
             </div>
+            <Link
+              href="/dashboard"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-200 border border-white/20"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
 
-            {/* Release Notes List */}
-            {releases.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Release Notes Yet</h3>
-                <p className="text-gray-600">Release notes will appear here when published.</p>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {releases.map((release) => (
-                  <div key={release.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    {/* Release Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <h2 className="text-2xl font-bold text-gray-900">v{release.version}</h2>
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(release.type)}`}>
-                          {release.type.toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(release.releaseDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </div>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {releases.length === 0 ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+            <p className="text-yellow-800 text-lg">No release notes available yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {releases.map((release) => (
+              <div
+                key={release.id}
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-100"
+              >
+                {/* Release Header */}
+                <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center space-x-3">
+                      <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        v{release.version}
+                      </h2>
+                      <span
+                        className={`px-3 py-1 text-xs font-bold rounded-full ${getTypeColor(
+                          release.type
+                        )} shadow-sm`}
+                      >
+                        {release.type.toUpperCase()}
+                      </span>
                     </div>
-
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{release.title}</h3>
-                    <p className="text-gray-600 mb-6">{release.description}</p>
-
-                    {/* Changes */}
-                    <div className="space-y-4">
-                      {release.changes.map((change, idx) => (
-                        <div key={idx}>
-                          <h4 className={`text-sm font-semibold uppercase mb-2 flex items-center gap-2 ${getChangeTypeColor(change.type)}`}>
-                            <span>{getChangeTypeIcon(change.type)}</span>
-                            {change.type}
-                          </h4>
-                          <ul className="space-y-1 ml-6">
-                            {change.items.map((item, itemIdx) => (
-                              <li key={itemIdx} className="text-sm text-gray-700 list-disc">
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
+                    <span className="text-sm font-medium text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm">
+                      📅 {new Date(release.releaseDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <h3 className="text-xl font-bold text-gray-800 mt-4">{release.title}</h3>
+                  <p className="text-gray-600 mt-2">{release.description}</p>
+                </div>
 
-            {/* Footer */}
-            <div className="mt-12 text-center">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">🔔 Stay Updated</h3>
-                <p className="text-gray-600 mb-4">
-                  Want to be notified about new releases? Contact your administrator to be added to the update notifications.
-                </p>
-                <div className="text-sm text-gray-500">
-                  <p>Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                {/* Changes Content */}
+                <div className="px-8 py-6">
+                  {release.changes && release.changes.length > 0 && (
+                    <div className="space-y-6">
+                      {/* Group changes by type */}
+                      {['feature', 'improvement', 'fix', 'other'].map((changeType) => {
+                        const changesOfType = release.changes.filter(
+                          (c) => c.type === changeType
+                        );
+                        if (changesOfType.length === 0) return null;
+
+                        const sectionTitle =
+                          changeType === 'feature'
+                            ? '✨ New Features'
+                            : changeType === 'improvement'
+                            ? '🚀 Improvements'
+                            : changeType === 'fix'
+                            ? '🐛 Bug Fixes'
+                            : '📝 Other Changes';
+
+                        return (
+                          <div key={changeType}>
+                            <h4 className="text-lg font-bold text-gray-900 mb-3">
+                              {sectionTitle}
+                            </h4>
+                            <ul className="space-y-2">
+                              {changesOfType.map((change, idx) => (
+                                <li
+                                  key={idx}
+                                  className="flex items-start space-x-2 text-gray-700"
+                                >
+                                  <span className="text-blue-600 mt-1">•</span>
+                                  <span>{change.description}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer CTA */}
+        <div className="mt-16">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-center text-white">
+            <div className="text-4xl mb-4">🔔</div>
+            <h3 className="text-2xl font-bold mb-3">Stay Updated</h3>
+            <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+              Check back regularly for new features, improvements, and bug fixes to the
+              QuantShift platform.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                href="/dashboard"
+                className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-md"
+              >
+                🏠 Back to Dashboard
+              </Link>
             </div>
           </div>
         </div>
-      </LayoutWrapper>
-    </ProtectedRoute>
+      </main>
+    </div>
   );
 }
