@@ -23,7 +23,7 @@ interface EmailConfig {
 type TabType = 'email' | 'general' | 'notifications';
 
 export default function AdminSettingsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('email');
   const [emailConfig, setEmailConfig] = useState<EmailConfig>({
     authType: 'gmail',
@@ -46,17 +46,12 @@ export default function AdminSettingsPage() {
   const [statusMessage, setStatusMessage] = useState('');
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
-    }
-
     if (user?.role !== 'ADMIN') {
       window.location.href = '/dashboard';
       return;
     }
     loadConfiguration();
-  }, [user, authLoading]);
+  }, [user]);
 
   const loadConfiguration = async () => {
     try {

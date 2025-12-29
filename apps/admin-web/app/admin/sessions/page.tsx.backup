@@ -22,23 +22,18 @@ interface UserSession {
 }
 
 export default function SessionsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [terminating, setTerminating] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
-    }
-
     if (user?.role !== 'ADMIN') {
       window.location.href = '/dashboard';
       return;
     }
     loadSessions();
-  }, [user, authLoading]);
+  }, [user]);
 
   const loadSessions = async () => {
     try {

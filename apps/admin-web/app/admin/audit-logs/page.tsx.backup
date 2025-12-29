@@ -22,7 +22,7 @@ interface AuditLog {
 }
 
 export default function AuditLogsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,17 +30,12 @@ export default function AuditLogsPage() {
   const [filterResource, setFilterResource] = useState('all');
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
-    }
-
     if (user?.role !== 'ADMIN') {
       window.location.href = '/dashboard';
       return;
     }
     loadLogs();
-  }, [user, authLoading]);
+  }, [user]);
 
   const loadLogs = async () => {
     try {

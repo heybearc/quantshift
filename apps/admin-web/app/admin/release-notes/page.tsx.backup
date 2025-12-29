@@ -34,7 +34,7 @@ interface ReleaseFormData {
 }
 
 export default function AdminReleaseNotesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [releases, setReleases] = useState<ReleaseNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,17 +49,12 @@ export default function AdminReleaseNotesPage() {
   });
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
-    }
-
     if (user?.role !== 'ADMIN') {
       window.location.href = '/dashboard';
       return;
     }
     loadReleases();
-  }, [user, authLoading]);
+  }, [user]);
 
   const loadReleases = async () => {
     try {
