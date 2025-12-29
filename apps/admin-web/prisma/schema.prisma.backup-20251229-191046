@@ -1,0 +1,239 @@
+// Prisma schema for QuantShift Admin
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  username                String?   @unique
+  email                   String    @unique
+  passwordHash            String    @map("password_hash")
+  fullName                String?   @map("full_name")
+  role                    UserRole  @default(VIEWER)
+  isActive                Boolean   @default(true) @map("is_active")
+  lastSeenReleaseVersion  String?   @map("last_seen_release_version")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  lastLogin               DateTime? @map("last_login")
+  
+  // Security fields
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerificationToken  String?   @unique @map("email_verification_token")
+  emailVerificationExpiry DateTime? @map("email_verification_expiry")
+  failedLoginAttempts     Int       @default(0) @map("failed_login_attempts")
+  accountLockedUntil      DateTime? @map("account_locked_until")
+  lastPasswordChange      DateTime  @default(now()) @map("last_password_change")
+  passwordResetToken      String?   @unique @map("password_reset_token")
+  passwordResetExpiry     DateTime? @map("password_reset_expiry")
+  requiresApproval        Boolean   @default(true) @map("requires_approval")
+  approvedBy              String?   @map("approved_by")
+  approvedAt              DateTime? @map("approved_at")
+  
+  sessions     Session[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  tokenHash      String   @map("token_hash")
+  expiresAt      DateTime @map("expires_at")
+  isActive       Boolean  @default(true) @map("is_active")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  userAgent      String?  @map("user_agent")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  changes      Json?
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
+
+enum UserRole {
+  ADMIN
+  VIEWER
+}
+
+// Trading Bot Models
+
+model BotConfig {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  strategy          String
+  symbols           String[] // Array of symbols to trade
+  enabled           Boolean  @default(true)
+  paperTrading      Boolean  @default(true) @map("paper_trading")
+  riskPerTrade      Float    @map("risk_per_trade")
+  maxPositionSize   Float    @map("max_position_size")
+  maxPortfolioHeat  Float    @map("max_portfolio_heat")
+  simulatedCapital  Float?   @map("simulated_capital")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_config")
+}
+
+model BotStatus {
+  id              String   @id @default(uuid())
+  botName         String   @unique @map("bot_name")
+  status          String   // RUNNING, STOPPED, ERROR
+  lastHeartbeat   DateTime @map("last_heartbeat")
+  accountEquity   Float    @map("account_equity")
+  accountCash     Float    @map("account_cash")
+  buyingPower     Float    @map("buying_power")
+  portfolioValue  Float    @map("portfolio_value")
+  unrealizedPl    Float    @map("unrealized_pl")
+  realizedPl      Float    @map("realized_pl")
+  positionsCount  Int      @map("positions_count")
+  tradesCount     Int      @map("trades_count")
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_status")
+}
+
+model Trade {
+  id              String    @id @default(uuid())
+  botName         String    @map("bot_name")
+  symbol          String
+  side            String    // BUY, SELL
+  quantity        Float
+  entryPrice      Float     @map("entry_price")
+  exitPrice       Float?    @map("exit_price")
+  stopLoss        Float?    @map("stop_loss")
+  takeProfit      Float?    @map("take_profit")
+  status          String    // OPEN, CLOSED, CANCELLED
+  pnl             Float?
+  pnlPercent      Float?    @map("pnl_percent")
+  commission      Float?
+  strategy        String
+  signalType      String?   @map("signal_type")
+  entryReason     String?   @map("entry_reason")
+  exitReason      String?   @map("exit_reason")
+  enteredAt       DateTime  @map("entered_at")
+  exitedAt        DateTime? @map("exited_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([symbol])
+  @@index([status])
+  @@index([enteredAt])
+  @@map("trades")
+}
+
+model Position {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  symbol          String
+  quantity        Float
+  entryPrice      Float    @map("entry_price")
+  currentPrice    Float    @map("current_price")
+  marketValue     Float    @map("market_value")
+  costBasis       Float    @map("cost_basis")
+  unrealizedPl    Float    @map("unrealized_pl")
+  unrealizedPlPct Float    @map("unrealized_pl_pct")
+  stopLoss        Float?   @map("stop_loss")
+  takeProfit      Float?   @map("take_profit")
+  strategy        String
+  enteredAt       DateTime @map("entered_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([botName, symbol])
+  @@index([botName])
+  @@map("positions")
+}
+
+model PerformanceMetrics {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  date            DateTime @unique
+  totalTrades     Int      @map("total_trades")
+  winningTrades   Int      @map("winning_trades")
+  losingTrades    Int      @map("losing_trades")
+  winRate         Float    @map("win_rate")
+  profitFactor    Float?   @map("profit_factor")
+  sharpeRatio     Float?   @map("sharpe_ratio")
+  maxDrawdown     Float?   @map("max_drawdown")
+  totalPnl        Float    @map("total_pnl")
+  totalPnlPct     Float    @map("total_pnl_pct")
+  avgWin          Float?   @map("avg_win")
+  avgLoss         Float?   @map("avg_loss")
+  largestWin      Float?   @map("largest_win")
+  largestLoss     Float?   @map("largest_loss")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([date])
+  @@map("performance_metrics")
+}
+
+model EmailNotification {
+  id              String   @id @default(uuid())
+  email           String
+  notificationType String  @map("notification_type") // TRADE_ALERT, DAILY_SUMMARY, WEEKLY_REPORT, ERROR
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@map("email_notifications")
+}
+
+model PlatformSettings {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           String
+  description     String?
+  category        String   // EMAIL, GENERAL, NOTIFICATIONS, etc.
+  updatedBy       String?  @map("updated_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+model ReleaseNote {
+  id              String   @id @default(uuid())
+  version         String   @unique
+  title           String
+  description     String
+  type            String   @default("patch") // major, minor, patch
+  changes         Json     // Array of change objects with type and description
+  releaseDate     DateTime @map("release_date")
+  isPublished     Boolean  @default(false) @map("is_published")
+  isDismissed     Boolean  @default(false) @map("is_dismissed")
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([version])
+  @@index([releaseDate])
+  @@map("release_notes")
+}
