@@ -1,54 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="quantumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="qGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
       <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
     </linearGradient>
-    <radialGradient id="glow">
+    <radialGradient id="qGlow">
       <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.6" />
       <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0" />
     </radialGradient>
+    <!-- Arch path for text -->
+    <path id="archPath" d="M 15,50 A 35,35 0 0,1 85,50" />
   </defs>
   
   <!-- Background -->
-  <circle cx="100" cy="100" r="95" fill="#0f172a" stroke="url(#quantumGrad)" stroke-width="2"/>
+  <rect width="100" height="100" fill="#0f172a" rx="18"/>
   
-  <!-- Quantum atom core - central node -->
-  <circle cx="100" cy="100" r="12" fill="url(#quantumGrad)"/>
-  <circle cx="100" cy="100" r="18" fill="url(#glow)"/>
+  <!-- QUANTSHIFT Text in Arch at Top -->
+  <text font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="url(#qGrad)" letter-spacing="1.5">
+    <textPath href="#archPath" startOffset="50%" text-anchor="middle">
+      QUANTSHIFT
+    </textPath>
+  </text>
   
-  <!-- Orbital rings (quantum states) -->
-  <ellipse cx="100" cy="100" rx="45" ry="25" fill="none" stroke="#06b6d4" stroke-width="1.5" opacity="0.6" transform="rotate(30 100 100)"/>
-  <ellipse cx="100" cy="100" rx="45" ry="25" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.6" transform="rotate(90 100 100)"/>
-  <ellipse cx="100" cy="100" rx="45" ry="25" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.6" transform="rotate(150 100 100)"/>
+  <!-- Quantum atom core -->
+  <circle cx="50" cy="58" r="8" fill="url(#qGrad)"/>
+  <circle cx="50" cy="58" r="12" fill="url(#qGlow)"/>
   
-  <!-- Quantum particles (electrons) on orbits -->
-  <circle cx="145" cy="100" r="4" fill="#06b6d4">
+  <!-- Orbital rings -->
+  <ellipse cx="50" cy="58" rx="28" ry="16" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6" transform="rotate(30 50 58)"/>
+  <ellipse cx="50" cy="58" rx="28" ry="16" fill="none" stroke="#3b82f6" stroke-width="1.2" opacity="0.6" transform="rotate(90 50 58)"/>
+  <ellipse cx="50" cy="58" rx="28" ry="16" fill="none" stroke="#8b5cf6" stroke-width="1.2" opacity="0.6" transform="rotate(150 50 58)"/>
+  
+  <!-- Quantum particles -->
+  <circle cx="78" cy="58" r="3" fill="#06b6d4">
     <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
   </circle>
-  <circle cx="55" cy="100" r="4" fill="#3b82f6">
+  <circle cx="22" cy="58" r="3" fill="#3b82f6">
     <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
   </circle>
-  <circle cx="100" cy="75" r="4" fill="#8b5cf6">
+  <circle cx="50" cy="42" r="3" fill="#8b5cf6">
     <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
   </circle>
-  <circle cx="100" cy="125" r="4" fill="#06b6d4">
-    <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
-  </circle>
   
-  <!-- Neural network nodes (AI layer) -->
-  <circle cx="70" cy="60" r="3" fill="#06b6d4" opacity="0.8"/>
-  <circle cx="130" cy="60" r="3" fill="#3b82f6" opacity="0.8"/>
-  <circle cx="70" cy="140" r="3" fill="#8b5cf6" opacity="0.8"/>
-  <circle cx="130" cy="140" r="3" fill="#06b6d4" opacity="0.8"/>
+  <!-- Neural nodes -->
+  <circle cx="35" cy="38" r="2" fill="#06b6d4" opacity="0.7"/>
+  <circle cx="65" cy="38" r="2" fill="#3b82f6" opacity="0.7"/>
+  <circle cx="35" cy="78" r="2" fill="#8b5cf6" opacity="0.7"/>
+  <circle cx="65" cy="78" r="2" fill="#06b6d4" opacity="0.7"/>
   
   <!-- Neural connections -->
-  <line x1="70" y1="60" x2="100" y2="100" stroke="url(#quantumGrad)" stroke-width="0.5" opacity="0.4"/>
-  <line x1="130" y1="60" x2="100" y2="100" stroke="url(#quantumGrad)" stroke-width="0.5" opacity="0.4"/>
-  <line x1="70" y1="140" x2="100" y2="100" stroke="url(#quantumGrad)" stroke-width="0.5" opacity="0.4"/>
-  <line x1="130" y1="140" x2="100" y2="100" stroke="url(#quantumGrad)" stroke-width="0.5" opacity="0.4"/>
-  
-  <!-- QuantShift text -->
-  <text x="100" y="180" font-size="24" font-weight="bold" fill="url(#quantumGrad)" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="2">QUANTSHIFT</text>
+  <line x1="35" y1="38" x2="50" y2="58" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="65" y1="38" x2="50" y2="58" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="35" y1="78" x2="50" y2="58" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
+  <line x1="65" y1="78" x2="50" y2="58" stroke="url(#qGrad)" stroke-width="0.4" opacity="0.3"/>
 </svg>
