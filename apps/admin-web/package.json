@@ -11,7 +11,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:init": "tsx scripts/init-db.ts"
+    "db:init": "tsx scripts/init-db.ts",
+    "release": "tsx scripts/generate-release-notes.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
