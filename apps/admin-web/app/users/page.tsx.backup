@@ -23,7 +23,7 @@ interface UserData {
 }
 
 export default function UsersPage() {
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -42,17 +42,12 @@ export default function UsersPage() {
   const [checkingUsername, setCheckingUsername] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
-    }
-    
     if (currentUser?.role !== 'ADMIN') {
       window.location.href = '/dashboard';
       return;
     }
     fetchUsers();
-  }, [currentUser, authLoading]);
+  }, [currentUser]);
 
   const fetchUsers = async () => {
     try {
