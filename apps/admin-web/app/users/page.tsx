@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Edit, Trash2, Shield, User } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, Shield, User, Phone, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface UserData {
@@ -12,14 +12,25 @@ interface UserData {
   email: string;
   username: string;
   fullName: string;
-  role: 'ADMIN' | 'VIEWER';
+  phoneNumber?: string;
+  timeZone?: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'TRADER' | 'VIEWER' | 'API_USER';
   isActive: boolean;
+  accountStatus: 'ACTIVE' | 'INACTIVE' | 'PENDING_APPROVAL' | 'SUSPENDED' | 'LOCKED' | 'ARCHIVED';
   emailVerified: boolean;
+  phoneVerified: boolean;
+  mfaEnabled: boolean;
   requiresApproval: boolean;
   approvedBy?: string;
   approvedAt?: string;
+  kycStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+  alpacaAccountId?: string;
+  riskTolerance?: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE' | 'CUSTOM';
+  canPlaceOrders: boolean;
+  subscriptionTier?: string;
   createdAt: string;
   lastLogin?: string;
+  lastLoginIp?: string;
 }
 
 export default function UsersPage() {
@@ -188,6 +199,30 @@ export default function UsersPage() {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      ACTIVE: 'bg-green-100 text-green-800',
+      INACTIVE: 'bg-gray-100 text-gray-800',
+      PENDING_APPROVAL: 'bg-yellow-100 text-yellow-800',
+      SUSPENDED: 'bg-red-100 text-red-800',
+      LOCKED: 'bg-red-100 text-red-800',
+      ARCHIVED: 'bg-gray-100 text-gray-800',
+    };
+    return badges[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getKycBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      NOT_STARTED: 'bg-gray-100 text-gray-800',
+      IN_PROGRESS: 'bg-blue-100 text-blue-800',
+      PENDING_REVIEW: 'bg-yellow-100 text-yellow-800',
+      APPROVED: 'bg-green-100 text-green-800',
+      REJECTED: 'bg-red-100 text-red-800',
+      EXPIRED: 'bg-orange-100 text-orange-800',
+    };
+    return badges[status] || 'bg-gray-100 text-gray-800';
+  };
+
   const handleApproveUser = async (userId: string) => {
     if (!confirm('Approve this user account? They will be able to log in.')) return;
 
@@ -266,22 +301,22 @@ export default function UsersPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Full Name
+                    User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Verification
+                    Account Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    KYC Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
+                    Security
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Last Login
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -291,57 +326,80 @@ export default function UsersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
-                    {/* Email Column */}
+                    {/* User Column - Combined */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-600" />
+                        <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm text-gray-900">{user.email}</div>
-                          <div className="text-xs text-gray-500">{user.username}</div>
+                          <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
+                          <div className="text-xs text-gray-500">{user.email}</div>
+                          {user.phoneNumber && (
+                            <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                              <Phone className="h-3 w-3" />
+                              {user.phoneNumber}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </td>
-                    {/* Full Name Column */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
                     </td>
                     {/* Role Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'ADMIN' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : 'bg-gray-100 text-gray-800'
+                        user.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-800' :
+                        user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                        user.role === 'TRADER' ? 'bg-blue-100 text-blue-800' :
+                        user.role === 'API_USER' ? 'bg-gray-100 text-gray-800' :
+                        'bg-green-100 text-green-800'
                       }`}>
-                        {user.role === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
+                        {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && <Shield className="h-3 w-3 mr-1" />}
                         {user.role}
                       </span>
                     </td>
-                    {/* Verification Column */}
+                    {/* Account Status Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
-                        user.emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {user.emailVerified ? '✓ Verified' : '⏳ Pending'}
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(user.accountStatus)}`}>
+                        {user.accountStatus.replace('_', ' ')}
                       </span>
                     </td>
-                    {/* Status Column */}
+                    {/* KYC Status Column */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {user.requiresApproval ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 w-fit">
-                          🔒 Needs Approval
-                        </span>
-                      ) : (
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
-                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {user.isActive ? '✓ Active' : '❌ Inactive'}
-                        </span>
-                      )}
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getKycBadge(user.kycStatus)}`}>
+                        {user.kycStatus.replace('_', ' ')}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(user.createdAt)}
+                    {/* Security Column - Icons */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {user.emailVerified && (
+                          <div title="Email Verified">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          </div>
+                        )}
+                        {user.mfaEnabled && (
+                          <div title="MFA Enabled">
+                            <Shield className="h-4 w-4 text-blue-500" />
+                          </div>
+                        )}
+                        {user.phoneVerified && (
+                          <div title="Phone Verified">
+                            <Phone className="h-4 w-4 text-purple-500" />
+                          </div>
+                        )}
+                        {!user.emailVerified && !user.mfaEnabled && !user.phoneVerified && (
+                          <span className="text-xs text-gray-400">None</span>
+                        )}
+                      </div>
+                    </td>
+                    {/* Last Login Column */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                      </div>
+                      {user.lastLoginIp && (
+                        <div className="text-xs text-gray-500">{user.lastLoginIp}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
