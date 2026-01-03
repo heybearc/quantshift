@@ -45,7 +45,9 @@ export default function EmailSettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/settings/email');
+      const response = await fetch('/api/settings/email', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setSettings(data.settings);
@@ -66,6 +68,7 @@ export default function EmailSettingsPage() {
       const response = await fetch('/api/settings/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(settings),
       });
 
@@ -96,6 +99,7 @@ export default function EmailSettingsPage() {
       const response = await fetch('/api/settings/email/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...settings,
           testEmail,
@@ -175,7 +179,7 @@ export default function EmailSettingsPage() {
                   value={settings.smtpHost}
                   onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
                   placeholder="smtp.gmail.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Your email provider's SMTP server address
@@ -192,7 +196,7 @@ export default function EmailSettingsPage() {
                   value={settings.smtpPort}
                   onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
                   placeholder="587"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Common ports: 587 (TLS), 465 (SSL), 25 (unsecured)
@@ -209,7 +213,7 @@ export default function EmailSettingsPage() {
                   value={settings.smtpUser}
                   onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
                   placeholder="your-email@gmail.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Usually your email address
@@ -227,7 +231,7 @@ export default function EmailSettingsPage() {
                     value={settings.smtpPass}
                     onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
                     placeholder="••••••••••••••••"
-                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                   <button
                     type="button"
@@ -252,7 +256,7 @@ export default function EmailSettingsPage() {
                   value={settings.appUrl}
                   onChange={(e) => setSettings({ ...settings, appUrl: e.target.value })}
                   placeholder="http://10.92.3.29:3001"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Used for generating links in emails (verification, password reset, etc.)
@@ -292,7 +296,7 @@ export default function EmailSettingsPage() {
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                   placeholder="test@example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
 
