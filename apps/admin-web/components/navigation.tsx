@@ -13,6 +13,7 @@ import {
   Settings,
   FileText,
   Shield,
+  Zap,
   LogOut,
   Menu,
   X
@@ -40,6 +41,8 @@ export function Navigation() {
     { name: 'User Management', href: '/users', icon: Users },
     { name: 'Session Management', href: '/admin/sessions', icon: Shield },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
+    { name: 'Health Monitor', href: '/admin/health', icon: Activity },
+    { name: 'API Status', href: '/admin/api-status', icon: Zap },
     { name: 'Platform Settings', href: '/admin/settings', icon: Settings },
   ];
 
