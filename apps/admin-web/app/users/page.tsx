@@ -40,11 +40,31 @@ export default function UsersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
-  const [newUser, setNewUser] = useState<{ email: string; username: string; fullName: string; role: 'ADMIN' | 'VIEWER'; password: string }>({ 
+  const [newUser, setNewUser] = useState<{ 
+    email: string; 
+    username: string; 
+    fullName: string; 
+    phoneNumber?: string;
+    timeZone?: string;
+    role: 'SUPER_ADMIN' | 'ADMIN' | 'TRADER' | 'VIEWER' | 'API_USER'; 
+    accountStatus: 'ACTIVE' | 'INACTIVE' | 'PENDING_APPROVAL' | 'SUSPENDED' | 'LOCKED' | 'ARCHIVED';
+    kycStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+    riskTolerance?: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE' | 'CUSTOM';
+    canPlaceOrders: boolean;
+    subscriptionTier?: string;
+    password: string;
+  }>({ 
     email: '', 
     username: '',
     fullName: '', 
+    phoneNumber: '',
+    timeZone: 'America/New_York',
     role: 'VIEWER', 
+    accountStatus: 'ACTIVE',
+    kycStatus: 'NOT_STARTED',
+    riskTolerance: 'MODERATE',
+    canPlaceOrders: false,
+    subscriptionTier: 'FREE',
     password: '' 
   });
   const [usernameError, setUsernameError] = useState('');
@@ -89,7 +109,20 @@ export default function UsersPage() {
 
       if (response.ok) {
         setShowAddModal(false);
-        setNewUser({ email: '', username: '', fullName: '', role: 'VIEWER', password: '' });
+        setNewUser({ 
+          email: '', 
+          username: '', 
+          fullName: '', 
+          phoneNumber: '',
+          timeZone: 'America/New_York',
+          role: 'VIEWER', 
+          accountStatus: 'ACTIVE',
+          kycStatus: 'NOT_STARTED',
+          riskTolerance: 'MODERATE',
+          canPlaceOrders: false,
+          subscriptionTier: 'FREE',
+          password: '' 
+        });
         fetchUsers();
       }
     } catch (error) {
@@ -440,10 +473,13 @@ export default function UsersPage() {
 
           {/* Add User Modal */}
           {showAddModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New User</h3>
-                <div className="space-y-4">
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Add New User</h3>
+                </div>
+                <div className="p-6 overflow-y-auto flex-1">
+                  <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
@@ -482,32 +518,139 @@ export default function UsersPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      value={newUser.phoneNumber}
+                      onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Time Zone
+                    </label>
+                    <select
+                      value={newUser.timeZone}
+                      onChange={(e) => setNewUser({ ...newUser, timeZone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="America/New_York">Eastern Time</option>
+                      <option value="America/Chicago">Central Time</option>
+                      <option value="America/Denver">Mountain Time</option>
+                      <option value="America/Los_Angeles">Pacific Time</option>
+                      <option value="UTC">UTC</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Role
                     </label>
                     <select
                       value={newUser.role}
-                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'ADMIN' | 'VIEWER' })}
+                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="VIEWER">Viewer</option>
+                      <option value="TRADER">Trader</option>
                       <option value="ADMIN">Admin</option>
+                      <option value="SUPER_ADMIN">Super Admin</option>
+                      <option value="API_USER">API User</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Account Status
+                    </label>
+                    <select
+                      value={newUser.accountStatus}
+                      onChange={(e) => setNewUser({ ...newUser, accountStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="PENDING_APPROVAL">Pending Approval</option>
+                      <option value="SUSPENDED">Suspended</option>
+                      <option value="LOCKED">Locked</option>
+                      <option value="ARCHIVED">Archived</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      KYC Status
+                    </label>
+                    <select
+                      value={newUser.kycStatus}
+                      onChange={(e) => setNewUser({ ...newUser, kycStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="NOT_STARTED">Not Started</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="PENDING_REVIEW">Pending Review</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="EXPIRED">Expired</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Risk Tolerance
+                    </label>
+                    <select
+                      value={newUser.riskTolerance}
+                      onChange={(e) => setNewUser({ ...newUser, riskTolerance: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="CONSERVATIVE">Conservative</option>
+                      <option value="MODERATE">Moderate</option>
+                      <option value="AGGRESSIVE">Aggressive</option>
+                      <option value="CUSTOM">Custom</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Subscription Tier
+                    </label>
+                    <input
+                      type="text"
+                      value={newUser.subscriptionTier}
+                      onChange={(e) => setNewUser({ ...newUser, subscriptionTier: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="FREE, BASIC, PRO, ENTERPRISE"
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="canPlaceOrders"
+                      checked={newUser.canPlaceOrders}
+                      onChange={(e) => setNewUser({ ...newUser, canPlaceOrders: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="canPlaceOrders" className="ml-2 block text-sm text-gray-900">
+                      Can Place Orders
+                    </label>
+                  </div>
+                  </div>
                 </div>
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddUser}
-                    disabled={!newUser.email || !newUser.username || !newUser.fullName || !newUser.password}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Add User
-                  </button>
+                <div className="p-6 border-t border-gray-200">
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddUser}
+                      disabled={!newUser.email || !newUser.username || !newUser.fullName || !newUser.password}
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add User
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -515,10 +658,13 @@ export default function UsersPage() {
 
           {/* Edit User Modal */}
           {showEditModal && editingUser && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
-                <div className="space-y-4">
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
+                </div>
+                <div className="p-6 overflow-y-auto flex-1">
+                  <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
@@ -590,50 +736,158 @@ export default function UsersPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={editingUser.phoneNumber || ''}
+                      onChange={(e) => setEditingUser({ ...editingUser, phoneNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Time Zone
                     </label>
                     <select
-                      value={editingUser.role}
-                      onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as 'ADMIN' | 'VIEWER' })}
+                      value={editingUser.timeZone || 'America/New_York'}
+                      onChange={(e) => setEditingUser({ ...editingUser, timeZone: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
-                      <option value="VIEWER">Viewer</option>
-                      <option value="ADMIN">Admin</option>
+                      <option value="America/New_York">Eastern Time</option>
+                      <option value="America/Chicago">Central Time</option>
+                      <option value="America/Denver">Mountain Time</option>
+                      <option value="America/Los_Angeles">Pacific Time</option>
+                      <option value="UTC">UTC</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Verified
+                      Role
                     </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingUser.emailVerified}
-                        onChange={(e) => setEditingUser({ ...editingUser, emailVerified: e.target.checked })}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-600">
-                        {editingUser.emailVerified ? "✓ Email is verified" : "⏳ Email not verified"}
-                      </span>
-                    </div>
+                    <select
+                      value={editingUser.role}
+                      onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    >
+                      <option value="VIEWER">Viewer</option>
+                      <option value="TRADER">Trader</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="SUPER_ADMIN">Super Admin</option>
+                      <option value="API_USER">API User</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Account Approval
+                      Account Status
                     </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!editingUser.requiresApproval}
-                        onChange={(e) => setEditingUser({ ...editingUser, requiresApproval: !e.target.checked })}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-600">
-                        {editingUser.requiresApproval ? "🔒 Requires approval" : "✓ Approved"}
-                      </span>
-                    </div>
+                    <select
+                      value={editingUser.accountStatus}
+                      onChange={(e) => setEditingUser({ ...editingUser, accountStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="PENDING_APPROVAL">Pending Approval</option>
+                      <option value="SUSPENDED">Suspended</option>
+                      <option value="LOCKED">Locked</option>
+                      <option value="ARCHIVED">Archived</option>
+                    </select>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      KYC Status
+                    </label>
+                    <select
+                      value={editingUser.kycStatus}
+                      onChange={(e) => setEditingUser({ ...editingUser, kycStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    >
+                      <option value="NOT_STARTED">Not Started</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="PENDING_REVIEW">Pending Review</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="EXPIRED">Expired</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Risk Tolerance
+                    </label>
+                    <select
+                      value={editingUser.riskTolerance || 'MODERATE'}
+                      onChange={(e) => setEditingUser({ ...editingUser, riskTolerance: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    >
+                      <option value="CONSERVATIVE">Conservative</option>
+                      <option value="MODERATE">Moderate</option>
+                      <option value="AGGRESSIVE">Aggressive</option>
+                      <option value="CUSTOM">Custom</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Subscription Tier
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.subscriptionTier || ''}
+                      onChange={(e) => setEditingUser({ ...editingUser, subscriptionTier: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="FREE, BASIC, PRO, ENTERPRISE"
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editCanPlaceOrders"
+                      checked={editingUser.canPlaceOrders}
+                      onChange={(e) => setEditingUser({ ...editingUser, canPlaceOrders: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editCanPlaceOrders" className="ml-2 block text-sm text-gray-900">
+                      Can Place Orders
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editEmailVerified"
+                      checked={editingUser.emailVerified}
+                      onChange={(e) => setEditingUser({ ...editingUser, emailVerified: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editEmailVerified" className="ml-2 block text-sm text-gray-900">
+                      Email Verified
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editPhoneVerified"
+                      checked={editingUser.phoneVerified}
+                      onChange={(e) => setEditingUser({ ...editingUser, phoneVerified: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editPhoneVerified" className="ml-2 block text-sm text-gray-900">
+                      Phone Verified
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editMfaEnabled"
+                      checked={editingUser.mfaEnabled}
+                      onChange={(e) => setEditingUser({ ...editingUser, mfaEnabled: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editMfaEnabled" className="ml-2 block text-sm text-gray-900">
+                      MFA Enabled
+                    </label>
+                  </div>
+                  <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Last Login
                     </label>
@@ -644,24 +898,27 @@ export default function UsersPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
                     />
                   </div>
+                  </div>
                 </div>
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditingUser(null);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEditUser}
-                    disabled={!editingUser.fullName || !editingUser.username}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Save Changes
-                  </button>
+                <div className="p-6 border-t border-gray-200">
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingUser(null);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleEditUser}
+                      disabled={!editingUser.fullName || !editingUser.username}
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
