@@ -43,7 +43,9 @@ export default function SessionsPage() {
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/sessions');
+      const response = await fetch('/api/admin/sessions', {
+        credentials: 'include'
+      });
       const data = await response.json();
       if (data.success) {
         setSessions(data.data);
@@ -62,6 +64,7 @@ export default function SessionsPage() {
       setTerminating(sessionId);
       const response = await fetch(`/api/admin/sessions/${sessionId}`, {
         method: 'DELETE',
+        credentials: 'include'
       });
 
       const data = await response.json();
