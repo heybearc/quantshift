@@ -300,7 +300,7 @@ export default function AdminSettingsPage() {
                             placeholder="your-email@gmail.com"
                             value={emailConfig.gmailEmail}
                             onChange={(e) => setEmailConfig({ ...emailConfig, gmailEmail: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                           />
                         </div>
                         <div>
@@ -312,7 +312,7 @@ export default function AdminSettingsPage() {
                             placeholder="16-character app password (no spaces)"
                             value={emailConfig.gmailAppPassword}
                             onChange={(e) => setEmailConfig({ ...emailConfig, gmailAppPassword: e.target.value.replace(/\s/g, '') })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                           />
                           <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Spaces will be automatically removed</p>
                         </div>
@@ -330,7 +330,7 @@ export default function AdminSettingsPage() {
                           placeholder="smtp.example.com"
                           value={emailConfig.smtpServer}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpServer: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                       </div>
                       <div>
@@ -338,7 +338,7 @@ export default function AdminSettingsPage() {
                         <select
                           value={emailConfig.smtpPort}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         >
                           <option value="587">587 (STARTTLS)</option>
                           <option value="465">465 (SSL)</option>
@@ -352,7 +352,7 @@ export default function AdminSettingsPage() {
                           placeholder="username or email"
                           value={emailConfig.smtpUser}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                       </div>
                       <div>
@@ -362,7 +362,7 @@ export default function AdminSettingsPage() {
                           placeholder="SMTP password"
                           value={emailConfig.smtpPassword}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                       </div>
                       <div className="md:col-span-2">
@@ -390,7 +390,7 @@ export default function AdminSettingsPage() {
                           placeholder="noreply@quantshift.local"
                           value={emailConfig.fromEmail}
                           onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                         <p className="text-xs text-gray-500 mt-1">Email address that appears in "From" field</p>
                       </div>
@@ -401,7 +401,7 @@ export default function AdminSettingsPage() {
                           placeholder="QuantShift Trading Platform"
                           value={emailConfig.fromName}
                           onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                         <p className="text-xs text-gray-500 mt-1">Display name for outgoing emails</p>
                       </div>
@@ -412,7 +412,7 @@ export default function AdminSettingsPage() {
                           placeholder="admin@quantshift.local (optional)"
                           value={emailConfig.replyToEmail}
                           onChange={(e) => setEmailConfig({ ...emailConfig, replyToEmail: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         />
                         <p className="text-xs text-gray-500 mt-1">Where replies should be sent (optional)</p>
                       </div>
