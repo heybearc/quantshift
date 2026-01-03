@@ -7,21 +7,33 @@ import { useState, useEffect } from 'react';
 import { Mail, Send, Save, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 interface EmailSettings {
-  smtpHost: string;
+  authType: 'gmail' | 'smtp';
+  gmailEmail: string;
+  gmailAppPassword: string;
+  smtpServer: string;
   smtpPort: string;
   smtpUser: string;
-  smtpPass: string;
-  appUrl: string;
+  smtpPassword: string;
+  smtpSecure: boolean;
+  fromEmail: string;
+  fromName: string;
+  replyToEmail: string;
 }
 
 export default function EmailSettingsPage() {
   const { user: currentUser, loading: authLoading } = useAuth();
   const [settings, setSettings] = useState<EmailSettings>({
-    smtpHost: '',
+    authType: 'gmail',
+    gmailEmail: '',
+    gmailAppPassword: '',
+    smtpServer: 'smtp.gmail.com',
     smtpPort: '587',
     smtpUser: '',
-    smtpPass: '',
-    appUrl: '',
+    smtpPassword: '',
+    smtpSecure: true,
+    fromEmail: '',
+    fromName: 'QuantShift Trading Platform',
+    replyToEmail: '',
   });
   const [testEmail, setTestEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -45,12 +57,14 @@ export default function EmailSettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/settings/email', {
+      const response = await fetch('/api/admin/settings/email', {
         credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
-        setSettings(data.settings);
+        if (data.success && data.data) {
+          setSettings(data.data);
+        }
         setTestEmail(currentUser?.email || '');
       }
     } catch (error) {
@@ -65,7 +79,7 @@ export default function EmailSettingsPage() {
     setSaving(true);
 
     try {
-      const response = await fetch('/api/settings/email', {
+      const response = await fetch('/api/admin/settings/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -74,8 +88,8 @@ export default function EmailSettingsPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setMessage({ type: 'success', text: data.message });
+      if (response.ok && data.success) {
+        setMessage({ type: 'success', text: 'Email settings saved successfully' });
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to save settings' });
       }
@@ -96,7 +110,7 @@ export default function EmailSettingsPage() {
     setTesting(true);
 
     try {
-      const response = await fetch('/api/settings/email/test', {
+      const response = await fetch('/api/admin/settings/email/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -169,20 +183,20 @@ export default function EmailSettingsPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* SMTP Host */}
+              {/* Gmail Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Host
+                  Gmail Email Address
                 </label>
                 <input
-                  type="text"
-                  value={settings.smtpHost}
-                  onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
-                  placeholder="smtp.gmail.com"
+                  type="email"
+                  value={settings.gmailEmail}
+                  onChange={(e) => setSettings({ ...settings, gmailEmail: e.target.value })}
+                  placeholder="your-email@gmail.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Your email provider's SMTP server address
+                  Your Gmail email address
                 </p>
               </div>
 
@@ -203,33 +217,33 @@ export default function EmailSettingsPage() {
                 </p>
               </div>
 
-              {/* SMTP User */}
+              {/* From Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Username
+                  From Name
                 </label>
                 <input
                   type="text"
-                  value={settings.smtpUser}
-                  onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
-                  placeholder="your-email@gmail.com"
+                  value={settings.fromName}
+                  onChange={(e) => setSettings({ ...settings, fromName: e.target.value })}
+                  placeholder="QuantShift Trading Platform"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Usually your email address
+                  Name that appears in the "From" field of emails
                 </p>
               </div>
 
-              {/* SMTP Password */}
+              {/* Gmail App Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Password
+                  Gmail App Password
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={settings.smtpPass}
-                    onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
+                    value={settings.gmailAppPassword}
+                    onChange={(e) => setSettings({ ...settings, gmailAppPassword: e.target.value })}
                     placeholder="••••••••••••••••"
                     className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
@@ -242,24 +256,24 @@ export default function EmailSettingsPage() {
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  For Gmail, use an App Password (not your regular password)
+                  16-character App Password from Google Account Security settings
                 </p>
               </div>
 
-              {/* App URL */}
+              {/* From Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Application URL
+                  From Email Address
                 </label>
                 <input
-                  type="text"
-                  value={settings.appUrl}
-                  onChange={(e) => setSettings({ ...settings, appUrl: e.target.value })}
-                  placeholder="http://10.92.3.29:3001"
+                  type="email"
+                  value={settings.fromEmail}
+                  onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
+                  placeholder="noreply@quantshift.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Used for generating links in emails (verification, password reset, etc.)
+                  Email address that appears in the "From" field
                 </p>
               </div>
 
@@ -267,7 +281,7 @@ export default function EmailSettingsPage() {
               <div className="pt-4 border-t border-gray-200">
                 <button
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || !settings.gmailEmail || !settings.gmailAppPassword}
                   className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Save className="h-4 w-4" />
@@ -302,7 +316,7 @@ export default function EmailSettingsPage() {
 
               <button
                 onClick={handleTest}
-                disabled={testing || !settings.smtpHost || !settings.smtpUser}
+                disabled={testing || !settings.gmailEmail || !settings.gmailAppPassword}
                 className="w-full sm:w-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Send className="h-4 w-4" />
