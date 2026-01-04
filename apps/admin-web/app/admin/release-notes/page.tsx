@@ -63,7 +63,9 @@ export default function AdminReleaseNotesPage() {
 
   const loadReleases = async () => {
     try {
-      const response = await fetch('/api/admin/release-notes');
+      const response = await fetch('/api/admin/release-notes', {
+        credentials: 'include'
+      });
       const data = await response.json();
       if (data.success) {
         setReleases(data.data);
@@ -88,6 +90,7 @@ export default function AdminReleaseNotesPage() {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
@@ -126,6 +129,7 @@ export default function AdminReleaseNotesPage() {
     try {
       const response = await fetch(`/api/admin/release-notes/${id}`, {
         method: 'DELETE',
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -146,6 +150,7 @@ export default function AdminReleaseNotesPage() {
       const response = await fetch(`/api/admin/release-notes/${id}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ isPublished: !currentStatus }),
       });
 

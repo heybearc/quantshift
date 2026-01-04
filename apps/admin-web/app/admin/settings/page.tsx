@@ -20,6 +20,17 @@ interface EmailConfig {
   replyToEmail: string;
 }
 
+interface GeneralSettings {
+  platformName: string;
+  platformDescription: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  allowRegistration: boolean;
+  requireEmailVerification: boolean;
+  sessionTimeout: number;
+  maxLoginAttempts: number;
+}
+
 type TabType = 'email' | 'general' | 'notifications';
 
 export default function AdminSettingsPage() {
@@ -37,6 +48,17 @@ export default function AdminSettingsPage() {
     fromEmail: '',
     fromName: 'QuantShift Trading Platform',
     replyToEmail: '',
+  });
+
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+    platformName: 'QuantShift Trading Platform',
+    platformDescription: 'Advanced Algorithmic Trading Platform',
+    maintenanceMode: false,
+    maintenanceMessage: 'System is currently under maintenance. Please check back soon.',
+    allowRegistration: true,
+    requireEmailVerification: false,
+    sessionTimeout: 86400,
+    maxLoginAttempts: 5,
   });
 
   const [loading, setLoading] = useState(true);
@@ -61,14 +83,26 @@ export default function AdminSettingsPage() {
   const loadConfiguration = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/settings/email');
-      const data = await response.json();
+      
+      // Load email settings
+      const emailResponse = await fetch('/api/admin/settings/email', {
+        credentials: 'include'
+      });
+      const emailData = await emailResponse.json();
+      if (emailData.success && emailData.data) {
+        setEmailConfig(emailData.data);
+      }
 
-      if (data.success && data.data) {
-        setEmailConfig(data.data);
+      // Load general settings
+      const generalResponse = await fetch('/api/admin/settings/general', {
+        credentials: 'include'
+      });
+      const generalData = await generalResponse.json();
+      if (generalData.success && generalData.data) {
+        setGeneralSettings(generalData.data);
       }
     } catch (error) {
-      console.error('Error loading email configuration:', error);
+      console.error('Error loading configuration:', error);
     } finally {
       setLoading(false);
     }
@@ -83,6 +117,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/admin/settings/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(emailConfig),
       });
 
@@ -111,6 +146,44 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleSaveGeneral = async () => {
+    setSaving(true);
+    setStatus('idle');
+    setStatusMessage('');
+
+    try {
+      const response = await fetch('/api/admin/settings/general', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(generalSettings),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStatus('success');
+        setStatusMessage('General settings saved successfully!');
+        setTimeout(() => {
+          setStatus('idle');
+          setStatusMessage('');
+        }, 3000);
+      } else {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving general settings:', error);
+      setStatus('error');
+      setStatusMessage('Failed to save settings. Please try again.');
+      setTimeout(() => {
+        setStatus('idle');
+        setStatusMessage('');
+      }, 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleTestEmail = async () => {
     setTesting(true);
     setStatus('idle');
@@ -120,6 +193,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/admin/settings/email/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(emailConfig),
       });
 
@@ -469,11 +543,118 @@ export default function AdminSettingsPage() {
 
               {/* General Settings Tab */}
               {activeTab === 'general' && (
-                <div className="p-6">
-                  <div className="text-center py-12">
-                    <SettingsIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">General Settings</h3>
-                    <p className="text-gray-600">Coming soon - Platform preferences and configuration</p>
+                <div className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Platform Name</label>
+                        <input
+                          type="text"
+                          value={generalSettings.platformName}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, platformName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Platform Description</label>
+                        <input
+                          type="text"
+                          value={generalSettings.platformDescription}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, platformDescription: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Mode</h3>
+                    <div className="space-y-4">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={generalSettings.maintenanceMode}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, maintenanceMode: e.target.checked })}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Enable maintenance mode</span>
+                      </label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Maintenance Message</label>
+                        <textarea
+                          value={generalSettings.maintenanceMessage}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, maintenanceMessage: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Registration & Authentication</h3>
+                    <div className="space-y-4">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={generalSettings.allowRegistration}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, allowRegistration: e.target.checked })}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Allow new user registration</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={generalSettings.requireEmailVerification}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, requireEmailVerification: e.target.checked })}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Require email verification for new accounts</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (seconds)</label>
+                        <input
+                          type="number"
+                          value={generalSettings.sessionTimeout}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, sessionTimeout: parseInt(e.target.value) || 86400 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Default: 86400 (24 hours)</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
+                        <input
+                          type="number"
+                          value={generalSettings.maxLoginAttempts}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, maxLoginAttempts: parseInt(e.target.value) || 5 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Number of failed attempts before lockout</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-200">
+                    <button
+                      onClick={handleSaveGeneral}
+                      disabled={saving}
+                      className={`inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                        saving
+                          ? 'bg-blue-400 text-white cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      }`}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? 'Saving...' : 'Save General Settings'}
+                    </button>
                   </div>
                 </div>
               )}
