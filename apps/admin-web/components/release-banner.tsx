@@ -19,12 +19,20 @@ export function ReleaseBanner({ userId }: ReleaseBannerProps) {
 
   const checkForNewRelease = async () => {
     try {
-      const response = await fetch('/api/release-notes/latest');
+      const response = await fetch('/api/release-notes/latest', {
+        credentials: 'include'
+      });
       const data = await response.json();
 
-      if (data.success && data.data && data.showBanner) {
-        setRelease(data.data);
-        setVisible(true);
+      if (data.success && data.data) {
+        const latestRelease = data.data;
+        // Check if user has dismissed this version
+        const dismissedVersion = localStorage.getItem('dismissedReleaseVersion');
+        
+        if (dismissedVersion !== latestRelease.version && latestRelease.isPublished) {
+          setRelease(latestRelease);
+          setVisible(true);
+        }
       }
     } catch (error) {
       console.error('Error checking for new release:', error);
@@ -33,16 +41,10 @@ export function ReleaseBanner({ userId }: ReleaseBannerProps) {
     }
   };
 
-  const handleDismiss = async () => {
-    try {
-      await fetch('/api/release-notes/dismiss', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ releaseId: release.id }),
-      });
+  const handleDismiss = () => {
+    if (release) {
+      localStorage.setItem('dismissedReleaseVersion', release.version);
       setVisible(false);
-    } catch (error) {
-      console.error('Error dismissing banner:', error);
     }
   };
 

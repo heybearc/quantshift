@@ -14,6 +14,7 @@ import {
   FileText,
   Shield,
   Zap,
+  BookOpen,
   LogOut,
   Menu,
   X
@@ -34,6 +35,7 @@ export function Navigation() {
     { name: 'Performance', href: '/performance', icon: BarChart3 },
     { name: 'Email Notifications', href: '/email', icon: Mail },
     { name: 'Release Notes', href: '/release-notes', icon: FileText },
+    { name: 'Help', href: '/help', icon: BookOpen },
   ];
 
   // Admin Control Center Section (admin only)

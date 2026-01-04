@@ -1,0 +1,333 @@
+'use client';
+
+import { ProtectedRoute } from '@/components/protected-route';
+import { LayoutWrapper } from '@/components/layout-wrapper';
+import { useState } from 'react';
+import { BookOpen, Users, Shield, Activity, Mail, Settings, FileText, Search } from 'lucide-react';
+
+interface HelpSection {
+  id: string;
+  title: string;
+  icon: any;
+  content: {
+    subtitle: string;
+    description: string;
+    steps?: string[];
+  }[];
+}
+
+export default function HelpPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSection, setActiveSection] = useState<string>('getting-started');
+
+  const helpSections: HelpSection[] = [
+    {
+      id: 'getting-started',
+      title: 'Getting Started',
+      icon: BookOpen,
+      content: [
+        {
+          subtitle: 'Welcome to QuantShift',
+          description: 'QuantShift is an advanced algorithmic trading platform with comprehensive admin controls. This help documentation will guide you through all features.',
+        },
+        {
+          subtitle: 'First Steps',
+          description: 'After logging in, you\'ll see the main dashboard with real-time trading data.',
+          steps: [
+            'Review your dashboard for current positions and performance',
+            'Check the trading bot status in the sidebar',
+            'Explore admin features if you have ADMIN role',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'user-management',
+      title: 'User Management',
+      icon: Users,
+      content: [
+        {
+          subtitle: 'Managing Users',
+          description: 'Admin users can create, edit, and manage all platform users.',
+          steps: [
+            'Navigate to User Management from the Admin Control Center',
+            'Click "Add User" to create new accounts',
+            'Set appropriate roles: SUPER_ADMIN, ADMIN, TRADER, VIEWER, or API_USER',
+            'Configure enterprise fields like phone, timezone, and trading permissions',
+            'Approve or deactivate user accounts as needed',
+          ],
+        },
+        {
+          subtitle: 'User Roles',
+          description: 'Different roles have different permissions:',
+          steps: [
+            'SUPER_ADMIN: Full system access including user management',
+            'ADMIN: Administrative access to most features',
+            'TRADER: Can execute trades and view positions',
+            'VIEWER: Read-only access to trading data',
+            'API_USER: Programmatic API access only',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'sessions-audit',
+      title: 'Sessions & Audit Logs',
+      icon: Shield,
+      content: [
+        {
+          subtitle: 'Session Management',
+          description: 'Monitor and control active user sessions.',
+          steps: [
+            'View all active sessions with user details',
+            'See last activity time, browser, and IP address',
+            'Terminate suspicious sessions immediately',
+            'Review session statistics (active/inactive/total)',
+          ],
+        },
+        {
+          subtitle: 'Audit Logs',
+          description: 'Track all system actions for security and compliance.',
+          steps: [
+            'Filter logs by action type (CREATE, UPDATE, DELETE, LOGIN)',
+            'Search by user email, action, or resource',
+            'Review changes made to system settings',
+            'Export audit logs for compliance reporting',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'monitoring',
+      title: 'System Monitoring',
+      icon: Activity,
+      content: [
+        {
+          subtitle: 'Health Monitor',
+          description: 'Real-time system health and performance metrics.',
+          steps: [
+            'Monitor memory usage and CPU load',
+            'Check database health and response times',
+            'View system uptime and platform information',
+            'Enable auto-refresh for continuous monitoring',
+          ],
+        },
+        {
+          subtitle: 'API Status',
+          description: 'Monitor critical API endpoint health.',
+          steps: [
+            'View operational status of all endpoints',
+            'Check response times for performance issues',
+            'Identify degraded or down endpoints',
+            'Use auto-refresh to track real-time status',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'email-settings',
+      title: 'Email Configuration',
+      icon: Mail,
+      content: [
+        {
+          subtitle: 'Gmail Setup',
+          description: 'Configure Gmail for platform notifications.',
+          steps: [
+            'Go to Platform Settings → Email Configuration',
+            'Select "Gmail (Recommended)"',
+            'Enter your Gmail email address',
+            'Generate an App Password from Google Account Security',
+            'IMPORTANT: Remove ALL spaces from the App Password',
+            'Enter the App Password (16 characters, no spaces)',
+            'Configure From Name and From Email',
+            'Click "Send Test Email" to verify',
+          ],
+        },
+        {
+          subtitle: 'SMTP Setup',
+          description: 'Configure custom SMTP server for emails.',
+          steps: [
+            'Select "Custom SMTP"',
+            'Enter SMTP server address and port',
+            'Provide SMTP username and password',
+            'Enable secure connection (TLS/SSL)',
+            'Configure email sender information',
+            'Test the configuration',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'general-settings',
+      title: 'General Settings',
+      icon: Settings,
+      content: [
+        {
+          subtitle: 'Platform Configuration',
+          description: 'Customize platform name, description, and behavior.',
+          steps: [
+            'Navigate to Platform Settings → General Settings',
+            'Update platform name and description',
+            'Configure maintenance mode if needed',
+            'Set user registration policies',
+            'Adjust security settings (session timeout, login attempts)',
+          ],
+        },
+        {
+          subtitle: 'Maintenance Mode',
+          description: 'Enable maintenance mode during updates.',
+          steps: [
+            'Toggle "Enable maintenance mode"',
+            'Customize the maintenance message',
+            'Save settings to activate',
+            'Users will see the maintenance message',
+            'Disable when maintenance is complete',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'release-notes',
+      title: 'Release Notes',
+      icon: FileText,
+      content: [
+        {
+          subtitle: 'Managing Release Notes',
+          description: 'Create and publish platform release notes.',
+          steps: [
+            'Navigate to Release Notes from the navigation',
+            'Click "Create Release Note" to add new version',
+            'Enter version number (e.g., 1.1.0)',
+            'Add title and description',
+            'Categorize changes: Added, Changed, Fixed, Removed, Security',
+            'Set release type: Major, Minor, or Patch',
+            'Save as draft or publish immediately',
+          ],
+        },
+        {
+          subtitle: 'Version Numbering',
+          description: 'Follow semantic versioning (MAJOR.MINOR.PATCH):',
+          steps: [
+            'MAJOR: Breaking changes or major new features',
+            'MINOR: New features, backward compatible',
+            'PATCH: Bug fixes and minor improvements',
+          ],
+        },
+      ],
+    },
+  ];
+
+  const filteredSections = helpSections.filter(section =>
+    section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    section.content.some(c => 
+      c.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  const activeContent = helpSections.find(s => s.id === activeSection);
+
+  return (
+    <ProtectedRoute>
+      <LayoutWrapper>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <BookOpen className="h-8 w-8 text-blue-600" />
+                <h1 className="text-3xl font-bold text-gray-900">Help Documentation</h1>
+              </div>
+              <p className="text-gray-600">Learn how to use all features of the QuantShift platform</p>
+            </div>
+
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search documentation..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Sidebar Navigation */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Topics</h3>
+                  <nav className="space-y-1">
+                    {filteredSections.map((section) => {
+                      const Icon = section.icon;
+                      return (
+                        <button
+                          key={section.id}
+                          onClick={() => setActiveSection(section.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            activeSection === section.id
+                              ? 'bg-blue-50 text-blue-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {section.title}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              </div>
+
+              {/* Content Area */}
+              <div className="lg:col-span-3">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+                  {activeContent && (
+                    <>
+                      <div className="flex items-center gap-3 mb-6">
+                        {(() => {
+                          const Icon = activeContent.icon;
+                          return <Icon className="h-8 w-8 text-blue-600" />;
+                        })()}
+                        <h2 className="text-2xl font-bold text-gray-900">{activeContent.title}</h2>
+                      </div>
+
+                      <div className="space-y-8">
+                        {activeContent.content.map((item, index) => (
+                          <div key={index}>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">{item.subtitle}</h3>
+                            <p className="text-gray-700 mb-4">{item.description}</p>
+                            {item.steps && (
+                              <ol className="list-decimal list-inside space-y-2 ml-4">
+                                {item.steps.map((step, stepIndex) => (
+                                  <li key={stepIndex} className="text-gray-700">{step}</li>
+                                ))}
+                              </ol>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Quick Links */}
+                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-3">Need More Help?</h3>
+                  <div className="space-y-2 text-sm text-blue-800">
+                    <p>• Check the Release Notes for latest updates and changes</p>
+                    <p>• Review Audit Logs for system activity</p>
+                    <p>• Contact your system administrator for additional support</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </LayoutWrapper>
+    </ProtectedRoute>
+  );
+}
