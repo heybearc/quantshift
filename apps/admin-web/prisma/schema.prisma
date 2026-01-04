@@ -429,3 +429,28 @@ model ReleaseNote {
   @@index([releaseDate])
   @@map("release_notes")
 }
+
+model UserInvitation {
+  id              String   @id @default(uuid())
+  email           String
+  invitationToken String   @unique @map("invitation_token")
+  invitedBy       String   @map("invited_by")
+  invitedByName   String   @map("invited_by_name")
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime @map("expires_at")
+  acceptedAt      DateTime? @map("accepted_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([invitationToken])
+  @@index([status])
+  @@map("user_invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}

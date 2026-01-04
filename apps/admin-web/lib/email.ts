@@ -463,3 +463,98 @@ export async function sendPasswordResetEmail(
     return { success: false, error };
   }
 }
+
+export async function sendUserInvitationEmail(
+  email: string,
+  invitedByName: string,
+  invitationToken: string
+) {
+  const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation?token=${invitationToken}`;
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+  const fromName = config.fromName || 'QuantShift Platform';
+
+  const mailOptions = {
+    from: `"${fromName}" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
+    to: email,
+    subject: 'You\'re Invited to Join QuantShift',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #8b5cf6 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: #0ea5e9; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .info-box { background: #dbeafe; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0; }
+            .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 You're Invited!</h1>
+              <p>Join QuantShift Trading Platform</p>
+            </div>
+            <div class="content">
+              <h2>Hello,</h2>
+              <p><strong>${invitedByName}</strong> has invited you to join the QuantShift Quantum Trading Intelligence Platform.</p>
+              
+              <div class="info-box">
+                <strong>What is QuantShift?</strong>
+                <p>QuantShift is an AI-driven quantum trading intelligence platform that provides advanced algorithmic trading capabilities, real-time market analysis, and comprehensive portfolio management.</p>
+              </div>
+              
+              <p>To accept this invitation and create your account, click the button below:</p>
+              
+              <div style="text-align: center;">
+                <a href="${invitationUrl}" class="button">Accept Invitation & Create Account</a>
+              </div>
+              
+              <p>Or copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #0ea5e9;">${invitationUrl}</p>
+              
+              <div class="warning">
+                <strong>⚠️ Important Information:</strong>
+                <ul>
+                  <li>This invitation link will expire in 7 days</li>
+                  <li>You'll need to create a password during registration</li>
+                  <li>Your account will require admin approval before full access</li>
+                  <li>If you didn't expect this invitation, you can safely ignore this email</li>
+                </ul>
+              </div>
+              
+              <p><strong>Next Steps:</strong></p>
+              <ol>
+                <li>Click the invitation link above</li>
+                <li>Complete your registration with a secure password</li>
+                <li>Verify your email address</li>
+                <li>Wait for admin approval (you'll receive an email)</li>
+                <li>Start exploring QuantShift's powerful trading features</li>
+              </ol>
+              
+              <div class="footer">
+                <p>This invitation was sent by ${invitedByName} from QuantShift.</p>
+                <p>&copy; ${new Date().getFullYear()} QuantShift. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `You're Invited to Join QuantShift!\n\n${invitedByName} has invited you to join the QuantShift Quantum Trading Intelligence Platform.\n\nTo accept this invitation and create your account, visit:\n${invitationUrl}\n\nImportant Information:\n- This invitation link will expire in 7 days\n- You'll need to create a password during registration\n- Your account will require admin approval before full access\n\nNext Steps:\n1. Click the invitation link\n2. Complete your registration\n3. Verify your email address\n4. Wait for admin approval\n5. Start exploring QuantShift\n\nIf you didn't expect this invitation, you can safely ignore this email.\n\n© ${new Date().getFullYear()} QuantShift. All rights reserved.`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending invitation email:', error);
+    return { success: false, error };
+  }
+}
