@@ -1,14 +1,170 @@
 import nodemailer from 'nodemailer';
+import { prisma } from './prisma';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+interface EmailConfig {
+  authType: 'gmail' | 'smtp';
+  gmailEmail?: string;
+  gmailAppPassword?: string;
+  smtpServer?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPassword?: string;
+  smtpSecure?: boolean;
+  fromEmail?: string;
+  fromName?: string;
+  replyToEmail?: string;
+}
+
+async function getEmailConfig(): Promise<EmailConfig> {
+  const settings = await prisma.platformSettings.findMany({
+    where: {
+      key: {
+        in: [
+          'email_auth_type',
+          'email_gmail_email',
+          'email_gmail_app_password',
+          'email_smtp_server',
+          'email_smtp_port',
+          'email_smtp_user',
+          'email_smtp_password',
+          'email_smtp_secure',
+          'email_from_email',
+          'email_from_name',
+          'email_reply_to_email',
+        ],
+      },
+    },
+  });
+
+  const config: EmailConfig = {
+    authType: 'gmail',
+    gmailEmail: '',
+    gmailAppPassword: '',
+    smtpServer: 'smtp.gmail.com',
+    smtpPort: '587',
+    smtpUser: '',
+    smtpPassword: '',
+    smtpSecure: false,
+    fromEmail: '',
+    fromName: 'QuantShift Trading Platform',
+    replyToEmail: '',
+  };
+
+  settings.forEach((setting) => {
+    const key = setting.key.replace('email_', '').replace(/_/g, '');
+    let value: string | boolean = setting.value;
+
+    if (key === 'smtpsecure') {
+      value = value === 'true';
+    }
+
+    const keyMap: { [key: string]: keyof EmailConfig } = {
+      authtype: 'authType',
+      gmailemail: 'gmailEmail',
+      gmailapppassword: 'gmailAppPassword',
+      smtpserver: 'smtpServer',
+      smtpport: 'smtpPort',
+      smtpuser: 'smtpUser',
+      smtppassword: 'smtpPassword',
+      smtpsecure: 'smtpSecure',
+      fromemail: 'fromEmail',
+      fromname: 'fromName',
+      replytoemail: 'replyToEmail',
+    };
+
+    const mappedKey = keyMap[key];
+    if (mappedKey) {
+      (config as any)[mappedKey] = value;
+    }
+  });
+
+  return config;
+}
+
+async function createTransporter() {
+  const config = await getEmailConfig();
+
+  if (config.authType === 'gmail') {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: config.gmailEmail,
+        pass: config.gmailAppPassword,
+      },
+    });
+  } else {
+    return nodemailer.createTransport({
+      host: config.smtpServer,
+      port: parseInt(config.smtpPort || '587'),
+      secure: config.smtpSecure,
+      auth: {
+        user: config.smtpUser,
+        pass: config.smtpPassword,
+      },
+    });
+  }
+}
+
+export async function sendTestEmail(toEmail: string): Promise<{ success: boolean; error?: any }> {
+  try {
+    const transporter = await createTransporter();
+    const config = await getEmailConfig();
+    const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+    const fromName = config.fromName || 'QuantShift Platform';
+
+    const mailOptions = {
+      from: `"${fromName}" <${fromEmail}>`,
+      to: toEmail,
+      subject: 'QuantShift Email Test - Configuration Successful',
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+              .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+              .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>✅ Email Test Successful!</h1>
+              </div>
+              <div class="content">
+                <div class="success">
+                  <strong>Congratulations!</strong> Your email configuration is working correctly.
+                </div>
+                <p>This is a test email from your QuantShift admin platform.</p>
+                <p><strong>Configuration Details:</strong></p>
+                <ul>
+                  <li><strong>Auth Type:</strong> ${config.authType === 'gmail' ? 'Gmail App Password' : 'Custom SMTP'}</li>
+                  <li><strong>From Email:</strong> ${fromEmail}</li>
+                  <li><strong>From Name:</strong> ${fromName}</li>
+                  <li><strong>Test Time:</strong> ${new Date().toLocaleString()}</li>
+                </ul>
+                <p>You can now use this email configuration to send notifications, invitations, and alerts.</p>
+                <div class="footer">
+                  <p>&copy; ${new Date().getFullYear()} QuantShift. All rights reserved.</p>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `Email Test Successful!\n\nYour QuantShift email configuration is working correctly.\n\nConfiguration Details:\n- Auth Type: ${config.authType}\n- From Email: ${fromEmail}\n- From Name: ${fromName}\n- Test Time: ${new Date().toLocaleString()}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    return { success: false, error };
+  }
+}
 
 export async function sendVerificationEmail(
   email: string,
@@ -16,9 +172,14 @@ export async function sendVerificationEmail(
   verificationToken: string
 ) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+  const fromName = config.fromName || 'QuantShift Platform';
 
   const mailOptions = {
-    from: `"QuantShift Platform" <${process.env.SMTP_USER}>`,
+    from: `"${fromName}" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
     to: email,
     subject: 'Verify Your QuantShift Account',
     html: `
@@ -89,9 +250,14 @@ export async function sendAccountApprovedEmail(
   fullName: string
 ) {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+  const fromName = config.fromName || 'QuantShift Platform';
 
   const mailOptions = {
-    from: `"QuantShift Platform" <${process.env.SMTP_USER}>`,
+    from: `"${fromName}" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
     to: email,
     subject: 'Your QuantShift Account Has Been Approved',
     html: `
@@ -154,8 +320,13 @@ export async function sendSuspiciousLoginEmail(
   ipAddress: string,
   location?: string
 ) {
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+
   const mailOptions = {
-    from: `"QuantShift Security" <${process.env.SMTP_USER}>`,
+    from: `"QuantShift Security" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
     to: email,
     subject: '⚠️ Suspicious Login Attempt Detected',
     html: `
@@ -224,9 +395,14 @@ export async function sendPasswordResetEmail(
   resetToken: string
 ) {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+  const fromName = config.fromName || 'QuantShift Platform';
 
   const mailOptions = {
-    from: `"QuantShift Platform" <${process.env.SMTP_USER}>`,
+    from: `"${fromName}" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
     to: email,
     subject: 'Reset Your QuantShift Password',
     html: `
