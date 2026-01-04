@@ -29,7 +29,7 @@ export async function POST(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (user.accountStatus === 'APPROVED') {
+    if (user.accountStatus === 'ACTIVE') {
       return NextResponse.json(
         { error: 'User is already approved' },
         { status: 400 }
@@ -40,7 +40,7 @@ export async function POST(
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        accountStatus: 'APPROVED',
+        accountStatus: 'ACTIVE',
         isActive: true,
       },
     });
@@ -58,12 +58,11 @@ export async function POST(
         action: 'USER_APPROVED',
         resourceType: 'USER',
         resourceId: userId,
-        details: {
+        changes: {
           approvedUser: updatedUser.email,
           approvedBy: payload.sub,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
 

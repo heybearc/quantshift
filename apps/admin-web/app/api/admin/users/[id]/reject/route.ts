@@ -34,7 +34,7 @@ export async function POST(
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        accountStatus: 'REJECTED',
+        accountStatus: 'INACTIVE',
         isActive: false,
       },
     });
@@ -53,9 +53,8 @@ export async function POST(
         action: 'USER_REJECTED',
         resourceType: 'USER',
         resourceId: userId,
-        metadata: reason ? { reason } : {},
+        changes: reason ? { reason } : {},
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
 
