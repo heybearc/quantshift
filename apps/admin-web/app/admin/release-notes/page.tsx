@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
+import { FileText, Calendar, Tag } from 'lucide-react';
 
 interface ReleaseNote {
   id: string;

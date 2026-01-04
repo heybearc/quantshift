@@ -49,25 +49,55 @@ export const RELEASE_DATE = '2026-01-03';
 
 ---
 
-## Step 3: Create Release Notes
+## Step 3: Create Release Notes (Automated)
 
-1. Navigate to the admin platform (or use API)
-2. Go to **Release Notes** page
-3. Click **"Create Release Note"**
-4. Fill in:
-   - **Version**: Match the version from Step 2
-   - **Title**: Brief title (e.g., "Admin Platform Week 1-4 Features")
-   - **Description**: Summary of changes
-   - **Type**: Major/Minor/Patch
-   - **Release Date**: Today's date
-   - **Changes**: Categorize by type:
-     - **Added**: New features
-     - **Changed**: Modified features
-     - **Fixed**: Bug fixes
-     - **Removed**: Deprecated features
-     - **Security**: Security improvements
+**I will create and publish the release notes automatically via script.**
 
-5. **Save and Publish**
+Create `scripts/create-release.ts` with the release data:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function createRelease() {
+  const release = await prisma.releaseNote.create({
+    data: {
+      version: 'X.X.X',
+      title: 'Release Title',
+      description: 'Summary of changes',
+      type: 'major|minor|patch',
+      releaseDate: new Date('YYYY-MM-DD'),
+      isPublished: true,
+      createdBy: 'System',
+      changes: [
+        {
+          type: 'added',
+          items: ['New feature 1', 'New feature 2']
+        },
+        {
+          type: 'changed',
+          items: ['Changed item 1']
+        },
+        {
+          type: 'fixed',
+          items: ['Bug fix 1']
+        }
+      ]
+    }
+  });
+  console.log('✅ Release note created:', release.version);
+  await prisma.$disconnect();
+}
+
+createRelease();
+```
+
+Then run on container:
+```bash
+scp scripts/create-release.ts root@10.92.3.29:/opt/quantshift/apps/admin-web/scripts/
+ssh root@10.92.3.29 'cd /opt/quantshift/apps/admin-web && npx tsx scripts/create-release.ts'
+```
 
 ---
 
