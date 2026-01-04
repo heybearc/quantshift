@@ -314,6 +314,75 @@ export async function sendAccountApprovedEmail(
   }
 }
 
+export async function sendAccountRejectedEmail(
+  email: string,
+  fullName: string,
+  reason?: string
+) {
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+  const fromEmail = config.fromEmail || config.gmailEmail || config.smtpUser;
+  const fromName = config.fromName || 'QuantShift Platform';
+
+  const mailOptions = {
+    from: `"${fromName}" <${fromEmail}>`,
+    replyTo: config.replyToEmail || fromEmail,
+    to: email,
+    subject: 'QuantShift Account Application Update',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+            .info-box { background: #e0e7ff; border-left: 4px solid #6366f1; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Account Application Update</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${fullName},</h2>
+              <p>Thank you for your interest in joining the QuantShift platform.</p>
+              <p>After careful review, we are unable to approve your account application at this time.</p>
+              
+              ${reason ? `
+                <div class="info-box">
+                  <strong>Reason:</strong>
+                  <p>${reason}</p>
+                </div>
+              ` : ''}
+              
+              <p>If you believe this decision was made in error or if you have any questions, please contact our support team.</p>
+              
+              <p>We appreciate your understanding.</p>
+              
+              <div class="footer">
+                <p>&copy; ${new Date().getFullYear()} QuantShift. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `Account Application Update\n\nHello ${fullName},\n\nThank you for your interest in joining the QuantShift platform.\n\nAfter careful review, we are unable to approve your account application at this time.\n\n${reason ? `Reason: ${reason}\n\n` : ''}If you believe this decision was made in error or if you have any questions, please contact our support team.\n\nWe appreciate your understanding.\n\n© ${new Date().getFullYear()} QuantShift. All rights reserved.`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending rejection email:', error);
+    return { success: false, error };
+  }
+}
+
 export async function sendSuspiciousLoginEmail(
   email: string,
   fullName: string,
