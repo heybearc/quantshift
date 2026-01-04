@@ -34,7 +34,6 @@ export function Navigation() {
     { name: 'Positions', href: '/positions', icon: Activity },
     { name: 'Performance', href: '/performance', icon: BarChart3 },
     { name: 'Email Notifications', href: '/email', icon: Mail },
-    { name: 'Release Notes', href: '/release-notes', icon: FileText },
     { name: 'Help', href: '/help', icon: BookOpen },
   ];
 

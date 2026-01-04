@@ -318,7 +318,7 @@ export default function HelpPage() {
                 <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
                   <h3 className="text-sm font-semibold text-blue-900 mb-3">Need More Help?</h3>
                   <div className="space-y-2 text-sm text-blue-800">
-                    <p>• Check the Release Notes for latest updates and changes</p>
+                    <p>• <a href="/release-notes" className="text-blue-700 hover:text-blue-900 underline">View Release Notes</a> for latest updates and changes</p>
                     <p>• Review Audit Logs for system activity</p>
                     <p>• Contact your system administrator for additional support</p>
                   </div>
