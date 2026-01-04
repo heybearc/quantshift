@@ -17,7 +17,8 @@ import {
   BookOpen,
   LogOut,
   Menu,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 import { useState } from 'react';
 import { APP_VERSION, APP_NAME } from '@/lib/version';
@@ -40,6 +41,7 @@ export function Navigation() {
   // Admin Control Center Section (admin only)
   const adminNav = [
     { name: 'User Management', href: '/users', icon: Users },
+    { name: 'User Invitations', href: '/admin/invitations', icon: UserPlus },
     { name: 'Session Management', href: '/admin/sessions', icon: Shield },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
     { name: 'Health Monitor', href: '/admin/health', icon: Activity },
