@@ -454,3 +454,29 @@ enum InvitationStatus {
   EXPIRED
   CANCELLED
 }
+
+model EmailQueue {
+  id          String   @id @default(uuid())
+  to          String
+  subject     String
+  htmlBody    String   @map("html_body")
+  textBody    String?  @map("text_body")
+  status      EmailStatus @default(PENDING)
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3) @map("max_attempts")
+  lastError   String?  @map("last_error")
+  sentAt      DateTime? @map("sent_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("email_queue")
+  @@index([status, createdAt])
+}
+
+enum EmailStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+}
