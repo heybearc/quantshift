@@ -23,6 +23,9 @@ export default function PendingUsersPage() {
   const [rejectingUser, setRejectingUser] = useState<PendingUser | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [showBulkRejectModal, setShowBulkRejectModal] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = useState('');
 
   useEffect(() => {
     loadPendingUsers();
