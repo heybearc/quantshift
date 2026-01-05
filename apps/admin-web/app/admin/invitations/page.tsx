@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Mail, Send, Clock, CheckCircle, XCircle, Loader2, UserPlus, RefreshCw } from 'lucide-react';
+import { ProtectedRoute } from '@/components/protected-route';
+import { LayoutWrapper } from '@/components/layout-wrapper';
 
 interface Invitation {
   id: string;
@@ -120,7 +122,9 @@ export default function InvitationsPage() {
   };
 
   return (
-    <div className="p-6">
+    <ProtectedRoute>
+      <LayoutWrapper>
+        <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">User Invitations</h1>
@@ -299,6 +303,8 @@ export default function InvitationsPage() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </LayoutWrapper>
+    </ProtectedRoute>
   );
 }

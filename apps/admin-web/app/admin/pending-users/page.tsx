@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { UserCheck, UserX, Clock, Mail, User, Loader2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { ProtectedRoute } from '@/components/protected-route';
+import { LayoutWrapper } from '@/components/layout-wrapper';
 
 interface PendingUser {
   id: string;
@@ -121,7 +123,9 @@ export default function PendingUsersPage() {
   };
 
   return (
-    <div className="p-6">
+    <ProtectedRoute>
+      <LayoutWrapper>
+        <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Pending User Approvals</h1>
@@ -311,6 +315,8 @@ export default function PendingUsersPage() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </LayoutWrapper>
+    </ProtectedRoute>
   );
 }
