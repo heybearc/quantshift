@@ -36,10 +36,14 @@ interface UserData {
 export default function UsersPage() {
   const { user: currentUser, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [newUser, setNewUser] = useState<{ 
     email: string; 
     username: string; 
@@ -84,6 +88,33 @@ export default function UsersPage() {
     }
     fetchUsers();
   }, [currentUser, authLoading]);
+
+  useEffect(() => {
+    // Apply filters and search
+    let filtered = users;
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.email.toLowerCase().includes(term) ||
+        user.username.toLowerCase().includes(term) ||
+        user.fullName.toLowerCase().includes(term)
+      );
+    }
+
+    // Role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(user => user.accountStatus === statusFilter);
+    }
+
+    setFilteredUsers(filtered);
+  }, [users, searchTerm, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
     try {
