@@ -115,6 +115,89 @@ export default function PendingUsersPage() {
     setRejectReason('');
   };
 
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedUsers.size === 0) return;
+    if (!confirm(`Approve ${selectedUsers.size} user(s)?`)) return;
+
+    setProcessing('bulk-approve');
+    try {
+      const response = await fetch('/api/admin/users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          userIds: Array.from(selectedUsers),
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: data.message });
+        setSelectedUsers(new Set());
+        loadPendingUsers();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to approve users' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'An error occurred during bulk approval' });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedUsers.size === 0) return;
+    setShowBulkRejectModal(true);
+  };
+
+  const confirmBulkReject = async () => {
+    setProcessing('bulk-reject');
+    try {
+      const response = await fetch('/api/admin/users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reject',
+          userIds: Array.from(selectedUsers),
+          reason: bulkRejectReason,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: data.message });
+        setSelectedUsers(new Set());
+        setShowBulkRejectModal(false);
+        setBulkRejectReason('');
+        loadPendingUsers();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to reject users' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'An error occurred during bulk rejection' });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -164,14 +247,66 @@ export default function PendingUsersPage() {
           <p className="text-slate-400">No pending user approvals at this time</p>
         </div>
       ) : (
-        <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-900/50 border-b border-slate-700/50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    User
-                  </th>
+        <>
+          {selectedUsers.size > 0 && (
+            <div className="mb-4 bg-slate-800/40 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 flex items-center justify-between">
+              <span className="text-white font-medium">
+                {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBulkApprove}
+                  disabled={processing === 'bulk-approve'}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {processing === 'bulk-approve' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Approving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Approve Selected
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleBulkReject}
+                  disabled={processing === 'bulk-reject'}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {processing === 'bulk-reject' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Rejecting...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4" />
+                      Reject Selected
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-900/50 border-b border-slate-700/50">
+                  <tr>
+                    <th className="px-6 py-4 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.size === users.length && users.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-500"
+                      />
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      User
+                    </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Email
                   </th>
@@ -189,6 +324,14 @@ export default function PendingUsersPage() {
               <tbody className="divide-y divide-slate-700/50">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-700/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.has(user.id)}
+                        onChange={() => toggleUserSelection(user.id)}
+                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-500"
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
@@ -255,6 +398,7 @@ export default function PendingUsersPage() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Reject Modal */}
@@ -311,6 +455,67 @@ export default function PendingUsersPage() {
                   <>
                     <UserX className="h-4 w-4" />
                     Reject User
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Reject Modal */}
+      {showBulkRejectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                <UserX className="h-6 w-6 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Reject Multiple Users</h2>
+                <p className="text-sm text-slate-400">{selectedUsers.size} users selected</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="bulk-reason" className="block text-sm font-medium text-slate-300 mb-2">
+                Rejection Reason (Optional)
+              </label>
+              <textarea
+                id="bulk-reason"
+                value={bulkRejectReason}
+                onChange={(e) => setBulkRejectReason(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                placeholder="Provide a reason for rejection (will be sent to all selected users)"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkRejectModal(false);
+                  setBulkRejectReason('');
+                }}
+                className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBulkReject}
+                disabled={processing === 'bulk-reject'}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {processing === 'bulk-reject' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Rejecting...
+                  </>
+                ) : (
+                  <>
+                    <UserX className="h-4 w-4" />
+                    Reject {selectedUsers.size} Users
                   </>
                 )}
               </button>
