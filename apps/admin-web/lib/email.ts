@@ -105,6 +105,29 @@ async function createTransporter() {
   }
 }
 
+export async function sendEmail(options: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<void> {
+  const transporter = await createTransporter();
+  const config = await getEmailConfig();
+
+  await transporter.sendMail({
+    from: config.fromEmail 
+      ? `"${config.fromName || 'QuantShift'}" <${config.fromEmail}>`
+      : config.authType === 'gmail' 
+        ? `"${config.fromName || 'QuantShift'}" <${config.gmailEmail}>`
+        : `"${config.fromName || 'QuantShift'}" <${config.smtpUser}>`,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    text: options.text,
+    replyTo: config.replyToEmail,
+  });
+}
+
 export async function sendTestEmail(toEmail: string): Promise<{ success: boolean; error?: any }> {
   try {
     const transporter = await createTransporter();
