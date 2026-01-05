@@ -45,7 +45,7 @@ export async function processEmailQueue() {
         to: email.to,
         subject: email.subject,
         html: email.htmlBody,
-        text: email.textBody,
+        text: email.textBody || undefined,
       });
 
       await prisma.emailQueue.update({
