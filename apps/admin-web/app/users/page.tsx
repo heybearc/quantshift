@@ -256,21 +256,6 @@ export default function UsersPage() {
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleApproveUser = async (userId: string) => {
-    if (!confirm('Approve this user account? They will be able to log in.')) return;
-
-    try {
-      const response = await fetch(`/api/users/${userId}/approve`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Error approving user:', error);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -436,15 +421,6 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
-                        {user.requiresApproval && (
-                          <button
-                            onClick={() => handleApproveUser(user.id)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Approve user"
-                          >
-                            <Shield className="h-5 w-5" />
-                          </button>
-                        )}
                         <button
                           onClick={() => {
                             setEditingUser(user);
