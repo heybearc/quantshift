@@ -28,13 +28,13 @@ export default function UsersPage() {
     if (!loading && !user) {
       router.push("/login");
     }
-    if (!loading && user?.role !== "admin") {
+    if (!loading && user && user.role?.toUpperCase() !== "ADMIN") {
       router.push("/dashboard");
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user?.role === "admin") {
+    if (user?.role?.toUpperCase() === "ADMIN") {
       fetchUsers();
     }
   }, [user]);
@@ -67,7 +67,7 @@ export default function UsersPage() {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user || user.role?.toUpperCase() !== "ADMIN") {
     return null;
   }
 
