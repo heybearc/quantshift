@@ -78,20 +78,15 @@ export function Navigation() {
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-24 px-6 bg-slate-900 border-b border-slate-800">
-            <div className="flex flex-col items-center gap-2">
-              <Image
-                src="/logo.svg"
-                alt="QuantShift Logo"
-                width={60}
-                height={60}
-                className="rounded-lg"
-              />
-              <div className="text-center">
-                <h1 className="text-lg font-bold text-white">QuantShift</h1>
-                <p className="text-xs text-cyan-400">Trading Platform</p>
-              </div>
-            </div>
+          <div className="flex flex-col items-center justify-center py-6 px-6 border-b border-slate-800">
+            <Image
+              src="/logo.svg"
+              alt="QuantShift Logo"
+              width={80}
+              height={80}
+              className="rounded-xl mb-3"
+            />
+            <h1 className="text-xl font-bold text-white">QuantShift</h1>
           </div>
 
           {/* User info */}
@@ -104,7 +99,7 @@ export function Navigation() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-white">{user?.full_name || user?.email}</p>
-                <p className="text-xs text-slate-400">{user?.role}</p>
+                <p className="text-xs text-slate-400 uppercase">{user?.role}</p>
               </div>
             </div>
           </div>
@@ -114,7 +109,7 @@ export function Navigation() {
             {/* Trading Platform Section */}
             <div className="mb-6">
               <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Trading Platform
+                Platform
               </h3>
               {platformNav.map((item) => {
                 const isActive = pathname === item.href;
@@ -137,9 +132,9 @@ export function Navigation() {
 
             {/* Admin Control Center Section (admin only) */}
             {user?.role === "admin" && (
-              <div>
+              <div className="mb-6">
                 <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  Admin Control
+                  Admin
                 </h3>
                 {adminNav.map((item) => {
                   const isActive = pathname === item.href;
