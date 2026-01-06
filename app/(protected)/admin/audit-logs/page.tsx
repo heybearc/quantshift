@@ -64,7 +64,7 @@ export default function AuditLogsPage() {
     if (action.includes('UPDATE')) return 'bg-blue-100 text-blue-800';
     if (action.includes('DELETE')) return 'bg-red-100 text-red-800';
     if (action.includes('LOGIN')) return 'bg-purple-100 text-purple-800';
-    return 'bg-gray-100 text-gray-800';
+    return 'bg-slate-800 text-slate-100';
   };
 
   const getActionIcon = (action: string) => {
@@ -101,7 +101,7 @@ export default function AuditLogsPage() {
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading audit logs...</p>
+              <p className="text-slate-400">Loading audit logs...</p>
             </div>
           </div>
         </LayoutWrapper>
@@ -112,16 +112,16 @@ export default function AuditLogsPage() {
   return (
     <ProtectedRoute>
       <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <FileText className="h-8 w-8 text-blue-600" />
-                  <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
+                  <h1 className="text-3xl font-bold text-white">Audit Logs</h1>
                 </div>
-                <p className="text-gray-600">View system activity and user actions</p>
+                <p className="text-slate-400">View system activity and user actions</p>
               </div>
               <button
                 onClick={() => alert('Export functionality coming soon')}
@@ -133,27 +133,27 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                   <input
                     type="text"
                     placeholder="Search logs..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Action Filter */}
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                   <select
                     value={filterAction}
                     onChange={(e) => setFilterAction(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                   >
                     <option value="all">All Actions</option>
                     {uniqueActions.map(action => (
@@ -164,11 +164,11 @@ export default function AuditLogsPage() {
 
                 {/* Resource Filter */}
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                   <select
                     value={filterResource}
                     onChange={(e) => setFilterResource(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                   >
                     <option value="all">All Resources</option>
                     {uniqueResources.map(resource => (
@@ -181,69 +181,69 @@ export default function AuditLogsPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <p className="text-2xl font-bold text-gray-900">{logs.length}</p>
-                <p className="text-sm text-gray-600">Total Logs</p>
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-4">
+                <p className="text-2xl font-bold text-white">{logs.length}</p>
+                <p className="text-sm text-slate-400">Total Logs</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <p className="text-2xl font-bold text-gray-900">{filteredLogs.length}</p>
-                <p className="text-sm text-gray-600">Filtered Results</p>
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-4">
+                <p className="text-2xl font-bold text-white">{filteredLogs.length}</p>
+                <p className="text-sm text-slate-400">Filtered Results</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <p className="text-2xl font-bold text-gray-900">{uniqueActions.length}</p>
-                <p className="text-sm text-gray-600">Action Types</p>
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-4">
+                <p className="text-2xl font-bold text-white">{uniqueActions.length}</p>
+                <p className="text-sm text-slate-400">Action Types</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <p className="text-2xl font-bold text-gray-900">{uniqueResources.length}</p>
-                <p className="text-sm text-gray-600">Resource Types</p>
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-4">
+                <p className="text-2xl font-bold text-white">{uniqueResources.length}</p>
+                <p className="text-sm text-slate-400">Resource Types</p>
               </div>
             </div>
 
             {/* Logs Table */}
             {filteredLogs.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Audit Logs Found</h3>
-                <p className="text-gray-600">
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-12 text-center">
+                <FileText className="h-12 w-12 text-slate-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">No Audit Logs Found</h3>
+                <p className="text-slate-400">
                   {searchTerm || filterAction !== 'all' || filterResource !== 'all'
                     ? 'Try adjusting your filters'
                     : 'Audit logs will appear here as users perform actions'}
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-900">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Timestamp
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           User
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Action
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Resource
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           IP Address
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-slate-800/50 divide-y divide-gray-200">
                       {filteredLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <tr key={log.id} className="hover:bg-slate-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                             {new Date(log.createdAt).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-white">
                               {log.user.full_name || log.user.email}
                             </div>
-                            <div className="text-sm text-gray-500">{log.user.email}</div>
+                            <div className="text-sm text-slate-400">{log.user.email}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
@@ -252,12 +252,12 @@ export default function AuditLogsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{log.resourceType}</div>
+                            <div className="text-sm text-white">{log.resourceType}</div>
                             {log.resourceId && (
-                              <div className="text-xs text-gray-500">{log.resourceId.substring(0, 8)}...</div>
+                              <div className="text-xs text-slate-400">{log.resourceId.substring(0, 8)}...</div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                             {log.ipAddress || 'Unknown'}
                           </td>
                         </tr>

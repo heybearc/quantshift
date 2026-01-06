@@ -83,7 +83,7 @@ export default function InvitationsPage() {
       case 'EXPIRED':
         return <XCircle className="h-5 w-5 text-red-400" />;
       case 'CANCELLED':
-        return <XCircle className="h-5 w-5 text-gray-400" />;
+        return <XCircle className="h-5 w-5 text-slate-500" />;
       default:
         return null;
     }
@@ -98,9 +98,9 @@ export default function InvitationsPage() {
       case 'EXPIRED':
         return 'bg-red-500/10 text-red-400 border-red-500/20';
       case 'CANCELLED':
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+        return 'bg-slate-9000/10 text-slate-500 border-gray-500/20';
       default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+        return 'bg-slate-9000/10 text-slate-500 border-gray-500/20';
     }
   };
 

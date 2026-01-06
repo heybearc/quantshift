@@ -104,7 +104,7 @@ export default function HealthMonitorPage() {
       case 'healthy': return 'text-green-600 bg-green-50';
       case 'warning': return 'text-yellow-600 bg-yellow-50';
       case 'critical': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-slate-400 bg-slate-900';
     }
   };
 
@@ -126,7 +126,7 @@ export default function HealthMonitorPage() {
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading health metrics...</p>
+              <p className="text-slate-400">Loading health metrics...</p>
             </div>
           </div>
         </LayoutWrapper>
@@ -137,16 +137,16 @@ export default function HealthMonitorPage() {
   return (
     <ProtectedRoute>
       <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <Activity className="h-8 w-8 text-blue-600" />
-                  <h1 className="text-3xl font-bold text-gray-900">System Health Monitor</h1>
+                  <h1 className="text-3xl font-bold text-white">System Health Monitor</h1>
                 </div>
-                <p className="text-gray-600">Real-time system metrics and performance monitoring</p>
+                <p className="text-slate-400">Real-time system metrics and performance monitoring</p>
               </div>
               <div className="flex gap-3">
                 <button
@@ -154,7 +154,7 @@ export default function HealthMonitorPage() {
                   className={`inline-flex items-center px-4 py-2 rounded-lg ${
                     autoRefresh 
                       ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-slate-700 text-slate-200 hover:bg-gray-300'
                   }`}
                 >
                   <Activity className="h-4 w-4 mr-2" />
@@ -192,17 +192,17 @@ export default function HealthMonitorPage() {
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {/* Memory Usage */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <HardDrive className="h-8 w-8 text-purple-600" />
                       <span className={`text-2xl font-bold ${
-                        health.memory.usagePercent > 75 ? 'text-red-600' : 'text-gray-900'
+                        health.memory.usagePercent > 75 ? 'text-red-600' : 'text-white'
                       }`}>
                         {health.memory.usagePercent.toFixed(1)}%
                       </span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-2">Memory Usage</h3>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <h3 className="text-sm font-medium text-slate-400 mb-2">Memory Usage</h3>
+                    <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
                       <div 
                         className={`h-2 rounded-full ${
                           health.memory.usagePercent > 75 ? 'bg-red-600' : 'bg-purple-600'
@@ -210,31 +210,31 @@ export default function HealthMonitorPage() {
                         style={{ width: `${health.memory.usagePercent}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-400">
                       {formatBytes(health.memory.used)} / {formatBytes(health.memory.total)}
                     </p>
                   </div>
 
                   {/* CPU Load */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Cpu className="h-8 w-8 text-blue-600" />
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-2xl font-bold text-white">
                         {health.cpu.loadAverage['1min'].toFixed(2)}
                       </span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-2">CPU Load (1min)</h3>
-                    <p className="text-xs text-gray-500">
+                    <h3 className="text-sm font-medium text-slate-400 mb-2">CPU Load (1min)</h3>
+                    <p className="text-xs text-slate-400">
                       {health.cpu.cores} cores • {health.cpu.model.substring(0, 30)}...
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       5min: {health.cpu.loadAverage['5min'].toFixed(2)} • 
                       15min: {health.cpu.loadAverage['15min'].toFixed(2)}
                     </p>
                   </div>
 
                   {/* Database */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Database className="h-8 w-8 text-green-600" />
                       <span className={`text-2xl font-bold ${
@@ -243,27 +243,27 @@ export default function HealthMonitorPage() {
                         {health.database.responseTime}ms
                       </span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-2">Database</h3>
-                    <p className="text-xs text-gray-500 capitalize">
+                    <h3 className="text-sm font-medium text-slate-400 mb-2">Database</h3>
+                    <p className="text-xs text-slate-400 capitalize">
                       Status: {health.database.status}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-400">
                       {health.database.connections.users} users • 
                       {health.database.connections.activeSessions} sessions
                     </p>
                   </div>
 
                   {/* Uptime */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Clock className="h-8 w-8 text-orange-600" />
-                      <Server className="h-8 w-8 text-gray-400" />
+                      <Server className="h-8 w-8 text-slate-500" />
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-2">System Uptime</h3>
-                    <p className="text-lg font-bold text-gray-900">
+                    <h3 className="text-sm font-medium text-slate-400 mb-2">System Uptime</h3>
+                    <p className="text-lg font-bold text-white">
                       {formatUptime(health.system.uptime)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       {health.system.platform} • {health.system.arch}
                     </p>
                   </div>
@@ -272,47 +272,47 @@ export default function HealthMonitorPage() {
                 {/* Detailed Information */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* System Information */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">System Information</h3>
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">System Information</h3>
                     <dl className="space-y-3">
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Hostname</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.system.hostname}</dd>
+                        <dt className="text-sm text-slate-400">Hostname</dt>
+                        <dd className="text-sm font-medium text-white">{health.system.hostname}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Platform</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.system.platform}</dd>
+                        <dt className="text-sm text-slate-400">Platform</dt>
+                        <dd className="text-sm font-medium text-white">{health.system.platform}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Architecture</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.system.arch}</dd>
+                        <dt className="text-sm text-slate-400">Architecture</dt>
+                        <dd className="text-sm font-medium text-white">{health.system.arch}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Node Version</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.system.nodeVersion}</dd>
+                        <dt className="text-sm text-slate-400">Node Version</dt>
+                        <dd className="text-sm font-medium text-white">{health.system.nodeVersion}</dd>
                       </div>
                     </dl>
                   </div>
 
                   {/* Database Statistics */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Database Statistics</h3>
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Database Statistics</h3>
                     <dl className="space-y-3">
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Total Users</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.database.connections.users}</dd>
+                        <dt className="text-sm text-slate-400">Total Users</dt>
+                        <dd className="text-sm font-medium text-white">{health.database.connections.users}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Active Sessions</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.database.connections.activeSessions}</dd>
+                        <dt className="text-sm text-slate-400">Active Sessions</dt>
+                        <dd className="text-sm font-medium text-white">{health.database.connections.activeSessions}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Audit Logs</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.database.connections.auditLogs}</dd>
+                        <dt className="text-sm text-slate-400">Audit Logs</dt>
+                        <dd className="text-sm font-medium text-white">{health.database.connections.auditLogs}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">Release Notes</dt>
-                        <dd className="text-sm font-medium text-gray-900">{health.database.connections.releaseNotes}</dd>
+                        <dt className="text-sm text-slate-400">Release Notes</dt>
+                        <dd className="text-sm font-medium text-white">{health.database.connections.releaseNotes}</dd>
                       </div>
                     </dl>
                   </div>

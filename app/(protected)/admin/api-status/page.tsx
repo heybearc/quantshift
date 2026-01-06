@@ -76,7 +76,7 @@ export default function ApiStatusPage() {
       case 'operational': return 'text-green-600 bg-green-50';
       case 'degraded': return 'text-yellow-600 bg-yellow-50';
       case 'down': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-slate-400 bg-slate-900';
     }
   };
 
@@ -104,7 +104,7 @@ export default function ApiStatusPage() {
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Checking API status...</p>
+              <p className="text-slate-400">Checking API status...</p>
             </div>
           </div>
         </LayoutWrapper>
@@ -115,16 +115,16 @@ export default function ApiStatusPage() {
   return (
     <ProtectedRoute>
       <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <Zap className="h-8 w-8 text-blue-600" />
-                  <h1 className="text-3xl font-bold text-gray-900">API Status Monitor</h1>
+                  <h1 className="text-3xl font-bold text-white">API Status Monitor</h1>
                 </div>
-                <p className="text-gray-600">Real-time API endpoint health and performance monitoring</p>
+                <p className="text-slate-400">Real-time API endpoint health and performance monitoring</p>
               </div>
               <div className="flex gap-3">
                 <button
@@ -132,7 +132,7 @@ export default function ApiStatusPage() {
                   className={`inline-flex items-center px-4 py-2 rounded-lg ${
                     autoRefresh 
                       ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-slate-700 text-slate-200 hover:bg-gray-300'
                   }`}
                 >
                   <Zap className="h-4 w-4 mr-2" />
@@ -153,78 +153,78 @@ export default function ApiStatusPage() {
               <>
                 {/* Overall Status Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-2">
                       <CheckCircle className="h-8 w-8 text-green-600" />
-                      <span className="text-3xl font-bold text-gray-900">{apiStatus.overall.operational}</span>
+                      <span className="text-3xl font-bold text-white">{apiStatus.overall.operational}</span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600">Operational</h3>
+                    <h3 className="text-sm font-medium text-slate-400">Operational</h3>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-2">
                       <AlertCircle className="h-8 w-8 text-yellow-600" />
-                      <span className="text-3xl font-bold text-gray-900">{apiStatus.overall.degraded}</span>
+                      <span className="text-3xl font-bold text-white">{apiStatus.overall.degraded}</span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600">Degraded</h3>
+                    <h3 className="text-sm font-medium text-slate-400">Degraded</h3>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-2">
                       <XCircle className="h-8 w-8 text-red-600" />
-                      <span className="text-3xl font-bold text-gray-900">{apiStatus.overall.down}</span>
+                      <span className="text-3xl font-bold text-white">{apiStatus.overall.down}</span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600">Down</h3>
+                    <h3 className="text-sm font-medium text-slate-400">Down</h3>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                     <div className="flex items-center justify-between mb-2">
                       <Clock className="h-8 w-8 text-blue-600" />
                       <span className={`text-3xl font-bold ${getResponseTimeColor(apiStatus.overall.avgResponseTime)}`}>
                         {apiStatus.overall.avgResponseTime}ms
                       </span>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-600">Avg Response</h3>
+                    <h3 className="text-sm font-medium text-slate-400">Avg Response</h3>
                   </div>
                 </div>
 
                 {/* Endpoints Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">API Endpoints</h2>
-                    <p className="text-sm text-gray-600 mt-1">
+                <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-700">
+                    <h2 className="text-lg font-semibold text-white">API Endpoints</h2>
+                    <p className="text-sm text-slate-400 mt-1">
                       Last checked: {new Date(apiStatus.timestamp).toLocaleString()}
                     </p>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-slate-900">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Endpoint
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Method
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Response Time
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Last Checked
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-slate-800/50 divide-y divide-gray-200">
                         {apiStatus.endpoints.map((endpoint, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
+                          <tr key={index} className="hover:bg-slate-900">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-mono text-gray-900">{endpoint.endpoint}</div>
+                              <div className="text-sm font-mono text-white">{endpoint.endpoint}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-100">
                                 {endpoint.method}
                               </span>
                             </td>
@@ -239,7 +239,7 @@ export default function ApiStatusPage() {
                                 {endpoint.responseTime}ms
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                               {new Date(endpoint.lastChecked).toLocaleTimeString()}
                             </td>
                           </tr>
@@ -250,28 +250,28 @@ export default function ApiStatusPage() {
                 </div>
 
                 {/* Status Legend */}
-                <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Status Legend</h3>
+                <div className="mt-6 bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
+                  <h3 className="text-sm font-semibold text-white mb-3">Status Legend</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Operational</p>
-                        <p className="text-xs text-gray-500">Response time &lt; 2s, status 2xx/3xx</p>
+                        <p className="text-sm font-medium text-white">Operational</p>
+                        <p className="text-xs text-slate-400">Response time &lt; 2s, status 2xx/3xx</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-yellow-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Degraded</p>
-                        <p className="text-xs text-gray-500">Response time &gt; 2s or status 4xx</p>
+                        <p className="text-sm font-medium text-white">Degraded</p>
+                        <p className="text-xs text-slate-400">Response time &gt; 2s or status 4xx</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <XCircle className="h-5 w-5 text-red-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Down</p>
-                        <p className="text-xs text-gray-500">Timeout or status 5xx</p>
+                        <p className="text-sm font-medium text-white">Down</p>
+                        <p className="text-xs text-slate-400">Timeout or status 5xx</p>
                       </div>
                     </div>
                   </div>

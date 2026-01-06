@@ -112,7 +112,7 @@ export default function SessionsPage() {
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading sessions...</p>
+              <p className="text-slate-400">Loading sessions...</p>
             </div>
           </div>
         </LayoutWrapper>
@@ -126,16 +126,16 @@ export default function SessionsPage() {
   return (
     <ProtectedRoute>
       <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <Shield className="h-8 w-8 text-blue-600" />
-                  <h1 className="text-3xl font-bold text-gray-900">Session Management</h1>
+                  <h1 className="text-3xl font-bold text-white">Session Management</h1>
                 </div>
-                <p className="text-gray-600">Monitor and manage active user sessions</p>
+                <p className="text-slate-400">Monitor and manage active user sessions</p>
               </div>
               <button
                 onClick={loadSessions}
@@ -148,38 +148,38 @@ export default function SessionsPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                 <div className="flex items-center">
                   <div className="p-3 bg-green-50 rounded-lg">
                     <Shield className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{activeSessions.length}</p>
-                    <p className="text-sm text-gray-600">Active Sessions</p>
+                    <p className="text-2xl font-bold text-white">{activeSessions.length}</p>
+                    <p className="text-sm text-slate-400">Active Sessions</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                 <div className="flex items-center">
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <Clock className="h-6 w-6 text-gray-600" />
+                  <div className="p-3 bg-slate-900 rounded-lg">
+                    <Clock className="h-6 w-6 text-slate-400" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{inactiveSessions.length}</p>
-                    <p className="text-sm text-gray-600">Inactive Sessions</p>
+                    <p className="text-2xl font-bold text-white">{inactiveSessions.length}</p>
+                    <p className="text-sm text-slate-400">Inactive Sessions</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-6">
                 <div className="flex items-center">
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <Monitor className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
-                    <p className="text-sm text-gray-600">Total Sessions</p>
+                    <p className="text-2xl font-bold text-white">{sessions.length}</p>
+                    <p className="text-sm text-slate-400">Total Sessions</p>
                   </div>
                 </div>
               </div>
@@ -187,76 +187,76 @@ export default function SessionsPage() {
 
             {/* Active Sessions */}
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Active Sessions</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Active Sessions</h2>
               {activeSessions.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                  <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Sessions</h3>
-                  <p className="text-gray-600">There are currently no active user sessions.</p>
+                <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 p-12 text-center">
+                  <Shield className="h-12 w-12 text-slate-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">No Active Sessions</h3>
+                  <p className="text-slate-400">There are currently no active user sessions.</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-slate-900">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Last Activity
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Browser
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             IP Address
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Started
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-slate-800/50 divide-y divide-gray-200">
                         {activeSessions.map((session) => (
-                          <tr key={session.id} className="hover:bg-gray-50">
+                          <tr key={session.id} className="hover:bg-slate-900">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-white">
                                   {session.user.full_name || session.user.email}
                                 </div>
-                                <div className="text-sm text-gray-500">{session.user.email}</div>
+                                <div className="text-sm text-slate-400">{session.user.email}</div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                   session.user.role === 'ADMIN' 
                                     ? 'bg-purple-100 text-purple-800' 
-                                    : 'bg-gray-100 text-gray-800'
+                                    : 'bg-slate-800 text-slate-100'
                                 }`}>
                                   {session.user.role}
                                 </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center text-sm text-gray-900">
-                                <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                              <div className="flex items-center text-sm text-white">
+                                <Clock className="h-4 w-4 mr-1 text-slate-500" />
                                 {getTimeSince(session.lastActivityAt)}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center text-sm text-gray-900">
-                                <Monitor className="h-4 w-4 mr-1 text-gray-400" />
+                              <div className="flex items-center text-sm text-white">
+                                <Monitor className="h-4 w-4 mr-1 text-slate-500" />
                                 {getBrowserInfo(session.userAgent)}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center text-sm text-gray-900">
-                                <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+                              <div className="flex items-center text-sm text-white">
+                                <MapPin className="h-4 w-4 mr-1 text-slate-500" />
                                 {session.ipAddress || 'Unknown'}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                               {new Date(session.createdAt).toLocaleString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -280,35 +280,35 @@ export default function SessionsPage() {
             {/* Inactive Sessions */}
             {inactiveSessions.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Inactive Sessions</h2>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <h2 className="text-xl font-bold text-white mb-4">Recent Inactive Sessions</h2>
+                <div className="bg-slate-800/50 rounded-lg shadow-sm border border-slate-700 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-slate-900">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Last Activity
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Duration
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-slate-800/50 divide-y divide-gray-200">
                         {inactiveSessions.slice(0, 10).map((session) => (
                           <tr key={session.id} className="opacity-60">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-white">
                                 {session.user.full_name || session.user.email}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                               {getTimeSince(session.lastActivityAt)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                               {new Date(session.createdAt).toLocaleString()}
                             </td>
                           </tr>

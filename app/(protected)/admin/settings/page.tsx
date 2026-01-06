@@ -233,7 +233,7 @@ export default function AdminSettingsPage() {
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading settings...</p>
+              <p className="text-slate-400">Loading settings...</p>
             </div>
           </div>
         </LayoutWrapper>
@@ -244,15 +244,15 @@ export default function AdminSettingsPage() {
   return (
     <ProtectedRoute>
       <LayoutWrapper>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-900">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
                 <SettingsIcon className="h-8 w-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900">Platform Settings</h1>
+                <h1 className="text-3xl font-bold text-white">Platform Settings</h1>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Configure email notifications, platform preferences, and system settings
               </p>
             </div>
@@ -276,15 +276,15 @@ export default function AdminSettingsPage() {
             )}
 
             {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-sm mb-6">
-              <div className="border-b border-gray-200">
+            <div className="bg-slate-800/50 rounded-lg shadow-sm mb-6">
+              <div className="border-b border-slate-700">
                 <nav className="flex -mb-px">
                   <button
                     onClick={() => setActiveTab('email')}
                     className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'email'
                         ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function AdminSettingsPage() {
                     className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'general'
                         ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -313,14 +313,14 @@ export default function AdminSettingsPage() {
                 <div className="p-6 space-y-6">
                   {/* Email Provider Selection */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Provider</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Email Provider</h3>
                     <div className="flex space-x-4">
                       <button
                         onClick={() => setEmailConfig({ ...emailConfig, authType: 'gmail' })}
                         className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                           emailConfig.authType === 'gmail'
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                         }`}
                       >
                         📧 Gmail (Recommended)
@@ -330,7 +330,7 @@ export default function AdminSettingsPage() {
                         className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                           emailConfig.authType === 'smtp'
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                         }`}
                       >
                         🔧 Custom SMTP
@@ -366,7 +366,7 @@ export default function AdminSettingsPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-slate-200 mb-2">
                             Gmail Email Address *
                           </label>
                           <input
@@ -374,11 +374,11 @@ export default function AdminSettingsPage() {
                             placeholder="your-email@gmail.com"
                             value={emailConfig.gmailEmail}
                             onChange={(e) => setEmailConfig({ ...emailConfig, gmailEmail: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-slate-200 mb-2">
                             Gmail App Password *
                           </label>
                           <input
@@ -386,7 +386,7 @@ export default function AdminSettingsPage() {
                             placeholder="16-character app password (no spaces)"
                             value={emailConfig.gmailAppPassword}
                             onChange={(e) => setEmailConfig({ ...emailConfig, gmailAppPassword: e.target.value.replace(/\s/g, '') })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                           />
                           <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Spaces will be automatically removed</p>
                         </div>
@@ -398,21 +398,21 @@ export default function AdminSettingsPage() {
                   {emailConfig.authType === 'smtp' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Server *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">SMTP Server *</label>
                         <input
                           type="text"
                           placeholder="smtp.example.com"
                           value={emailConfig.smtpServer}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpServer: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">SMTP Port *</label>
                         <select
                           value={emailConfig.smtpPort}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         >
                           <option value="587">587 (STARTTLS)</option>
                           <option value="465">465 (SSL)</option>
@@ -420,23 +420,23 @@ export default function AdminSettingsPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Username *</label>
                         <input
                           type="text"
                           placeholder="username or email"
                           value={emailConfig.smtpUser}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Password *</label>
                         <input
                           type="password"
                           placeholder="SMTP password"
                           value={emailConfig.smtpPassword}
                           onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                       <div className="md:col-span-2">
@@ -445,62 +445,62 @@ export default function AdminSettingsPage() {
                             type="checkbox"
                             checked={emailConfig.smtpSecure}
                             onChange={(e) => setEmailConfig({ ...emailConfig, smtpSecure: e.target.checked })}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-slate-700 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="ml-2 text-sm text-gray-700">Use secure connection (TLS/SSL)</span>
+                          <span className="ml-2 text-sm text-slate-200">Use secure connection (TLS/SSL)</span>
                         </label>
                       </div>
                     </div>
                   )}
 
                   {/* Common Email Settings */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Settings</h3>
+                  <div className="pt-6 border-t border-slate-700">
+                    <h3 className="text-lg font-semibold text-white mb-4">Email Settings</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">From Email *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">From Email *</label>
                         <input
                           type="email"
                           placeholder="noreply@quantshift.local"
                           value={emailConfig.fromEmail}
                           onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Email address that appears in "From" field</p>
+                        <p className="text-xs text-slate-400 mt-1">Email address that appears in "From" field</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">From Name *</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">From Name *</label>
                         <input
                           type="text"
                           placeholder="QuantShift Trading Platform"
                           value={emailConfig.fromName}
                           onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Display name for outgoing emails</p>
+                        <p className="text-xs text-slate-400 mt-1">Display name for outgoing emails</p>
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Reply-To Email</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Reply-To Email</label>
                         <input
                           type="email"
                           placeholder="admin@quantshift.local (optional)"
                           value={emailConfig.replyToEmail}
                           onChange={(e) => setEmailConfig({ ...emailConfig, replyToEmail: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Where replies should be sent (optional)</p>
+                        <p className="text-xs text-slate-400 mt-1">Where replies should be sent (optional)</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4">
+                  <div className="pt-6 border-t border-slate-700 flex flex-col sm:flex-row gap-4">
                     <button
                       onClick={handleSave}
                       disabled={!isConfigValid || saving}
                       className={`inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
                         !isConfigValid
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? 'bg-gray-300 text-slate-400 cursor-not-allowed'
                           : saving
                           ? 'bg-blue-400 text-white cursor-not-allowed'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -515,7 +515,7 @@ export default function AdminSettingsPage() {
                       disabled={!isConfigValid || testing}
                       className={`inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
                         !isConfigValid
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? 'bg-gray-300 text-slate-400 cursor-not-allowed'
                           : testing
                           ? 'bg-green-400 text-white cursor-not-allowed'
                           : 'bg-green-600 hover:bg-green-700 text-white'
@@ -545,104 +545,104 @@ export default function AdminSettingsPage() {
               {activeTab === 'general' && (
                 <div className="p-6 space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Information</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Platform Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Platform Name</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Platform Name</label>
                         <input
                           type="text"
                           value={generalSettings.platformName}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, platformName: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Platform Description</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Platform Description</label>
                         <input
                           type="text"
                           value={generalSettings.platformDescription}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, platformDescription: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Mode</h3>
+                  <div className="pt-6 border-t border-slate-700">
+                    <h3 className="text-lg font-semibold text-white mb-4">Maintenance Mode</h3>
                     <div className="space-y-4">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
                           checked={generalSettings.maintenanceMode}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, maintenanceMode: e.target.checked })}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-700 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Enable maintenance mode</span>
+                        <span className="ml-2 text-sm text-slate-200">Enable maintenance mode</span>
                       </label>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Maintenance Message</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Maintenance Message</label>
                         <textarea
                           value={generalSettings.maintenanceMessage}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, maintenanceMessage: e.target.value })}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Registration & Authentication</h3>
+                  <div className="pt-6 border-t border-slate-700">
+                    <h3 className="text-lg font-semibold text-white mb-4">User Registration & Authentication</h3>
                     <div className="space-y-4">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
                           checked={generalSettings.allowRegistration}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, allowRegistration: e.target.checked })}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-700 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Allow new user registration</span>
+                        <span className="ml-2 text-sm text-slate-200">Allow new user registration</span>
                       </label>
                       <label className="flex items-center">
                         <input
                           type="checkbox"
                           checked={generalSettings.requireEmailVerification}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, requireEmailVerification: e.target.checked })}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-700 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Require email verification for new accounts</span>
+                        <span className="ml-2 text-sm text-slate-200">Require email verification for new accounts</span>
                       </label>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+                  <div className="pt-6 border-t border-slate-700">
+                    <h3 className="text-lg font-semibold text-white mb-4">Security Settings</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (seconds)</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Session Timeout (seconds)</label>
                         <input
                           type="number"
                           value={generalSettings.sessionTimeout}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, sessionTimeout: parseInt(e.target.value) || 86400 })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Default: 86400 (24 hours)</p>
+                        <p className="text-xs text-slate-400 mt-1">Default: 86400 (24 hours)</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
+                        <label className="block text-sm font-medium text-slate-200 mb-2">Max Login Attempts</label>
                         <input
                           type="number"
                           value={generalSettings.maxLoginAttempts}
                           onChange={(e) => setGeneralSettings({ ...generalSettings, maxLoginAttempts: parseInt(e.target.value) || 5 })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Number of failed attempts before lockout</p>
+                        <p className="text-xs text-slate-400 mt-1">Number of failed attempts before lockout</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200">
+                  <div className="pt-6 border-t border-slate-700">
                     <button
                       onClick={handleSaveGeneral}
                       disabled={saving}
