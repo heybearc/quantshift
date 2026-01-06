@@ -1,0 +1,482 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== USER MANAGEMENT =====
+
+model User {
+  id                      String    @id @default(uuid())
+  
+  // ===== CORE IDENTITY =====
+  username                String?   @unique
+  email                   String    @unique
+  passwordHash            String    @map("password_hash")
+  fullName                String?   @map("full_name")
+  phoneNumber             String?   @map("phone_number")
+  phoneCountryCode        String?   @default("+1") @map("phone_country_code")
+  timeZone                String?   @default("America/New_York") @map("time_zone")
+  preferredLanguage       String?   @default("en") @map("preferred_language")
+  profilePhotoUrl         String?   @map("profile_photo_url")
+  
+  // ===== AUTHENTICATION & SECURITY =====
+  role                    UserRole  @default(VIEWER)
+  isActive                Boolean   @default(true) @map("is_active")
+  accountStatus           AccountStatus @default(PENDING_APPROVAL) @map("account_status")
+  
+  // Email Verification
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerificationToken  String?   @unique @map("email_verification_token")
+  emailVerificationExpiry DateTime? @map("email_verification_expiry")
+  
+  // Phone Verification
+  phoneVerified           Boolean   @default(false) @map("phone_verified")
+  phoneVerificationCode   String?   @map("phone_verification_code")
+  phoneVerificationExpiry DateTime? @map("phone_verification_expiry")
+  
+  // Password Security
+  lastPasswordChange      DateTime  @default(now()) @map("last_password_change")
+  passwordExpiresAt       DateTime? @map("password_expires_at")
+  passwordResetToken      String?   @unique @map("password_reset_token")
+  passwordResetExpiry     DateTime? @map("password_reset_expiry")
+  passwordHistory         Json?     @map("password_history")
+  forcePasswordChange     Boolean   @default(false) @map("force_password_change")
+  
+  // Account Lockout
+  failedLoginAttempts     Int       @default(0) @map("failed_login_attempts")
+  accountLockedUntil      DateTime? @map("account_locked_until")
+  lastFailedLogin         DateTime? @map("last_failed_login")
+  
+  // Multi-Factor Authentication
+  mfaEnabled              Boolean   @default(false) @map("mfa_enabled")
+  mfaSecret               String?   @map("mfa_secret")
+  mfaBackupCodes          Json?     @map("mfa_backup_codes")
+  mfaMethod               MfaMethod? @map("mfa_method")
+  
+  // Session Management
+  maxConcurrentSessions   Int       @default(3) @map("max_concurrent_sessions")
+  sessionTimeoutMinutes   Int       @default(60) @map("session_timeout_minutes")
+  trustedDevices          Json?     @map("trusted_devices")
+  
+  // IP Security
+  ipWhitelist             Json?     @map("ip_whitelist")
+  ipWhitelistEnabled      Boolean   @default(false) @map("ip_whitelist_enabled")
+  
+  // ===== TRADING PLATFORM =====
+  // Trading Account
+  alpacaAccountId         String?   @unique @map("alpaca_account_id")
+  alpacaAccountType       AccountType? @map("alpaca_account_type")
+  alpacaApiKeyEncrypted   String?   @map("alpaca_api_key_encrypted")
+  alpacaSecretEncrypted   String?   @map("alpaca_secret_encrypted")
+  tradingAccountStatus    TradingAccountStatus? @map("trading_account_status")
+  
+  // Risk Management
+  riskTolerance           RiskTolerance? @map("risk_tolerance")
+  maxPositionSize         Decimal?  @map("max_position_size") @db.Decimal(15, 2)
+  maxPortfolioAllocation  Decimal?  @map("max_portfolio_allocation") @db.Decimal(5, 2)
+  dailyLossLimit          Decimal?  @map("daily_loss_limit") @db.Decimal(15, 2)
+  maxOpenPositions        Int?      @map("max_open_positions")
+  allowedStrategies       Json?     @map("allowed_strategies")
+  
+  // Trading Permissions
+  canPlaceOrders          Boolean   @default(false) @map("can_place_orders")
+  canModifyOrders         Boolean   @default(false) @map("can_modify_orders")
+  canCancelOrders         Boolean   @default(false) @map("can_cancel_orders")
+  maxOrderSize            Decimal?  @map("max_order_size") @db.Decimal(15, 2)
+  allowedAssetClasses     Json?     @map("allowed_asset_classes")
+  tradingHoursOnly        Boolean   @default(true) @map("trading_hours_only")
+  
+  // ===== COMPLIANCE & KYC =====
+  // Identity Verification
+  kycStatus               KycStatus @default(NOT_STARTED) @map("kyc_status")
+  kycVerifiedAt           DateTime? @map("kyc_verified_at")
+  kycVerifiedBy           String?   @map("kyc_verified_by")
+  identityDocumentUrl     String?   @map("identity_document_url")
+  proofOfAddressUrl       String?   @map("proof_of_address_url")
+  
+  // Regulatory
+  isAccreditedInvestor    Boolean   @default(false) @map("is_accredited_investor")
+  isPatternDayTrader      Boolean   @default(false) @map("is_pattern_day_trader")
+  tradingAgreementAccepted Boolean  @default(false) @map("trading_agreement_accepted")
+  tradingAgreementDate    DateTime? @map("trading_agreement_date")
+  riskDisclosureAccepted  Boolean   @default(false) @map("risk_disclosure_accepted")
+  riskDisclosureDate      DateTime? @map("risk_disclosure_date")
+  tosVersion              String?   @map("tos_version")
+  tosAcceptedAt           DateTime? @map("tos_accepted_at")
+  
+  // ===== NOTIFICATIONS =====
+  emailNotifications      Boolean   @default(true) @map("email_notifications")
+  smsNotifications        Boolean   @default(false) @map("sms_notifications")
+  pushNotifications       Boolean   @default(true) @map("push_notifications")
+  notificationPreferences Json?     @map("notification_preferences")
+  
+  // ===== ADMINISTRATIVE =====
+  requiresApproval        Boolean   @default(true) @map("requires_approval")
+  approvedBy              String?   @map("approved_by")
+  approvedAt              DateTime? @map("approved_at")
+  suspendedAt             DateTime? @map("suspended_at")
+  suspendedBy             String?   @map("suspended_by")
+  suspensionReason        String?   @map("suspension_reason")
+  accountExpiresAt        DateTime? @map("account_expires_at")
+  trialEndsAt             DateTime? @map("trial_ends_at")
+  subscriptionTier        String?   @default("FREE") @map("subscription_tier")
+  
+  // ===== TRACKING =====
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  lastLogin               DateTime? @map("last_login")
+  lastLoginIp             String?   @map("last_login_ip")
+  lastLoginDevice         String?   @map("last_login_device")
+  lastSeenReleaseVersion  String?   @map("last_seen_release_version")
+  
+  // ===== RELATIONS =====
+  sessions                Session[]
+  auditLogs               AuditLog[]
+  loginHistory            LoginHistory[]
+  apiKeys                 ApiKey[]
+  
+  @@map("users")
+  @@index([email])
+  @@index([username])
+  @@index([alpacaAccountId])
+  @@index([accountStatus])
+  @@index([kycStatus])
+}
+
+// ===== ENUMS =====
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TRADER
+  VIEWER
+  API_USER
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_APPROVAL
+  SUSPENDED
+  LOCKED
+  ARCHIVED
+}
+
+enum AccountType {
+  PAPER
+  LIVE
+}
+
+enum TradingAccountStatus {
+  ACTIVE
+  INACTIVE
+  RESTRICTED
+  CLOSED
+}
+
+enum RiskTolerance {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+  CUSTOM
+}
+
+enum KycStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum MfaMethod {
+  TOTP
+  SMS
+  EMAIL
+}
+
+// ===== SUPPORTING MODELS =====
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  tokenHash      String   @map("token_hash")
+  expiresAt      DateTime @map("expires_at")
+  isActive       Boolean  @default(true) @map("is_active")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  userAgent      String?  @map("user_agent")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model LoginHistory {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  success         Boolean
+  ipAddress       String   @map("ip_address")
+  userAgent       String?  @map("user_agent")
+  device          String?
+  location        String?
+  failureReason   String?  @map("failure_reason")
+  mfaUsed         Boolean  @default(false) @map("mfa_used")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("login_history")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ApiKey {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  name            String
+  keyHash         String   @unique @map("key_hash")
+  permissions     Json
+  lastUsedAt      DateTime? @map("last_used_at")
+  expiresAt       DateTime? @map("expires_at")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+  @@index([userId])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  changes      Json?
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
+
+// ===== TRADING BOT MODELS (UNCHANGED) =====
+
+model BotConfig {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  strategy          String
+  symbols           String[]
+  enabled           Boolean  @default(true)
+  paperTrading      Boolean  @default(true) @map("paper_trading")
+  riskPerTrade      Float    @map("risk_per_trade")
+  maxPositionSize   Float    @map("max_position_size")
+  maxPortfolioHeat  Float    @map("max_portfolio_heat")
+  simulatedCapital  Float?   @map("simulated_capital")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_config")
+}
+
+model BotStatus {
+  id              String   @id @default(uuid())
+  botName         String   @unique @map("bot_name")
+  status          String
+  lastHeartbeat   DateTime @map("last_heartbeat")
+  accountEquity   Float    @map("account_equity")
+  accountCash     Float    @map("account_cash")
+  buyingPower     Float    @map("buying_power")
+  portfolioValue  Float    @map("portfolio_value")
+  unrealizedPl    Float    @map("unrealized_pl")
+  realizedPl      Float    @map("realized_pl")
+  positionsCount  Int      @map("positions_count")
+  tradesCount     Int      @map("trades_count")
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_status")
+}
+
+model Trade {
+  id              String    @id @default(uuid())
+  botName         String    @map("bot_name")
+  symbol          String
+  side            String
+  quantity        Float
+  entryPrice      Float     @map("entry_price")
+  exitPrice       Float?    @map("exit_price")
+  stopLoss        Float?    @map("stop_loss")
+  takeProfit      Float?    @map("take_profit")
+  status          String
+  pnl             Float?
+  pnlPercent      Float?    @map("pnl_percent")
+  commission      Float?
+  strategy        String
+  signalType      String?   @map("signal_type")
+  entryReason     String?   @map("entry_reason")
+  exitReason      String?   @map("exit_reason")
+  enteredAt       DateTime  @map("entered_at")
+  exitedAt        DateTime? @map("exited_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([symbol])
+  @@index([status])
+  @@index([enteredAt])
+  @@map("trades")
+}
+
+model Position {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  symbol          String
+  quantity        Float
+  entryPrice      Float    @map("entry_price")
+  currentPrice    Float    @map("current_price")
+  marketValue     Float    @map("market_value")
+  costBasis       Float    @map("cost_basis")
+  unrealizedPl    Float    @map("unrealized_pl")
+  unrealizedPlPct Float    @map("unrealized_pl_pct")
+  stopLoss        Float?   @map("stop_loss")
+  takeProfit      Float?   @map("take_profit")
+  strategy        String
+  enteredAt       DateTime @map("entered_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([botName, symbol])
+  @@index([botName])
+  @@map("positions")
+}
+
+model PerformanceMetrics {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  date            DateTime @unique
+  totalTrades     Int      @map("total_trades")
+  winningTrades   Int      @map("winning_trades")
+  losingTrades    Int      @map("losing_trades")
+  winRate         Float    @map("win_rate")
+  profitFactor    Float?   @map("profit_factor")
+  sharpeRatio     Float?   @map("sharpe_ratio")
+  maxDrawdown     Float?   @map("max_drawdown")
+  totalPnl        Float    @map("total_pnl")
+  totalPnlPct     Float    @map("total_pnl_pct")
+  avgWin          Float?   @map("avg_win")
+  avgLoss         Float?   @map("avg_loss")
+  largestWin      Float?   @map("largest_win")
+  largestLoss     Float?   @map("largest_loss")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([botName])
+  @@index([date])
+  @@map("performance_metrics")
+}
+
+model EmailNotification {
+  id              String   @id @default(uuid())
+  email           String
+  notificationType String  @map("notification_type")
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@map("email_notifications")
+}
+
+model PlatformSettings {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           String
+  description     String?
+  category        String
+  updatedBy       String?  @map("updated_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+model ReleaseNote {
+  id              String   @id @default(uuid())
+  version         String   @unique
+  title           String
+  description     String
+  type            String   @default("patch")
+  changes         Json
+  releaseDate     DateTime @map("release_date")
+  isPublished     Boolean  @default(false) @map("is_published")
+  isDismissed     Boolean  @default(false) @map("is_dismissed")
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([version])
+  @@index([releaseDate])
+  @@map("release_notes")
+}
+
+model UserInvitation {
+  id              String   @id @default(uuid())
+  email           String
+  invitationToken String   @unique @map("invitation_token")
+  invitedBy       String   @map("invited_by")
+  invitedByName   String   @map("invited_by_name")
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime @map("expires_at")
+  acceptedAt      DateTime? @map("accepted_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([invitationToken])
+  @@index([status])
+  @@map("user_invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+model EmailQueue {
+  id          String   @id @default(uuid())
+  to          String
+  subject     String
+  htmlBody    String   @map("html_body")
+  textBody    String?  @map("text_body")
+  status      EmailStatus @default(PENDING)
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3) @map("max_attempts")
+  lastError   String?  @map("last_error")
+  sentAt      DateTime? @map("sent_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("email_queue")
+  @@index([status, createdAt])
+}
+
+enum EmailStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+}

@@ -1,12 +1,10 @@
-# QuantShift Trading System
+# QuantShift - Quantum Trading Intelligence Platform
 
-**Algorithmic Trading Platform** - Production-grade automated trading system with backtested strategies, risk management, and hot-standby failover.
+**Production URL:** https://trader.cloudigan.net  
+**Server:** 10.92.3.29:3001  
+**Version:** 1.2.0
 
-## 🎯 Project Mission
-
-Build a **profitable, automated trading system** that:
-- Executes proven, backtested trading strategies
-- Manages risk systematically (position sizing, stops, portfolio limits)
+## 🏗️ Structure (Standard Next.js 14)
 - Operates 24/7 with zero-downtime failover
 - Provides real-time monitoring and analytics
 - Validates strategies before live deployment

@@ -1,0 +1,2125 @@
+{
+  "config": {
+    "configFile": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/playwright.config.ts",
+    "rootDir": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 8
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "test-results/html-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 8,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "smoke-test.spec.ts",
+      "file": "smoke-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "QuantShift - Quick Smoke Tests",
+          "file": "smoke-test.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Critical Path: Login → Dashboard",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 31091,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts",
+                            "column": 16,
+                            "line": 21
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 19 |\u001b[39m     \n \u001b[90m 20 |\u001b[39m     \u001b[90m// Wait for form to be ready\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \n \u001b[90m 23 |\u001b[39m     \u001b[90m// Fill credentials\u001b[39m\n \u001b[90m 24 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts:21:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-05T22:03:05.775Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9bd05-ical-Path-Login-→-Dashboard-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9bd05-ical-Path-Login-→-Dashboard-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9bd05-ical-Path-Login-→-Dashboard-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3f58d441499060f9c0b2-9ec869772a54654b7d4d",
+              "file": "smoke-test.spec.ts",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "Dashboard loads without errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 31146,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts",
+                            "column": 16,
+                            "line": 43
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 43 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 44 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m.\u001b[39mall([\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts:43:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-05T22:03:05.775Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9ed53-hboard-loads-without-errors-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9ed53-hboard-loads-without-errors-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-9ed53-hboard-loads-without-errors-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3f58d441499060f9c0b2-25e31eae7f12932581b6",
+              "file": "smoke-test.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "No critical JavaScript errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 31093,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts",
+                            "column": 16,
+                            "line": 61
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 59 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 61 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m.\u001b[39mall([\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/smoke-test.spec.ts:61:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-05T22:03:05.772Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-b3696--critical-JavaScript-errors-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-b3696--critical-JavaScript-errors-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/smoke-test-QuantShift---Qu-b3696--critical-JavaScript-errors-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3f58d441499060f9c0b2-5b622cb663c425b01464",
+              "file": "smoke-test.spec.ts",
+              "line": 56,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "trading-features.spec.ts",
+      "file": "trading-features.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "QuantShift Trading Platform - Core Features",
+          "file": "trading-features.spec.ts",
+          "line": 18,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Dashboard Features",
+              "file": "trading-features.spec.ts",
+              "line": 23,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Dashboard loads with all key metrics",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "timedOut",
+                          "duration": 31048,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:05.787Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d73de--loads-with-all-key-metrics-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d73de--loads-with-all-key-metrics-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d73de--loads-with-all-key-metrics-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-b9c8ddd4618b5b3041d7",
+                  "file": "trading-features.spec.ts",
+                  "line": 24,
+                  "column": 9
+                },
+                {
+                  "title": "Dashboard displays real-time data",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "timedOut",
+                          "duration": 31121,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:05.782Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-180d1-ard-displays-real-time-data-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-180d1-ard-displays-real-time-data-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-180d1-ard-displays-real-time-data-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-327dff02dcbbb226e8bc",
+                  "file": "trading-features.spec.ts",
+                  "line": 40,
+                  "column": 9
+                },
+                {
+                  "title": "Dashboard navigation links work",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "timedOut",
+                          "duration": 31081,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:05.792Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-01226-board-navigation-links-work-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-01226-board-navigation-links-work-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-01226-board-navigation-links-work-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-dc72eecc6f4cfce026e6",
+                  "file": "trading-features.spec.ts",
+                  "line": 52,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Bot Management",
+              "file": "trading-features.spec.ts",
+              "line": 66,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Bots page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "timedOut",
+                          "duration": 31139,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:05.778Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-21a5e-ots-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-21a5e-ots-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-21a5e-ots-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-8b548de3cd4a09c6cf66",
+                  "file": "trading-features.spec.ts",
+                  "line": 67,
+                  "column": 9
+                },
+                {
+                  "title": "Bot status is displayed",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "timedOut",
+                          "duration": 31075,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:05.777Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-27d24-ent-Bot-status-is-displayed-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-27d24-ent-Bot-status-is-displayed-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-27d24-ent-Bot-status-is-displayed-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-e8d01ef0db74b5569753",
+                  "file": "trading-features.spec.ts",
+                  "line": 75,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Positions Management",
+              "file": "trading-features.spec.ts",
+              "line": 85,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Positions page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 3,
+                          "status": "timedOut",
+                          "duration": 31239,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.353Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-85926-ons-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-85926-ons-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-85926-ons-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-3c94a9e261bf5b429732",
+                  "file": "trading-features.spec.ts",
+                  "line": 86,
+                  "column": 9
+                },
+                {
+                  "title": "Positions data structure is correct",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 7,
+                          "status": "timedOut",
+                          "duration": 31235,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.353Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-351ba-s-data-structure-is-correct-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-351ba-s-data-structure-is-correct-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-351ba-s-data-structure-is-correct-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-a51c3ccac8b0702536b4",
+                  "file": "trading-features.spec.ts",
+                  "line": 94,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Trade History",
+              "file": "trading-features.spec.ts",
+              "line": 104,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Trades page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 0,
+                          "status": "timedOut",
+                          "duration": 31223,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.364Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-7f247-des-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-7f247-des-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-7f247-des-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-9c7ddc9d1afb1a38340c",
+                  "file": "trading-features.spec.ts",
+                  "line": 105,
+                  "column": 9
+                },
+                {
+                  "title": "Trade history displays correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 11,
+                          "parallelIndex": 5,
+                          "status": "timedOut",
+                          "duration": 31223,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.349Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-3d89b--history-displays-correctly-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-3d89b--history-displays-correctly-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-3d89b--history-displays-correctly-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-b2656b8e44b297490c23",
+                  "file": "trading-features.spec.ts",
+                  "line": 113,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Strategies",
+              "file": "trading-features.spec.ts",
+              "line": 123,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Strategies page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 12,
+                          "parallelIndex": 2,
+                          "status": "timedOut",
+                          "duration": 31276,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.350Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-2dae7-ies-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-2dae7-ies-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-2dae7-ies-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-8add22d89cfc14b455f1",
+                  "file": "trading-features.spec.ts",
+                  "line": 124,
+                  "column": 9
+                },
+                {
+                  "title": "Strategy configuration is accessible",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 13,
+                          "parallelIndex": 4,
+                          "status": "timedOut",
+                          "duration": 31280,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.349Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-24ad8-configuration-is-accessible-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-24ad8-configuration-is-accessible-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-24ad8-configuration-is-accessible-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-a2bb673208b9ee5937f2",
+                  "file": "trading-features.spec.ts",
+                  "line": 132,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Analytics",
+              "file": "trading-features.spec.ts",
+              "line": 142,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Analytics page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 14,
+                          "parallelIndex": 6,
+                          "status": "timedOut",
+                          "duration": 31297,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.349Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f9742-ics-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f9742-ics-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f9742-ics-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-f1f260d4d2afb95296a4",
+                  "file": "trading-features.spec.ts",
+                  "line": 143,
+                  "column": 9
+                },
+                {
+                  "title": "Analytics displays performance metrics",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 15,
+                          "parallelIndex": 1,
+                          "status": "timedOut",
+                          "duration": 31296,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:03:38.353Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-0285e-isplays-performance-metrics-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-0285e-isplays-performance-metrics-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-0285e-isplays-performance-metrics-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-fffd7095c281bb420fa9",
+                  "file": "trading-features.spec.ts",
+                  "line": 151,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Settings",
+              "file": "trading-features.spec.ts",
+              "line": 161,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Settings page loads successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 17,
+                          "parallelIndex": 5,
+                          "status": "timedOut",
+                          "duration": 31044,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.797Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-a9652-ngs-page-loads-successfully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-a9652-ngs-page-loads-successfully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-a9652-ngs-page-loads-successfully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-e9299e3fbf53257a1d6e",
+                  "file": "trading-features.spec.ts",
+                  "line": 162,
+                  "column": 9
+                },
+                {
+                  "title": "Settings configuration is accessible",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 16,
+                          "parallelIndex": 0,
+                          "status": "timedOut",
+                          "duration": 30989,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.807Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d6cb5-configuration-is-accessible-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d6cb5-configuration-is-accessible-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-d6cb5-configuration-is-accessible-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-56d503f2f4ff4f9b9579",
+                  "file": "trading-features.spec.ts",
+                  "line": 170,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "API Integration",
+              "file": "trading-features.spec.ts",
+              "line": 180,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Dashboard API endpoints respond correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 18,
+                          "parallelIndex": 7,
+                          "status": "timedOut",
+                          "duration": 31039,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.805Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-5e31d-endpoints-respond-correctly-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-5e31d-endpoints-respond-correctly-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-5e31d-endpoints-respond-correctly-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-a1fde4b048d70e8f0f3b",
+                  "file": "trading-features.spec.ts",
+                  "line": 181,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Error Handling",
+              "file": "trading-features.spec.ts",
+              "line": 202,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Application handles missing data gracefully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 19,
+                          "parallelIndex": 2,
+                          "status": "timedOut",
+                          "duration": 31071,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.803Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-84b6a-les-missing-data-gracefully-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-84b6a-les-missing-data-gracefully-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-84b6a-les-missing-data-gracefully-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-2b11178fd349e19a89db",
+                  "file": "trading-features.spec.ts",
+                  "line": 203,
+                  "column": 9
+                },
+                {
+                  "title": "Navigation works even with API failures",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 20,
+                          "parallelIndex": 4,
+                          "status": "timedOut",
+                          "duration": 31049,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.802Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-c5e4f-orks-even-with-API-failures-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-c5e4f-orks-even-with-API-failures-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-c5e4f-orks-even-with-API-failures-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-1720eb20a44bc907fa98",
+                  "file": "trading-features.spec.ts",
+                  "line": 217,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Performance",
+              "file": "trading-features.spec.ts",
+              "line": 232,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Dashboard loads within acceptable time",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 22,
+                          "parallelIndex": 1,
+                          "status": "timedOut",
+                          "duration": 31012,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.801Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-96330-oads-within-acceptable-time-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-96330-oads-within-acceptable-time-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-96330-oads-within-acceptable-time-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-18a28c14ee97dfe64fd5",
+                  "file": "trading-features.spec.ts",
+                  "line": 233,
+                  "column": 9
+                },
+                {
+                  "title": "Page transitions are smooth",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 21,
+                          "parallelIndex": 6,
+                          "status": "timedOut",
+                          "duration": 31043,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.824Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-98865-Page-transitions-are-smooth-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-98865-Page-transitions-are-smooth-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-98865-Page-transitions-are-smooth-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-403dac683ce4619f649b",
+                  "file": "trading-features.spec.ts",
+                  "line": 245,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Console Errors",
+              "file": "trading-features.spec.ts",
+              "line": 257,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "No critical JavaScript errors on dashboard",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 23,
+                          "parallelIndex": 3,
+                          "status": "timedOut",
+                          "duration": 30992,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8",
+                            "location": {
+                              "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                              "column": 8,
+                              "line": 19
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                                "column": 8,
+                                "line": 19
+                              },
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'QuantShift Trading Platform - Core Features'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     \u001b[36mawait\u001b[39m login(page)\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:19:8\u001b[22m"
+                            },
+                            {
+                              "location": {
+                                "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts",
+                                "column": 14,
+                                "line": 20
+                              },
+                              "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[id=\"email\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mtest-helpers.ts:20\n\n\u001b[0m \u001b[90m 18 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m { state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[id=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[0m\n\u001b[2m    at login (/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/test-helpers.ts:20:14)\u001b[22m\n\u001b[2m    at /Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts:20:5\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-05T22:04:10.804Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f081e-aScript-errors-on-dashboard-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f081e-aScript-errors-on-dashboard-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/test-results/trading-features-QuantShif-f081e-aScript-errors-on-dashboard-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/cory/Documents/Cloudy-Work/applications/quantshift/apps/dashboard/tests/trading-features.spec.ts",
+                            "column": 8,
+                            "line": 19
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "13b8843fc5e368ffa020-dd1a25d09ea3761a3bd8",
+                  "file": "trading-features.spec.ts",
+                  "line": 258,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-05T22:03:02.388Z",
+    "duration": 100075.40699999999,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 24,
+    "flaky": 0
+  }
+}
