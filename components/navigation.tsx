@@ -35,7 +35,7 @@ export function Navigation() {
     { name: 'Trades', href: '/trades', icon: TrendingUp },
     { name: 'Positions', href: '/positions', icon: Activity },
     { name: 'Performance', href: '/performance', icon: BarChart3 },
-    { name: 'Email Notifications', href: '/email', icon: Mail },
+    { name: 'Email Notifications', href: '/settings/notifications', icon: Mail },
     { name: 'Help', href: '/help', icon: BookOpen },
   ];
 
