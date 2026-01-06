@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -19,8 +20,7 @@ import {
   Menu,
   X,
   UserPlus,
-  UserCheck,
-  LineChart
+  UserCheck
 } from "lucide-react";
 import { useState } from "react";
 import { APP_VERSION, APP_NAME } from "@/lib/version";
@@ -78,15 +78,19 @@ export function Navigation() {
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 h-20 px-6 bg-gradient-to-r from-cyan-600 to-blue-600">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <LineChart className="h-6 w-6 text-cyan-600" />
+          <div className="flex items-center justify-center h-24 px-6 bg-slate-900 border-b border-slate-800">
+            <div className="flex flex-col items-center gap-2">
+              <Image
+                src="/logo.svg"
+                alt="QuantShift Logo"
+                width={60}
+                height={60}
+                className="rounded-lg"
+              />
+              <div className="text-center">
+                <h1 className="text-lg font-bold text-white">QuantShift</h1>
+                <p className="text-xs text-cyan-400">Trading Platform</p>
               </div>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">QuantShift</h1>
-              <p className="text-xs text-cyan-100">Trading Platform</p>
             </div>
           </div>
 
