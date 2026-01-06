@@ -80,7 +80,7 @@ export function Navigation() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 bg-gray-800">
-            <h1 className="text-xl font-bold text-white">QuantShift</h1>
+            <h1 className="text-xl font-bold text-white">QuantShift Trading</h1>
           </div>
 
           {/* User info */}
