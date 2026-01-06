@@ -6,6 +6,12 @@ import { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
+
+// Null-safe number formatter
+const fmt2 = (v: unknown) => {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : "—";
+};
 interface PerformanceSummary {
   totalTrades: number;
   winningTrades: number;
@@ -68,7 +74,7 @@ export default function PerformancePage() {
   };
 
   const formatPercent = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+    return `${value >= 0 ? '+' : ''}${fmt2(value)}%`;
   };
 
   if (loading) {
