@@ -55,6 +55,9 @@ export function Navigation() {
     window.location.href = "/login";
   };
 
+  // Check if user is admin (case-insensitive)
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
+
   return (
     <>
       {/* Mobile menu button */}
@@ -131,7 +134,7 @@ export function Navigation() {
             </div>
 
             {/* Admin Control Center Section (admin only) */}
-            {user?.role === "admin" && (
+            {isAdmin && (
               <div className="mb-6">
                 <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                   Admin
