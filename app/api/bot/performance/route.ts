@@ -23,6 +23,24 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'asc' },
     });
 
+    // If no performance metrics exist yet, return empty data
+    if (metrics.length === 0) {
+      return NextResponse.json({
+        summary: {
+          totalTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          winRate: 0,
+          profitFactor: 0,
+          sharpeRatio: 0,
+          maxDrawdown: 0,
+          totalPnl: 0,
+          totalPnlPct: 0,
+        },
+        daily: [],
+      });
+    }
+
     // Calculate aggregate metrics
     const totalTrades = metrics.reduce((sum, m) => sum + m.totalTrades, 0);
     const totalWins = metrics.reduce((sum, m) => sum + m.winningTrades, 0);
@@ -36,7 +54,7 @@ export async function GET(request: NextRequest) {
     const avgSharpe = metrics.length > 0
       ? metrics.reduce((sum, m) => sum + (m.sharpeRatio || 0), 0) / metrics.length
       : 0;
-    const maxDrawdown = Math.min(...metrics.map(m => m.maxDrawdown || 0));
+    const maxDrawdown = metrics.length > 0 ? Math.min(...metrics.map(m => m.maxDrawdown || 0)) : 0;
 
     return NextResponse.json({
       summary: {

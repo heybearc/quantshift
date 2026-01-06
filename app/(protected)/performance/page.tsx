@@ -163,7 +163,7 @@ export default function PerformancePage() {
                 <Target className="h-5 w-5 text-blue-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {summary.winRate.toFixed(1)}%
+                {(summary.winRate || 0).toFixed(1)}%
               </p>
               <p className="text-sm text-gray-600 mt-1">
                 {summary.winningTrades}W / {summary.losingTrades}L
@@ -177,10 +177,10 @@ export default function PerformancePage() {
                 <Award className="h-5 w-5 text-purple-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {summary.profitFactor.toFixed(2)}
+                {(summary.profitFactor || 0).toFixed(2)}
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                {summary.profitFactor >= 1.5 ? 'Excellent' : summary.profitFactor >= 1.0 ? 'Good' : 'Poor'}
+                {(summary.profitFactor || 0) >= 1.5 ? 'Excellent' : (summary.profitFactor || 0) >= 1.0 ? 'Good' : 'Poor'}
               </p>
             </div>
 
@@ -191,7 +191,7 @@ export default function PerformancePage() {
                 <BarChart3 className="h-5 w-5 text-orange-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {summary.sharpeRatio.toFixed(2)}
+                {(summary.sharpeRatio || 0).toFixed(2)}
               </p>
               <p className="text-sm text-gray-600 mt-1">
                 Risk-adjusted return

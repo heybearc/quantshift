@@ -65,6 +65,1250 @@
   },
   "suites": [
     {
+      "title": "admin-pages.spec.ts",
+      "file": "admin-pages.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "QuantShift - Admin Pages",
+          "file": "admin-pages.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Admin Settings Page",
+              "file": "admin-pages.spec.ts",
+              "line": 9,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Settings page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4380,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.690Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-144e19d81029633dbbae",
+                  "file": "admin-pages.spec.ts",
+                  "line": 10,
+                  "column": 9
+                },
+                {
+                  "title": "Settings page displays configuration options",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 4756,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.695Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-4ec5bd8877ae97b9e7fb",
+                  "file": "admin-pages.spec.ts",
+                  "line": 18,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Invitations Page",
+              "file": "admin-pages.spec.ts",
+              "line": 28,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Invitations page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 4727,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.724Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-7e2d842029b31c0f953c",
+                  "file": "admin-pages.spec.ts",
+                  "line": 29,
+                  "column": 9
+                },
+                {
+                  "title": "Invitations page displays invitation management",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 4497,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.674Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-3c449e4584f2e2bf2cc6",
+                  "file": "admin-pages.spec.ts",
+                  "line": 37,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Sessions Page",
+              "file": "admin-pages.spec.ts",
+              "line": 47,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Sessions page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 4591,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.734Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-f9df48fa0bad4e6d01a3",
+                  "file": "admin-pages.spec.ts",
+                  "line": 48,
+                  "column": 9
+                },
+                {
+                  "title": "Sessions page displays active sessions",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 4420,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.690Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-07c95f14bc9553e19d9e",
+                  "file": "admin-pages.spec.ts",
+                  "line": 56,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Audit Logs Page",
+              "file": "admin-pages.spec.ts",
+              "line": 66,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Audit logs page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "passed",
+                          "duration": 4764,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.709Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-82cfc2cd169466ad30ce",
+                  "file": "admin-pages.spec.ts",
+                  "line": 67,
+                  "column": 9
+                },
+                {
+                  "title": "Audit logs page displays activity logs",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "passed",
+                          "duration": 4725,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:36.686Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-7d2e96a989d618c71d05",
+                  "file": "admin-pages.spec.ts",
+                  "line": 75,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Pending Users Page",
+              "file": "admin-pages.spec.ts",
+              "line": 85,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Pending users page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3017,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:41.835Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-5c3b160cfb23e6bc5e30",
+                  "file": "admin-pages.spec.ts",
+                  "line": 86,
+                  "column": 9
+                },
+                {
+                  "title": "Pending users page displays user management",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 2963,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:41.871Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-a3bf7e283fb3d33c4e63",
+                  "file": "admin-pages.spec.ts",
+                  "line": 94,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Health Page",
+              "file": "admin-pages.spec.ts",
+              "line": 104,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Health page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 3493,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:41.960Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-8fc61d426dfc0e3cb22f",
+                  "file": "admin-pages.spec.ts",
+                  "line": 105,
+                  "column": 9
+                },
+                {
+                  "title": "Health page displays system status",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 3466,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:42.092Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-997a25344f2ddc6c4453",
+                  "file": "admin-pages.spec.ts",
+                  "line": 113,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin API Status Page",
+              "file": "admin-pages.spec.ts",
+              "line": 123,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "API status page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 3612,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:42.181Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-36aca8a2bf462dfb46f4",
+                  "file": "admin-pages.spec.ts",
+                  "line": 124,
+                  "column": 9
+                },
+                {
+                  "title": "API status page displays endpoint status",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "passed",
+                          "duration": 3599,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:42.185Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-ed02f78f937578c24a8a",
+                  "file": "admin-pages.spec.ts",
+                  "line": 132,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Navigation",
+              "file": "admin-pages.spec.ts",
+              "line": 142,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Can navigate between admin pages",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 6185,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:42.215Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-f76cac06118db455add0",
+                  "file": "admin-pages.spec.ts",
+                  "line": 143,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin Error Handling",
+              "file": "admin-pages.spec.ts",
+              "line": 163,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Admin pages handle errors gracefully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "passed",
+                          "duration": 3497,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:42.219Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb8dc4b206445fd3e86e-e022b02353eb48e05224",
+                  "file": "admin-pages.spec.ts",
+                  "line": 164,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "auth-pages.spec.ts",
+      "file": "auth-pages.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "QuantShift - Auth Flow Pages",
+          "file": "auth-pages.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Login Page",
+              "file": "auth-pages.spec.ts",
+              "line": 4,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Login page loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1115,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:44.845Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-2a1f87569e04b548abfa",
+                  "file": "auth-pages.spec.ts",
+                  "line": 5,
+                  "column": 9
+                },
+                {
+                  "title": "Login page displays login form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1185,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:44.864Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-954b15605e4d3d62f888",
+                  "file": "auth-pages.spec.ts",
+                  "line": 13,
+                  "column": 9
+                },
+                {
+                  "title": "Login form validates empty fields",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 2069,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.476Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-0bacd582fa9d3ce01df7",
+                  "file": "auth-pages.spec.ts",
+                  "line": 23,
+                  "column": 9
+                },
+                {
+                  "title": "Login form validates invalid credentials",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
+                          "status": "passed",
+                          "duration": 3792,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.615Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-57c81b452026f25bd86b",
+                  "file": "auth-pages.spec.ts",
+                  "line": 35,
+                  "column": 9
+                },
+                {
+                  "title": "Successful login redirects to dashboard",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "passed",
+                          "duration": 1303,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.761Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-75f011281889d2175e53",
+                  "file": "auth-pages.spec.ts",
+                  "line": 52,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Email Verification Page",
+              "file": "auth-pages.spec.ts",
+              "line": 67,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Email verification page loads",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "passed",
+                          "duration": 1018,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.806Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-817423eeb97fe22c2b1b",
+                  "file": "auth-pages.spec.ts",
+                  "line": 68,
+                  "column": 9
+                },
+                {
+                  "title": "Email verification page displays verification message",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1037,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.812Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-b7eea6034d648ffd321e",
+                  "file": "auth-pages.spec.ts",
+                  "line": 76,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Accept Invitation Page",
+              "file": "auth-pages.spec.ts",
+              "line": 86,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Accept invitation page loads",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 1087,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:45.969Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-0ee8030063bf50fe72f3",
+                  "file": "auth-pages.spec.ts",
+                  "line": 87,
+                  "column": 9
+                },
+                {
+                  "title": "Accept invitation page handles missing token",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1051,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:46.061Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-94823e9c4b660dcc28ba",
+                  "file": "auth-pages.spec.ts",
+                  "line": 95,
+                  "column": 9
+                },
+                {
+                  "title": "Accept invitation page with token displays form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "passed",
+                          "duration": 1041,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:46.839Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-b8f7b9fee6cc301d5f91",
+                  "file": "auth-pages.spec.ts",
+                  "line": 106,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Auth Flow Navigation",
+              "file": "auth-pages.spec.ts",
+              "line": 115,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Unauthenticated users are redirected to login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1040,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:46.863Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-dae9fac6b024d3a72efc",
+                  "file": "auth-pages.spec.ts",
+                  "line": 116,
+                  "column": 9
+                },
+                {
+                  "title": "Login page allows authenticated users to access",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
+                          "status": "passed",
+                          "duration": 2346,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:47.083Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-15179d42a6b189797e9e",
+                  "file": "auth-pages.spec.ts",
+                  "line": 127,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Auth Error Handling",
+              "file": "auth-pages.spec.ts",
+              "line": 147,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Auth pages handle JavaScript errors gracefully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
+                          "status": "passed",
+                          "duration": 1133,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:47.083Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-bbcb1ef48e104773deba",
+                  "file": "auth-pages.spec.ts",
+                  "line": 148,
+                  "column": 9
+                },
+                {
+                  "title": "Auth pages load without console errors",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1098,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:47.129Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-ebc22e27adee518ccc3c",
+                  "file": "auth-pages.spec.ts",
+                  "line": 168,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Auth Performance",
+              "file": "auth-pages.spec.ts",
+              "line": 192,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "Login page loads within acceptable time",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 1056,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:47.553Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-e964c4faf00ed72a595b",
+                  "file": "auth-pages.spec.ts",
+                  "line": 193,
+                  "column": 9
+                },
+                {
+                  "title": "Login process completes within acceptable time",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
+                          "status": "passed",
+                          "duration": 2282,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-06T17:27:47.916Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "31e9b507106beddcaa5b-197849dc97d2b2049b1c",
+                  "file": "auth-pages.spec.ts",
+                  "line": 204,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "smoke-test.spec.ts",
       "file": "smoke-test.spec.ts",
       "column": 0,
@@ -90,15 +1334,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 4218,
+                      "duration": 3315,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-06T13:48:39.418Z",
+                      "startTime": "2026-01-06T17:27:47.928Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -124,15 +1368,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
                       "status": "passed",
-                      "duration": 4218,
+                      "duration": 3019,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-06T13:48:39.418Z",
+                      "startTime": "2026-01-06T17:27:48.233Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -158,15 +1402,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6212,
+                      "duration": 5022,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-06T13:48:39.429Z",
+                      "startTime": "2026-01-06T17:27:48.243Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -216,15 +1460,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
                           "status": "passed",
-                          "duration": 8475,
+                          "duration": 7397,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:39.437Z",
+                          "startTime": "2026-01-06T17:27:48.414Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -250,15 +1494,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 4,
-                          "parallelIndex": 4,
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 11719,
+                          "duration": 4921,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:39.435Z",
+                          "startTime": "2026-01-06T17:27:48.625Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -284,15 +1528,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 5,
-                          "parallelIndex": 5,
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 8441,
+                          "duration": 7260,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:39.431Z",
+                          "startTime": "2026-01-06T17:27:49.441Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -326,15 +1570,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 6024,
+                          "duration": 4447,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:39.406Z",
+                          "startTime": "2026-01-06T17:27:49.468Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -363,12 +1607,12 @@
                           "workerIndex": 7,
                           "parallelIndex": 7,
                           "status": "passed",
-                          "duration": 11154,
+                          "duration": 8885,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:39.423Z",
+                          "startTime": "2026-01-06T17:27:50.218Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -402,15 +1646,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 4534,
+                          "duration": 3901,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:44.595Z",
+                          "startTime": "2026-01-06T17:27:51.253Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -436,15 +1680,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 4544,
+                          "duration": 3876,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:44.595Z",
+                          "startTime": "2026-01-06T17:27:51.263Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -478,15 +1722,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 3999,
+                          "duration": 3964,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:46.398Z",
+                          "startTime": "2026-01-06T17:27:53.280Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -512,15 +1756,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 3803,
+                          "duration": 3934,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:46.592Z",
+                          "startTime": "2026-01-06T17:27:53.561Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -557,12 +1801,12 @@
                           "workerIndex": 5,
                           "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 4154,
+                          "duration": 3824,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:48.816Z",
+                          "startTime": "2026-01-06T17:27:53.953Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -588,15 +1832,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
+                          "workerIndex": 6,
+                          "parallelIndex": 6,
                           "status": "passed",
-                          "duration": 9263,
+                          "duration": 9275,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:48.849Z",
+                          "startTime": "2026-01-06T17:27:55.148Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -630,15 +1874,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 3826,
+                          "duration": 3935,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:49.148Z",
+                          "startTime": "2026-01-06T17:27:55.164Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -664,15 +1908,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
                           "status": "passed",
-                          "duration": 8951,
+                          "duration": 9219,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:49.157Z",
+                          "startTime": "2026-01-06T17:27:55.838Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -706,15 +1950,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 4119,
+                          "duration": 4858,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:50.406Z",
+                          "startTime": "2026-01-06T17:27:56.722Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -740,15 +1984,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 4024,
+                          "duration": 4633,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:50.408Z",
+                          "startTime": "2026-01-06T17:27:57.259Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -782,15 +2026,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
                           "status": "passed",
-                          "duration": 7312,
+                          "duration": 6690,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:51.536Z",
+                          "startTime": "2026-01-06T17:27:57.513Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -824,15 +2068,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 4,
-                          "parallelIndex": 4,
+                          "workerIndex": 5,
+                          "parallelIndex": 5,
                           "status": "passed",
-                          "duration": 9215,
+                          "duration": 9367,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:52.094Z",
+                          "startTime": "2026-01-06T17:27:57.795Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -858,15 +2102,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
+                          "workerIndex": 7,
+                          "parallelIndex": 7,
                           "status": "passed",
-                          "duration": 7103,
+                          "duration": 6803,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:52.983Z",
+                          "startTime": "2026-01-06T17:27:59.112Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -900,15 +2144,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 5,
-                          "parallelIndex": 5,
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
                           "status": "passed",
-                          "duration": 4130,
+                          "duration": 4025,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:52.985Z",
+                          "startTime": "2026-01-06T17:27:59.117Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -934,15 +2178,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
+                          "workerIndex": 4,
+                          "parallelIndex": 4,
                           "status": "passed",
-                          "duration": 4782,
+                          "duration": 4301,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:54.440Z",
+                          "startTime": "2026-01-06T17:28:01.596Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -976,15 +2220,15 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 4536,
+                          "duration": 3976,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-01-06T13:48:54.533Z",
+                          "startTime": "2026-01-06T17:28:01.903Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -1006,9 +2250,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-06T13:48:38.896Z",
-    "duration": 22472.09,
-    "expected": 24,
+    "startTime": "2026-01-06T17:27:36.142Z",
+    "duration": 31070.327,
+    "expected": 56,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
