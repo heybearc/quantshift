@@ -5,7 +5,8 @@ import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { BookOpen, ExternalLink, FileText, Video, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, ExternalLink, FileText, Video, MessageCircle, Mail } from "lucide-react";
 
 export default function HelpPage() {
   const { user, loading } = useAuth();
@@ -34,27 +35,27 @@ export default function HelpPage() {
       title: "Getting Started",
       icon: BookOpen,
       items: [
-        { name: "Platform Overview", description: "Learn about QuantShift features and capabilities" },
-        { name: "Trading Strategies", description: "Understanding the MA Crossover strategy" },
-        { name: "Risk Management", description: "How position sizing and stops work" },
+        { name: "Platform Overview", description: "Learn about QuantShift features and capabilities", link: "/dashboard" },
+        { name: "Trading Strategies", description: "Understanding the MA Crossover strategy", link: "/performance" },
+        { name: "Risk Management", description: "How position sizing and stops work", link: "/settings" },
       ],
     },
     {
       title: "Documentation",
       icon: FileText,
       items: [
-        { name: "API Reference", description: "Complete API documentation" },
-        { name: "Configuration Guide", description: "Customize bot settings and parameters" },
-        { name: "Performance Metrics", description: "Understanding your trading statistics" },
+        { name: "API Reference", description: "Complete API documentation", link: "/admin/api-status" },
+        { name: "Configuration Guide", description: "Customize bot settings and parameters", link: "/settings" },
+        { name: "Performance Metrics", description: "Understanding your trading statistics", link: "/performance" },
       ],
     },
     {
-      title: "Video Tutorials",
+      title: "Platform Pages",
       icon: Video,
       items: [
-        { name: "Dashboard Walkthrough", description: "Navigate the trading dashboard" },
-        { name: "Reading Performance Reports", description: "Analyze your trading results" },
-        { name: "Managing Positions", description: "Monitor and manage open trades" },
+        { name: "Dashboard", description: "Navigate the trading dashboard", link: "/dashboard" },
+        { name: "Trades History", description: "View your trading history", link: "/trades" },
+        { name: "Open Positions", description: "Monitor and manage open trades", link: "/positions" },
       ],
     },
   ];
@@ -80,7 +81,7 @@ export default function HelpPage() {
                   </div>
                   <div className="space-y-3">
                     {section.items.map((item) => (
-                      <div key={item.name} className="group cursor-pointer">
+                      <Link key={item.name} href={item.link} className="group cursor-pointer block">
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
@@ -90,7 +91,7 @@ export default function HelpPage() {
                           </div>
                           <ExternalLink className="h-4 w-4 text-slate-500 group-hover:text-cyan-400 transition-colors" />
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -103,11 +104,15 @@ export default function HelpPage() {
                 <div>
                   <h2 className="text-xl font-semibold text-white mb-2">Need More Help?</h2>
                   <p className="text-slate-400 mb-4">
-                    Can't find what you're looking for? Our support team is here to help.
+                    Cant find what youre looking for? Our support team is here to help.
                   </p>
-                  <button className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors">
+                  <a 
+                    href="mailto:support@quantshift.com" 
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+                  >
+                    <Mail className="h-4 w-4" />
                     Contact Support
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -115,22 +120,24 @@ export default function HelpPage() {
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
               <h2 className="text-xl font-semibold text-white mb-4">Quick Links</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a href="#" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
-                  <ExternalLink className="h-4 w-4" />
-                  <span>GitHub Repository</span>
-                </a>
-                <a href="#" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
+                <Link href="/release-notes" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
                   <ExternalLink className="h-4 w-4" />
                   <span>Release Notes</span>
-                </a>
-                <a href="#" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
+                </Link>
+                <Link href="/dashboard" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
                   <ExternalLink className="h-4 w-4" />
-                  <span>Community Forum</span>
-                </a>
-                <a href="#" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
+                  <span>Trading Dashboard</span>
+                </Link>
+                <Link href="/settings" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
                   <ExternalLink className="h-4 w-4" />
-                  <span>FAQ</span>
-                </a>
+                  <span>Platform Settings</span>
+                </Link>
+                {user?.role?.toUpperCase() === "ADMIN" && (
+                  <Link href="/users" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
+                    <ExternalLink className="h-4 w-4" />
+                    <span>User Management</span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
