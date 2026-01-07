@@ -5,6 +5,7 @@ import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap } from "lucide-react";
 
 interface BotStatus {
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,19 +43,22 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  async function fetchBotStatus() {
+  const fetchBotStatus = async () => {
     try {
       const response = await fetch("/api/bot/status");
       if (response.ok) {
         const data = await response.json();
         setBotStatus(data);
+        setError(null);
+      } else {
+        setError("Failed to fetch bot status");
       }
-    } catch (error) {
-      console.error("Failed to fetch bot status:", error);
+    } catch (err) {
+      setError("Error connecting to bot");
     } finally {
       setDataLoading(false);
     }
-  }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -63,13 +68,6 @@ export default function DashboardPage() {
       maximumFractionDigits: 2,
     }).format(value);
   };
-
-  const formatPercent = (value: number) => {
-    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-  };
-
-  const totalPL = (botStatus?.unrealizedPl || 0) + (botStatus?.realizedPl || 0);
-  const plPercent = botStatus?.accountEquity ? (totalPL / botStatus.accountEquity) * 100 : 0;
 
   if (loading) {
     return (
@@ -90,31 +88,15 @@ export default function DashboardPage() {
         {user && <ReleaseBanner userId={user.id} />}
         <div className="p-8">
           <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-white">Trading Dashboard</h1>
-                <p className="text-slate-400 mt-1">Real-time account overview and bot status</p>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
-                <div className={`h-2 w-2 rounded-full ${
-                  botStatus?.status === "RUNNING" ? "bg-green-500 animate-pulse" :
-                  botStatus?.status === "STALE" ? "bg-yellow-500" :
-                  "bg-red-500"
-                }`}></div>
-                <span className="text-sm text-slate-300">
-                  {botStatus?.status || "UNKNOWN"}
-                </span>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Trading Dashboard</h1>
+              <p className="text-slate-400 mt-2">Monitor your bot performance and account metrics</p>
             </div>
 
-            {botStatus?.errorMessage && (
-              <div className="bg-red-900/20 border border-red-700 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-medium text-red-400">Bot Error</h3>
-                  <p className="text-sm text-red-300 mt-1">{botStatus.errorMessage}</p>
-                </div>
+            {error && (
+              <div className="bg-red-900/20 border border-red-700 rounded-xl p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+                <p className="text-red-400">{error}</p>
               </div>
             )}
 
@@ -124,69 +106,59 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                {/* Primary Metrics - Large and Prominent */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Account Equity - Most Important */}
-                  <div className="lg:col-span-2 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-cyan-100 text-sm font-medium mb-2">Account Equity</p>
-                        <h2 className="text-5xl font-bold text-white mb-4">
-                          {formatCurrency(botStatus?.accountEquity || 0)}
-                        </h2>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div>
-                            <span className="text-cyan-100">Cash: </span>
-                            <span className="text-white font-semibold">
-                              {formatCurrency(botStatus?.accountCash || 0)}
-                            </span>
-                          </div>
-                          <div className="h-4 w-px bg-cyan-400"></div>
-                          <div>
-                            <span className="text-cyan-100">Buying Power: </span>
-                            <span className="text-white font-semibold">
-                              {formatCurrency(botStatus?.buyingPower || 0)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <DollarSign className="h-12 w-12 text-white/30" />
+                {/* Primary Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-cyan-900/50 to-blue-900/50 backdrop-blur-sm rounded-xl p-6 border border-cyan-700/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-cyan-300 text-sm font-medium">Account Equity</span>
+                      <DollarSign className="h-6 w-6 text-cyan-400" />
                     </div>
+                    <p className="text-4xl font-bold text-white mb-2">
+                      {formatCurrency(botStatus?.accountEquity || 0)}
+                    </p>
+                    <p className="text-sm text-cyan-300">
+                      Cash: {formatCurrency(botStatus?.accountCash || 0)}
+                    </p>
                   </div>
 
-                  {/* Total P&L */}
-                  <div className={`rounded-2xl p-6 shadow-xl ${
-                    totalPL >= 0 
-                      ? "bg-gradient-to-br from-green-600 to-emerald-600" 
-                      : "bg-gradient-to-br from-red-600 to-rose-600"
-                  }`}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-white/80 text-sm font-medium mb-2">Total P&L</p>
-                        <h2 className="text-4xl font-bold text-white mb-2">
-                          {formatCurrency(totalPL)}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                          {totalPL >= 0 ? (
-                            <TrendingUp className="h-5 w-5 text-white" />
-                          ) : (
-                            <TrendingDown className="h-5 w-5 text-white" />
-                          )}
-                          <span className="text-xl font-semibold text-white">
-                            {formatPercent(plPercent)}
-                          </span>
-                        </div>
-                      </div>
+                  <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-700/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-purple-300 text-sm font-medium">Total P&L</span>
+                      {((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0)) >= 0 ? (
+                        <TrendingUp className="h-6 w-6 text-green-400" />
+                      ) : (
+                        <TrendingDown className="h-6 w-6 text-red-400" />
+                      )}
                     </div>
+                    <p className={`text-4xl font-bold mb-2 ${
+                      ((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0)) >= 0 
+                        ? "text-green-400" 
+                        : "text-red-400"
+                    }`}>
+                      {formatCurrency((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0))}
+                    </p>
+                    <p className="text-sm text-purple-300">
+                      Realized: {formatCurrency(botStatus?.realizedPl || 0)}
+                    </p>
                   </div>
                 </div>
 
                 {/* Secondary Metrics - Quick Glance */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-slate-400 text-sm">Buying Power</span>
+                      <Activity className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <p className="text-2xl font-bold text-white">
+                      {formatCurrency(botStatus?.buyingPower || 0)}
+                    </p>
+                  </div>
+
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-slate-400 text-sm">Open Positions</span>
-                      <Activity className="h-5 w-5 text-cyan-500" />
+                      <TrendingUp className="h-5 w-5 text-purple-500" />
                     </div>
                     <p className="text-3xl font-bold text-white">{botStatus?.positionsCount || 0}</p>
                   </div>
@@ -212,22 +184,6 @@ export default function DashboardPage() {
                       (botStatus?.unrealizedPl || 0) >= 0 ? "text-green-500" : "text-red-500"
                     }`}>
                       {formatCurrency(botStatus?.unrealizedPl || 0)}
-                    </p>
-                  </div>
-
-                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-slate-400 text-sm">Realized P&L</span>
-                      {(botStatus?.realizedPl || 0) >= 0 ? (
-                        <TrendingUp className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <TrendingDown className="h-5 w-5 text-red-500" />
-                      )}
-                    </div>
-                    <p className={`text-2xl font-bold ${
-                      (botStatus?.realizedPl || 0) >= 0 ? "text-green-500" : "text-red-500"
-                    }`}>
-                      {formatCurrency(botStatus?.realizedPl || 0)}
                     </p>
                   </div>
                 </div>
@@ -260,6 +216,39 @@ export default function DashboardPage() {
                         {formatCurrency(botStatus?.portfolioValue || 0)}
                       </p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Link
+                      href="/trades"
+                      className="px-4 py-3 text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-center"
+                    >
+                      View Trades
+                    </Link>
+                    <Link
+                      href="/performance"
+                      className="px-4 py-3 text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-center"
+                    >
+                      Performance
+                    </Link>
+                    <Link
+                      href="/settings/notifications"
+                      className="px-4 py-3 text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-center"
+                    >
+                      Email Settings
+                    </Link>
+                    {user?.role?.toUpperCase() === "ADMIN" && (
+                      <Link
+                        href="/users"
+                        className="px-4 py-3 text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-center"
+                      >
+                        User Management
+                      </Link>
+                    )}
                   </div>
                 </div>
               </>
