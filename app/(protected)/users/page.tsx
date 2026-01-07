@@ -44,10 +44,12 @@ export default function UsersPage() {
       const response = await fetch("/api/users");
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
+        // API returns { success: true, users: [...] }
+        setUsers(data.users || []);
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
+      setUsers([]);
     } finally {
       setDataLoading(false);
     }
