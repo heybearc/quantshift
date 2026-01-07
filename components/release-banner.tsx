@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { X, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { X, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface ReleaseBannerProps {
   userId: string;
@@ -19,23 +19,22 @@ export function ReleaseBanner({ userId }: ReleaseBannerProps) {
 
   const checkForNewRelease = async () => {
     try {
-      const response = await fetch('/api/release-notes/latest', {
-        credentials: 'include'
+      const response = await fetch("/api/release-notes/latest", {
+        credentials: "include",
       });
       const data = await response.json();
 
       if (data.success && data.data) {
         const latestRelease = data.data;
-        // Check if user has dismissed this version
-        const dismissedVersion = localStorage.getItem('dismissedReleaseVersion');
-        
+        const dismissedVersion = localStorage.getItem("dismissedReleaseVersion");
+
         if (dismissedVersion !== latestRelease.version && latestRelease.isPublished) {
           setRelease(latestRelease);
           setVisible(true);
         }
       }
     } catch (error) {
-      console.error('Error checking for new release:', error);
+      console.error("Error checking for new release:", error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +42,7 @@ export function ReleaseBanner({ userId }: ReleaseBannerProps) {
 
   const handleDismiss = () => {
     if (release) {
-      localStorage.setItem('dismissedReleaseVersion', release.version);
+      localStorage.setItem("dismissedReleaseVersion", release.version);
       setVisible(false);
     }
   };
@@ -53,36 +52,30 @@ export function ReleaseBanner({ userId }: ReleaseBannerProps) {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="flex-shrink-0">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-semibold">New Release: v{release.version}</h3>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-white/20">
-                  {release.type.toUpperCase()}
-                </span>
-              </div>
-              <p className="text-sm text-blue-100">{release.title}</p>
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-500/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-3 text-white">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-semibold">New Release: v{release.version}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">{release.title}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/release-notes"
-              className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-50 transition-colors"
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs font-medium transition-colors"
             >
               View Details
             </Link>
             <button
               onClick={handleDismiss}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1 hover:bg-white/10 rounded transition-colors"
               aria-label="Dismiss"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
