@@ -47,6 +47,7 @@ export function Navigation() {
     { name: "Audit Logs", href: "/admin/audit-logs", icon: FileText },
     { name: "Health Monitor", href: "/admin/health", icon: Activity },
     { name: "API Status", href: "/admin/api-status", icon: Zap },
+    { name: "Email Configuration", href: "/settings/email", icon: Mail },
     { name: "Platform Settings", href: "/admin/settings", icon: Settings },
   ];
 
