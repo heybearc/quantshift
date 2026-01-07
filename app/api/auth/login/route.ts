@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     const refreshToken = createRefreshToken(user.id);
 
     // Store refresh token
-    await storeRefreshToken(user.id, refreshToken);
+    await storeRefreshToken(user.id, refreshToken, clientIp, request.headers.get('user-agent') || undefined);
 
     // Set cookies
     await setAuthCookies(accessToken, refreshToken);

@@ -108,13 +108,15 @@ export async function getCurrentUser() {
   return user;
 }
 
-export async function storeRefreshToken(userId: string, token: string) {
+export async function storeRefreshToken(userId: string, token: string, ipAddress?: string, userAgent?: string) {
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   await prisma.session.create({
     data: {
       userId,
+      ipAddress: ipAddress || null,
+      userAgent: userAgent || null,
       tokenHash,
       expiresAt,
     },
