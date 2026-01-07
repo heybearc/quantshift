@@ -10,12 +10,16 @@ import { Monitor, Trash2, RefreshCw, Loader2 } from "lucide-react";
 interface Session {
   id: string;
   userId: string;
-  userEmail: string;
-  ipAddress: string;
-  userAgent: string;
-  createdAt: string;
+  token: string;
+  ipAddress: string | null;
+  userAgent: string | null;
   expiresAt: string;
-  lastActivity: string;
+  createdAt: string;
+  user: {
+    email: string;
+    fullName: string | null;
+    role: string;
+  };
 }
 
 export default function SessionsPage() {
@@ -44,8 +48,16 @@ export default function SessionsPage() {
   const loadSessions = async () => {
     try {
       setLoading(true);
-      // Placeholder - implement actual API call
-      setSessions([]);
+      const response = await fetch("/api/admin/sessions", {
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setSessions(data.data);
+        }
+      }
     } catch (error) {
       console.error("Error loading sessions:", error);
     } finally {
@@ -62,9 +74,19 @@ export default function SessionsPage() {
     setMessage(null);
 
     try {
-      // Placeholder - implement actual API call
-      setMessage({ type: "success", text: "Session revoked successfully" });
-      loadSessions();
+      const response = await fetch(`/api/admin/sessions/${sessionId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setMessage({ type: "success", text: "Session revoked successfully" });
+        loadSessions();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to revoke session" });
+      }
     } catch (error) {
       setMessage({ type: "error", text: "Failed to revoke session" });
     } finally {
@@ -122,7 +144,7 @@ export default function SessionsPage() {
                 <div className="p-12 text-center">
                   <Monitor className="h-12 w-12 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-white mb-2">No Active Sessions</h3>
-                  <p className="text-slate-400">Session data will appear here when available</p>
+                  <p className="text-slate-400">Active user sessions will appear here</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -133,10 +155,13 @@ export default function SessionsPage() {
                           User
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                          Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           IP Address
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Last Activity
+                          Created
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Expires
@@ -149,10 +174,24 @@ export default function SessionsPage() {
                     <tbody className="divide-y divide-slate-700">
                       {sessions.map((session) => (
                         <tr key={session.id} className="hover:bg-slate-800/50 transition-colors">
-                          <td className="px-6 py-4 text-sm text-white">{session.userEmail}</td>
-                          <td className="px-6 py-4 text-sm text-slate-400">{session.ipAddress}</td>
+                          <td className="px-6 py-4">
+                            <div>
+                              <div className="text-sm font-medium text-white">
+                                {session.user.fullName || "No name"}
+                              </div>
+                              <div className="text-sm text-slate-400">{session.user.email}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-900/50 text-cyan-300">
+                              {session.user.role}
+                            </span>
+                          </td>
                           <td className="px-6 py-4 text-sm text-slate-400">
-                            {new Date(session.lastActivity).toLocaleString()}
+                            {session.ipAddress || "Unknown"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-400">
+                            {new Date(session.createdAt).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-400">
                             {new Date(session.expiresAt).toLocaleString()}
@@ -177,6 +216,13 @@ export default function SessionsPage() {
                   </table>
                 </div>
               )}
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4">
+              <p className="text-sm text-blue-300">
+                <strong>Note:</strong> You are currently viewing {sessions.length} active session{sessions.length !== 1 ? 's' : ''}. 
+                Revoking a session will immediately log out that user.
+              </p>
             </div>
           </div>
         </div>

@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { ProtectedRoute } from '@/components/protected-route';
-import { LayoutWrapper } from '@/components/layout-wrapper';
-import { useAuth } from '@/lib/auth-context';
-import { useState, useEffect } from 'react';
-import { Mail, Send, Save, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from "@/lib/auth-context";
+import { Navigation } from "@/components/navigation";
+import { ReleaseBanner } from "@/components/release-banner";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Mail, Send, Save, AlertCircle, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface EmailSettings {
-  authType: 'gmail' | 'smtp';
+  authType: "gmail" | "smtp";
   gmailEmail: string;
   gmailAppPassword: string;
   smtpServer: string;
@@ -21,54 +22,57 @@ interface EmailSettings {
 }
 
 export default function EmailSettingsPage() {
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [settings, setSettings] = useState<EmailSettings>({
-    authType: 'gmail',
-    gmailEmail: '',
-    gmailAppPassword: '',
-    smtpServer: 'smtp.gmail.com',
-    smtpPort: '587',
-    smtpUser: '',
-    smtpPassword: '',
+    authType: "gmail",
+    gmailEmail: "",
+    gmailAppPassword: "",
+    smtpServer: "smtp.gmail.com",
+    smtpPort: "587",
+    smtpUser: "",
+    smtpPassword: "",
     smtpSecure: true,
-    fromEmail: '',
-    fromName: 'QuantShift Trading Platform',
-    replyToEmail: '',
+    fromEmail: "",
+    fromName: "QuantShift Trading Platform",
+    replyToEmail: "",
   });
-  const [testEmail, setTestEmail] = useState('');
+  const [testEmail, setTestEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
-    if (authLoading) {
-      return;
+    if (!authLoading && !user) {
+      router.push("/login");
     }
+    if (!authLoading && user && user.role?.toUpperCase() !== "ADMIN") {
+      router.push("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
-    if (currentUser?.role !== 'ADMIN') {
-      window.location.href = '/dashboard';
-      return;
+  useEffect(() => {
+    if (user?.role?.toUpperCase() === "ADMIN") {
+      fetchSettings();
+      setTestEmail(user.email || "");
     }
-    fetchSettings();
-  }, [currentUser, authLoading]);
+  }, [user]);
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/admin/settings/email', {
-        credentials: 'include'
+      const response = await fetch("/api/admin/settings/email", {
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
           setSettings(data.data);
         }
-        setTestEmail(currentUser?.email || '');
       }
     } catch (error) {
-      console.error('Error fetching email settings:', error);
+      console.error("Error fetching email settings:", error);
     } finally {
       setLoading(false);
     }
@@ -79,30 +83,30 @@ export default function EmailSettingsPage() {
     setSaving(true);
 
     try {
-      const response = await fetch('/api/admin/settings/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const response = await fetch("/api/admin/settings/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(settings),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setMessage({ type: 'success', text: 'Email settings saved successfully' });
+        setMessage({ type: "success", text: "Email settings saved successfully" });
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to save settings' });
+        setMessage({ type: "error", text: data.error || "Failed to save settings" });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      setMessage({ type: "error", text: "Failed to save settings" });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleTest = async () => {
+  const handleTestEmail = async () => {
     if (!testEmail) {
-      setMessage({ type: 'error', text: 'Please enter a test email address' });
+      setMessage({ type: "error", text: "Please enter a test email address" });
       return;
     }
 
@@ -110,238 +114,297 @@ export default function EmailSettingsPage() {
     setTesting(true);
 
     try {
-      const response = await fetch('/api/admin/settings/email/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...settings,
-          testEmail,
-        }),
+      const response = await fetch("/api/admin/settings/email/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: testEmail }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        setMessage({ type: 'success', text: data.message });
+      if (response.ok && data.success) {
+        setMessage({ type: "success", text: `Test email sent to ${testEmail}` });
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to send test email' });
+        setMessage({ type: "error", text: data.error || "Failed to send test email" });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to send test email' });
+      setMessage({ type: "error", text: "Failed to send test email" });
     } finally {
       setTesting(false);
     }
   };
 
-  if (currentUser?.role !== 'ADMIN') {
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+      </div>
+    );
+  }
+
+  if (!user || user.role?.toUpperCase() !== "ADMIN") {
     return null;
   }
 
-  return (
-    <ProtectedRoute>
-      <LayoutWrapper>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl">
-                <Mail className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Email Configuration</h1>
-                <p className="text-gray-600 mt-1">Configure SMTP settings for email notifications</p>
-              </div>
-            </div>
-          </div>
+  const isGmailConfigValid = settings.authType === "gmail" && settings.gmailEmail && settings.gmailAppPassword;
+  const isSmtpConfigValid = settings.authType === "smtp" && settings.smtpServer && settings.smtpUser && settings.smtpPassword;
+  const isConfigValid = (isGmailConfigValid || isSmtpConfigValid) && settings.fromEmail && settings.fromName;
 
-          {/* Alert Message */}
-          {message && (
-            <div className={`p-4 rounded-xl border ${
-              message.type === 'success' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-              <div className="flex items-start gap-3">
-                {message.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+  return (
+    <div className="flex h-screen bg-slate-900">
+      <Navigation />
+      <main className="flex-1 lg:ml-64 overflow-y-auto">
+        {user && <ReleaseBanner userId={user.id} />}
+        <div className="p-8">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Email Configuration</h1>
+              <p className="text-slate-400 mt-2">Configure SMTP or Gmail settings for email notifications</p>
+            </div>
+
+            {message && (
+              <div
+                className={`p-4 rounded-xl border flex items-center gap-3 ${
+                  message.type === "success"
+                    ? "bg-green-900/20 border-green-700 text-green-400"
+                    : "bg-red-900/20 border-red-700 text-red-400"
+                }`}
+              >
+                {message.type === "success" ? (
+                  <CheckCircle className="h-5 w-5" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="h-5 w-5" />
                 )}
                 <p className="text-sm">{message.text}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Settings Form */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">SMTP Configuration</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Configure your email server settings to enable notifications
-              </p>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Gmail Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gmail Email Address
-                </label>
-                <input
-                  type="email"
-                  value={settings.gmailEmail}
-                  onChange={(e) => setSettings({ ...settings, gmailEmail: e.target.value })}
-                  placeholder="your-email@gmail.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Your Gmail email address
-                </p>
-              </div>
-
-              {/* SMTP Port */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Port
-                </label>
-                <input
-                  type="text"
-                  value={settings.smtpPort}
-                  onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
-                  placeholder="587"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Common ports: 587 (TLS), 465 (SSL), 25 (unsecured)
-                </p>
-              </div>
-
-              {/* From Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  From Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.fromName}
-                  onChange={(e) => setSettings({ ...settings, fromName: e.target.value })}
-                  placeholder="QuantShift Trading Platform"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Name that appears in the "From" field of emails
-                </p>
-              </div>
-
-              {/* Gmail App Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gmail App Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={settings.gmailAppPassword}
-                    onChange={(e) => setSettings({ ...settings, gmailAppPassword: e.target.value })}
-                    placeholder="••••••••••••••••"
-                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  16-character App Password from Google Account Security settings
-                </p>
-              </div>
-
-              {/* From Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  From Email Address
-                </label>
-                <input
-                  type="email"
-                  value={settings.fromEmail}
-                  onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
-                  placeholder="noreply@quantshift.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Email address that appears in the "From" field
-                </p>
-              </div>
-
-              {/* Save Button */}
-              <div className="pt-4 border-t border-gray-200">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Authentication Method</h2>
+              
+              <div className="flex gap-4 mb-6">
                 <button
-                  onClick={handleSave}
-                  disabled={saving || !settings.gmailEmail || !settings.gmailAppPassword}
-                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  onClick={() => setSettings({ ...settings, authType: "gmail" })}
+                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                    settings.authType === "gmail"
+                      ? "bg-cyan-600 text-white"
+                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
                 >
-                  <Save className="h-4 w-4" />
-                  {saving ? 'Saving...' : 'Save Configuration'}
+                  Gmail App Password
+                </button>
+                <button
+                  onClick={() => setSettings({ ...settings, authType: "smtp" })}
+                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                    settings.authType === "smtp"
+                      ? "bg-cyan-600 text-white"
+                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
+                >
+                  SMTP Server
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Test Email Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Test Email Configuration</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Send a test email to verify your settings are working
-              </p>
+              {settings.authType === "gmail" ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Gmail Address</label>
+                    <input
+                      type="email"
+                      value={settings.gmailEmail}
+                      onChange={(e) => setSettings({ ...settings, gmailEmail: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      placeholder="your-email@gmail.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">App Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={settings.gmailAppPassword}
+                        onChange={(e) => setSettings({ ...settings, gmailAppPassword: e.target.value })}
+                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="xxxx xxxx xxxx xxxx"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Generate an app password in your Google Account settings
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Server</label>
+                      <input
+                        type="text"
+                        value={settings.smtpServer}
+                        onChange={(e) => setSettings({ ...settings, smtpServer: e.target.value })}
+                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="smtp.example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Port</label>
+                      <input
+                        type="text"
+                        value={settings.smtpPort}
+                        onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
+                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="587"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                    <input
+                      type="text"
+                      value={settings.smtpUser}
+                      onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      placeholder="username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={settings.smtpPassword}
+                        onChange={(e) => setSettings({ ...settings, smtpPassword: e.target.value })}
+                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="smtpSecure"
+                      checked={settings.smtpSecure}
+                      onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
+                      className="w-4 h-4 text-cyan-600 bg-slate-900 border-slate-700 rounded focus:ring-cyan-500"
+                    />
+                    <label htmlFor="smtpSecure" className="ml-2 text-sm text-slate-300">
+                      Use TLS/SSL
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Test Email Address
-                </label>
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Email Details</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">From Email</label>
+                  <input
+                    type="email"
+                    value={settings.fromEmail}
+                    onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="noreply@quantshift.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">From Name</label>
+                  <input
+                    type="text"
+                    value={settings.fromName}
+                    onChange={(e) => setSettings({ ...settings, fromName: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="QuantShift Trading Platform"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Reply-To Email (Optional)</label>
+                  <input
+                    type="email"
+                    value={settings.replyToEmail}
+                    onChange={(e) => setSettings({ ...settings, replyToEmail: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="support@quantshift.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Test Email</h2>
+              
+              <div className="flex gap-4">
                 <input
                   type="email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   placeholder="test@example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
+                <button
+                  onClick={handleTestEmail}
+                  disabled={testing || !isConfigValid}
+                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Test
+                    </>
+                  )}
+                </button>
               </div>
+              {!isConfigValid && (
+                <p className="text-xs text-yellow-400 mt-2">
+                  Please configure all required fields before testing
+                </p>
+              )}
+            </div>
 
+            <div className="flex justify-end">
               <button
-                onClick={handleTest}
-                disabled={testing || !settings.gmailEmail || !settings.gmailAppPassword}
-                className="w-full sm:w-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="h-4 w-4" />
-                {testing ? 'Sending...' : 'Send Test Email'}
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
               </button>
             </div>
           </div>
-
-          {/* Gmail Setup Instructions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-sm font-semibold text-blue-900 mb-3">📧 Gmail Setup Instructions</h3>
-            <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
-              <li>Go to your Google Account → Security</li>
-              <li>Enable 2-Factor Authentication (required)</li>
-              <li>Go to Security → App Passwords</li>
-              <li>Generate a new App Password for "Mail"</li>
-              <li>Copy the 16-character password and paste it above</li>
-              <li>Use your Gmail address as the SMTP username</li>
-            </ol>
-            <p className="text-xs text-blue-700 mt-3">
-              <strong>Note:</strong> Never use your regular Gmail password. Always use an App Password.
-            </p>
-          </div>
         </div>
-      </LayoutWrapper>
-    </ProtectedRoute>
+      </main>
+    </div>
   );
 }
