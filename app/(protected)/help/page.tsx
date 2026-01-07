@@ -204,16 +204,21 @@ function HelpPageContent() {
     },
   ];
 
-  const filteredSections = helpSections.filter((section) =>
-    searchQuery
-      ? section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        section.content.some(
-          (c) =>
-            c.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : true
-  );
+  const filteredSections = searchQuery
+    ? helpSections.filter(
+        (section) =>
+          section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          section.content.some(
+            (c) =>
+              c.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              c.description.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+      )
+    : helpSections;
+
+  const displaySection = searchQuery
+    ? filteredSections
+    : helpSections.filter((s) => s.id === activeSection);
 
   return (
     <div className="p-8">
@@ -242,9 +247,12 @@ function HelpPageContent() {
                 {helpSections.map((section) => (
                   <button
                     key={section.id}
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() => {
+                      setActiveSection(section.id);
+                      setSearchQuery("");
+                    }}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      activeSection === section.id
+                      activeSection === section.id && !searchQuery
                         ? "bg-cyan-600 text-white"
                         : "text-slate-300 hover:bg-slate-700"
                     }`}
@@ -258,9 +266,12 @@ function HelpPageContent() {
           </div>
 
           <div className="lg:col-span-3 space-y-6">
-            {filteredSections
-              .filter((section) => !searchQuery || section.id === activeSection || searchQuery)
-              .map((section) => (
+            {displaySection.length === 0 ? (
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-8 text-center">
+                <p className="text-slate-400">No results found for "{searchQuery}"</p>
+              </div>
+            ) : (
+              displaySection.map((section) => (
                 <div
                   key={section.id}
                   id={section.id}
@@ -292,7 +303,8 @@ function HelpPageContent() {
                     ))}
                   </div>
                 </div>
-              ))}
+              ))
+            )}
           </div>
         </div>
       </div>
