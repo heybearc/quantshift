@@ -5,16 +5,17 @@ import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { Users, Search, Shield, CheckCircle, XCircle } from "lucide-react";
+import { Users, Search, Shield, CheckCircle, XCircle, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 
 interface User {
   id: string;
   email: string;
-  full_name: string | null;
+  fullName: string | null;
+  username: string;
   role: string;
-  is_active: boolean;
-  created_at: string;
-  last_login: string | null;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin: string | null;
 }
 
 export default function UsersPage() {
@@ -23,6 +24,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [processing, setProcessing] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,7 +47,6 @@ export default function UsersPage() {
       const response = await fetch("/api/users");
       if (response.ok) {
         const data = await response.json();
-        // API returns { success: true, users: [...] }
         setUsers(data.users || []);
       }
     } catch (error) {
@@ -55,10 +57,68 @@ export default function UsersPage() {
     }
   }
 
+  const handleToggleActive = async (userId: string, currentStatus: boolean) => {
+    setProcessing(userId);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ 
+          type: "success", 
+          text: `User ${!currentStatus ? "activated" : "deactivated"} successfully` 
+        });
+        fetchUsers();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to update user" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while updating user" });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to delete user ${userEmail}?`)) {
+      return;
+    }
+
+    setProcessing(userId);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "User deleted successfully" });
+        fetchUsers();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to delete user" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while deleting user" });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const filteredUsers = users.filter(
     (u) =>
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -91,12 +151,24 @@ export default function UsersPage() {
               </div>
             </div>
 
+            {message && (
+              <div
+                className={`p-4 rounded-xl border ${
+                  message.type === "success"
+                    ? "bg-green-900/20 border-green-700 text-green-400"
+                    : "bg-red-900/20 border-red-700 text-red-400"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search users by email or name..."
+                  placeholder="Search users by email, name, or username..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
@@ -118,6 +190,9 @@ export default function UsersPage() {
                           User
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                          Username
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Role
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -129,12 +204,15 @@ export default function UsersPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                           Created
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
                       {filteredUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                          <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
                             No users found
                           </td>
                         </tr>
@@ -144,10 +222,13 @@ export default function UsersPage() {
                             <td className="px-6 py-4">
                               <div>
                                 <div className="text-sm font-medium text-white">
-                                  {u.full_name || "No name"}
+                                  {u.fullName || "No name"}
                                 </div>
                                 <div className="text-sm text-slate-400">{u.email}</div>
                               </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-300">
+                              {u.username}
                             </td>
                             <td className="px-6 py-4">
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-900/50 text-cyan-300">
@@ -156,7 +237,7 @@ export default function UsersPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              {u.is_active ? (
+                              {u.isActive ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
                                   <CheckCircle className="h-3 w-3" />
                                   Active
@@ -169,12 +250,47 @@ export default function UsersPage() {
                               )}
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-400">
-                              {u.last_login
-                                ? new Date(u.last_login).toLocaleDateString()
+                              {u.lastLogin
+                                ? new Date(u.lastLogin).toLocaleDateString()
                                 : "Never"}
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-400">
-                              {new Date(u.created_at).toLocaleDateString()}
+                              {new Date(u.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleActive(u.id, u.isActive)}
+                                  disabled={processing === u.id}
+                                  className={`flex items-center gap-1 px-3 py-1.5 text-white text-xs rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    u.isActive
+                                      ? "bg-yellow-600 hover:bg-yellow-700"
+                                      : "bg-green-600 hover:bg-green-700"
+                                  }`}
+                                  title={u.isActive ? "Deactivate user" : "Activate user"}
+                                >
+                                  {u.isActive ? (
+                                    <>
+                                      <UserX className="h-3 w-3" />
+                                      Deactivate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="h-3 w-3" />
+                                      Activate
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u.id, u.email)}
+                                  disabled={processing === u.id || u.id === user.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title={u.id === user.id ? "Cannot delete yourself" : "Delete user"}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                  Delete
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))
