@@ -154,7 +154,7 @@ class QuantShiftEquityBotV2:
             
             # Get orders from last 24 hours
             request = GetOrdersRequest(
-                status=QueryOrderStatus.FILLED,
+                status=QueryOrderStatus.CLOSED,
                 limit=100,
                 after=datetime.utcnow() - timedelta(days=1)
             )

@@ -35,3 +35,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Ignore local backup files
+*_backup.py
