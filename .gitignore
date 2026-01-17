@@ -35,3 +35,7 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Ignore generated test artifacts
+/test-results/
+/playwright-report/
