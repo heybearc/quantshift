@@ -1,0 +1,3 @@
+[submodule ".cloudy-work"]
+	path = .cloudy-work
+	url = git@github.com:heybearc/Cloudy-Work.git
