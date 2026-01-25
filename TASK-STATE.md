@@ -1,16 +1,16 @@
 # QuantShift Task State
 
-**Last updated:** 2026-01-25 (mid-day)  
+**Last updated:** 2026-01-25 (afternoon)  
 **Current branch:** main  
-**Working on:** Infrastructure hardening complete
+**Working on:** Documentation cleanup and release notes implementation complete
 
 ---
 
 ## Current Task
-**Infrastructure hardening complete** - Hot-standby failover configured for bot containers
+**Documentation and release notes complete** - Quarantined docs reviewed, release notes system implemented
 
 ### What I'm doing right now
-Ready for next work. Bot containers now have complete git parity for failover.
+Ready for next work. Documentation organized, release notes system operational.
 
 ### Recent completions
 - ✅ Workflow system deployed (2026-01-25)
@@ -43,6 +43,18 @@ Ready for next work. Bot containers now have complete git parity for failover.
   - Verified git parity between primary (LXC 100) and standby (LXC 101)
   - Tested pull capabilities on both bot containers
   - Established true hot-standby failover capability
+- ✅ Quarantined documentation review (2026-01-25 afternoon):
+  - Reviewed 10 quarantined files for relevance
+  - Restored 2 critical docs (ARCHITECTURE.md, CONTAINER_DEVELOPMENT_WORKFLOW.md)
+  - Archived 7 outdated docs with rationale
+  - Deleted 1 contradictory doc (RELEASE_NOTES_SYSTEM.md)
+  - Created archive README explaining decisions
+- ✅ Release notes standardization (2026-01-25 afternoon):
+  - Implemented markdown file-based release notes (D-QS-003)
+  - Created /release-notes/ directory with v1.0.0 and v1.1.0
+  - Built markdown parser utility and VersionBanner component
+  - Created /release-notes display page
+  - Added implementation documentation
 
 ---
 
@@ -57,15 +69,17 @@ See `/ROADMAP.md` for comprehensive roadmap.
 
 ### This Week (Jan 25-31, 2026)
 1. ✅ Consolidate roadmaps and planning documents
-2. [ ] Review quarantined documentation (by Feb 1, 2026)
-3. [ ] Plan release notes standardization implementation
-4. [ ] Update any remaining documentation references
+2. ✅ Review quarantined documentation
+3. ✅ Implement release notes standardization
+4. [ ] Install release notes dependencies in admin-web
+5. [ ] Integrate VersionBanner into dashboard
+6. [ ] Test release notes display
 
 ### Next Week (Feb 1-7, 2026)
-1. [ ] Implement markdown file-based release notes
-2. [ ] Test release notes parsing and display
-3. [ ] Update version banner component
-4. [ ] Plan blue-green deployment infrastructure
+1. [ ] Complete release notes integration (dashboard, navigation)
+2. [ ] Test release notes end-to-end
+3. [ ] Plan blue-green deployment infrastructure
+4. [ ] Provision second container for blue-green
 
 ### Strategic Initiatives
 - **Release notes standardization** (Q1 2026) - Migrate to markdown files
@@ -77,4 +91,8 @@ See `/ROADMAP.md` for comprehensive roadmap.
 ---
 
 ## Exact Next Command
-Review quarantined documentation in `_quarantine/review-2026-01-25/` and decide: restore, archive, or delete each file.
+Install release notes dependencies in admin-web:
+```bash
+cd apps/admin-web
+npm install gray-matter react-markdown remark-gfm
+```
