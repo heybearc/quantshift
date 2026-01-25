@@ -20,7 +20,8 @@ export interface ReleaseNoteFrontmatter {
  * Get all release notes from the release-notes directory
  */
 export function getAllReleaseNotes(): ReleaseNote[] {
-  const releaseNotesDirectory = path.join(process.cwd(), 'release-notes');
+  // In monorepo structure, release-notes is at repo root, not in apps/web
+  const releaseNotesDirectory = path.join(process.cwd(), '..', '..', 'release-notes');
   
   // Check if directory exists
   if (!fs.existsSync(releaseNotesDirectory)) {
