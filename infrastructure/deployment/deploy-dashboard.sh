@@ -19,6 +19,9 @@ ssh root@$DASHBOARD_IP << 'ENDSSH'
     echo "⬇️  Pulling latest code..."
     git pull origin main
     
+    # Navigate to web app
+    cd apps/web
+    
     # Install dependencies
     echo "📦 Installing dependencies..."
     npm install
@@ -44,5 +47,5 @@ echo "✅ Dashboard Deployment Complete!"
 echo "=================================="
 echo ""
 echo "Dashboard running at:"
-echo "  - LXC 137: 10.92.3.29:3000"
+echo "  - LXC 137: 10.92.3.29:3001"
 echo "  - Public: https://trader.cloudigan.net"

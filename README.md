@@ -46,11 +46,15 @@
 ```
 quantshift/
 ├── apps/
-│   ├── bots/
-│   │   ├── equity/          # Alpaca equity trading bot
-│   │   ├── crypto/          # Coinbase crypto trading bot
-│   │   └── core/            # Shared bot utilities
-│   └── dashboard/           # Next.js dashboard with Prisma
+│   ├── web/                 # Next.js dashboard (port 3001)
+│   │   ├── app/             # Next.js App Router
+│   │   ├── components/      # React components
+│   │   ├── lib/             # Utilities
+│   │   └── prisma/          # Database schema
+│   └── bots/
+│       ├── equity/          # Alpaca equity trading bot
+│       ├── crypto/          # Coinbase crypto trading bot
+│       └── core/            # Shared bot utilities
 ├── packages/
 │   └── core/                # Shared libraries (config, database, models)
 ├── infrastructure/
@@ -112,8 +116,9 @@ cd /opt/quantshift
 - Redis (caching)
 - systemd (process management)
 
-**Dashboard:**
-- Next.js 14 with TypeScript
+**Dashboard (apps/web/):**
+- Next.js 14 with App Router
+- TypeScript
 - Prisma ORM
 - PM2 (process management)
 - Tailwind CSS

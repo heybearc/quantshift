@@ -3,7 +3,7 @@ module.exports = {
     name: "quantshift-admin",
     script: "npm",
     args: "start",
-    cwd: "/opt/quantshift",
+    cwd: "/opt/quantshift/apps/web",
     env: {
       NODE_ENV: "production",
       DATABASE_URL: "postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift",

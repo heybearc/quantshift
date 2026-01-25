@@ -24,7 +24,7 @@ QuantShift uses markdown files for release notes, providing version-controlled, 
 
 ## Required Dependencies
 
-Add to `apps/admin-web/package.json`:
+Add to `apps/web/package.json`:
 
 ```json
 {
@@ -38,7 +38,7 @@ Add to `apps/admin-web/package.json`:
 
 Install:
 ```bash
-cd apps/admin-web
+cd apps/web
 npm install gray-matter react-markdown remark-gfm
 ```
 
@@ -91,7 +91,7 @@ npm install gray-matter react-markdown remark-gfm
 
 ### Dashboard Integration
 
-Add to `apps/admin-web/app/dashboard/page.tsx`:
+Add to `apps/web/app/dashboard/page.tsx`:
 
 ```typescript
 import { getLatestReleaseNote } from '@/lib/release-notes';

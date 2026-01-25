@@ -11,7 +11,7 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** Consistent environment, no local dependency conflicts
 - **When:** Established as standard practice
 - **Pattern:** Local Mac for Windsurf/git, containers for builds/tests/execution
-- **Canonical path:** `/opt/quantshift`
+- **Canonical path:** `/opt/quantshift/apps/web` (Next.js), `/opt/quantshift/apps/bots` (Python bots)
 
 ## D-QS-002: Single container deployment
 - **Decision:** QuantShift uses single container (qs-dashboard), not blue-green
@@ -49,3 +49,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Containers:** LXC 100 (primary), LXC 101 (standby) - both at `/opt/quantshift`
 - **Capabilities:** Both can pull from GitHub, commit changes, push updates, access governance files
 - **Consequence:** If either container fails, the other can immediately take over all development and deployment operations
+
+## D-QS-007: Industry-standard monorepo structure
+- **Decision:** Restructure to industry-standard monorepo with all apps in `apps/` directory
+- **Why:** Eliminate confusion, consistent organization, matches industry best practices (Vercel, Turborepo)
+- **When:** 2026-01-25
+- **Implementation:** Move Next.js app from root to `apps/web/`, Python bots already in `apps/bots/`
+- **Structure:** `apps/web/` (Next.js), `apps/bots/` (Python), `packages/` (shared code)
+- **Impact:** Updated deployment scripts, PM2 config, documentation, container paths
+- **Benefit:** Crystal clear organization, no future confusion about app locations

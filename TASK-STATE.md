@@ -91,8 +91,8 @@ See `/ROADMAP.md` for comprehensive roadmap.
 ---
 
 ## Exact Next Command
-Install release notes dependencies in admin-web:
+Install release notes dependencies:
 ```bash
-cd apps/admin-web
+cd apps/web
 npm install gray-matter react-markdown remark-gfm
 ```
