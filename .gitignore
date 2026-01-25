@@ -41,12 +41,4 @@ logs/
 /playwright-report/
 
 # Workflow symlinks (repo-local, created by setup script)
-.windsurf/workflows/start-day.md
-.windsurf/workflows/mid-day.md
-.windsurf/workflows/end-day.md
-.windsurf/workflows/bump.md
-.windsurf/workflows/test-release.md
-.windsurf/workflows/release.md
-.windsurf/workflows/sync.md
-.windsurf/workflows/sync-governance.md
-.windsurf/workflows/container-dev.md
+.windsurf/workflows/*.md
