@@ -1,16 +1,16 @@
 # QuantShift Task State
 
-**Last updated:** 2026-01-25 (afternoon)  
+**Last updated:** 2026-01-25 (end of day)  
 **Current branch:** main  
-**Working on:** Documentation cleanup and release notes implementation complete
+**Working on:** Monorepo restructure complete - industry standard organization
 
 ---
 
 ## Current Task
-**Documentation and release notes complete** - Quarantined docs reviewed, release notes system implemented
+**Monorepo restructure complete** - Next.js app moved to apps/web/, industry-standard structure
 
 ### What I'm doing right now
-Ready for next work. Documentation organized, release notes system operational.
+Ready for next work. Repository now follows industry-standard monorepo layout with crystal-clear organization.
 
 ### Recent completions
 - ✅ Workflow system deployed (2026-01-25)
@@ -55,6 +55,12 @@ Ready for next work. Documentation organized, release notes system operational.
   - Built markdown parser utility and VersionBanner component
   - Created /release-notes display page
   - Added implementation documentation
+- ✅ Monorepo restructure (2026-01-25 end of day):
+  - Moved Next.js app from root to apps/web/ (D-QS-007)
+  - Updated PM2 config, deployment scripts, all documentation
+  - Deployed to LXC 137, verified working
+  - Industry-standard structure: apps/web/ (Next.js), apps/bots/ (Python)
+  - 121 files moved, 12 config files updated, ~45 minutes total
 
 ---
 
@@ -71,9 +77,10 @@ See `/ROADMAP.md` for comprehensive roadmap.
 1. ✅ Consolidate roadmaps and planning documents
 2. ✅ Review quarantined documentation
 3. ✅ Implement release notes standardization
-4. [ ] Install release notes dependencies in admin-web
-5. [ ] Integrate VersionBanner into dashboard
-6. [ ] Test release notes display
+4. ✅ Restructure to industry-standard monorepo
+5. [ ] Install release notes dependencies (gray-matter, react-markdown, remark-gfm)
+6. [ ] Integrate VersionBanner into dashboard
+7. [ ] Test release notes display
 
 ### Next Week (Feb 1-7, 2026)
 1. [ ] Complete release notes integration (dashboard, navigation)
@@ -91,8 +98,8 @@ See `/ROADMAP.md` for comprehensive roadmap.
 ---
 
 ## Exact Next Command
-Install release notes dependencies:
+Integrate VersionBanner into dashboard:
 ```bash
-cd apps/web
-npm install gray-matter react-markdown remark-gfm
+# Edit apps/web/app/(protected)/dashboard/page.tsx
+# Import and add VersionBanner component
 ```
