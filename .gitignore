@@ -48,4 +48,5 @@ logs/
 .windsurf/workflows/test-release.md
 .windsurf/workflows/release.md
 .windsurf/workflows/sync.md
+.windsurf/workflows/sync-governance.md
 .windsurf/workflows/container-dev.md
