@@ -40,3 +40,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **When:** 2026-01-25
 - **Supersedes:** Multiple scattered roadmaps and planning documents
 - **Location:** `/ROADMAP.md`
+
+## D-QS-006: Hot-standby git parity for bot containers
+- **Decision:** Configure identical git capabilities on both bot containers (LXC 100 and LXC 101)
+- **Why:** True hot-standby failover requires both containers to independently pull, commit, and push code
+- **When:** 2026-01-25
+- **Implementation:** Shared git credentials, identical user config, full submodule initialization on both containers
+- **Containers:** LXC 100 (primary), LXC 101 (standby) - both at `/opt/quantshift`
+- **Capabilities:** Both can pull from GitHub, commit changes, push updates, access governance files
+- **Consequence:** If either container fails, the other can immediately take over all development and deployment operations
