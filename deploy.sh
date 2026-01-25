@@ -4,7 +4,7 @@ set -e
 echo "=== QuantShift Deployment Script ==="
 echo "Starting deployment at $(date)"
 
-cd /opt/quantshift/apps/admin-web
+cd /opt/quantshift
 
 echo "1. Stopping all processes..."
 pm2 delete all 2>/dev/null || true

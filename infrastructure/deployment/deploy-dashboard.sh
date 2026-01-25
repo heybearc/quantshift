@@ -21,7 +21,6 @@ ssh root@$DASHBOARD_IP << 'ENDSSH'
     
     # Install dependencies
     echo "📦 Installing dependencies..."
-    cd apps/dashboard
     npm install
     
     # Generate Prisma client
@@ -34,7 +33,7 @@ ssh root@$DASHBOARD_IP << 'ENDSSH'
     
     # Reload with PM2 (zero-downtime)
     echo "🔄 Reloading with PM2..."
-    pm2 reload quantshift-dashboard || pm2 start ecosystem.config.js
+    pm2 reload quantshift-admin || pm2 start ecosystem.config.js
     
     echo "✅ Dashboard deployment complete"
 ENDSSH
