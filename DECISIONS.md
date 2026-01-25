@@ -58,3 +58,5 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Structure:** `apps/web/` (Next.js), `apps/bots/` (Python), `packages/` (shared code)
 - **Impact:** Updated deployment scripts, PM2 config, documentation, container paths
 - **Benefit:** Crystal clear organization, no future confusion about app locations
+- **Critical lesson:** .env files don't move with git - must be recreated on container after restructure
+- **Container .env location:** `/opt/quantshift/apps/web/.env` (not in git, contains DATABASE_URL, JWT_SECRET)

@@ -1,16 +1,21 @@
 # QuantShift Task State
 
-**Last updated:** 2026-01-25 (end of day)  
+**Last updated:** 2026-01-25 (end of day - 2:20pm)  
 **Current branch:** main  
-**Working on:** Monorepo restructure complete - industry standard organization
+**Working on:** Monorepo restructure complete, login verified working
 
 ---
 
 ## Current Task
-**Monorepo restructure complete** - Next.js app moved to apps/web/, industry-standard structure
+**Monorepo restructure complete and verified** - Next.js app moved to apps/web/, login working
 
 ### What I'm doing right now
-Ready for next work. Repository now follows industry-standard monorepo layout with crystal-clear organization.
+Ready for next work. Repository restructured to industry standard, all systems operational.
+
+### Lessons Learned
+- .env files are container-local (not in git) - must be recreated after path changes
+- PM2 ecosystem.config.js has env vars but Prisma CLI needs .env file
+- Always verify login/database access after infrastructure changes
 
 ### Recent completions
 - ✅ Workflow system deployed (2026-01-25)
@@ -61,6 +66,8 @@ Ready for next work. Repository now follows industry-standard monorepo layout wi
   - Deployed to LXC 137, verified working
   - Industry-standard structure: apps/web/ (Next.js), apps/bots/ (Python)
   - 121 files moved, 12 config files updated, ~45 minutes total
+  - Fixed post-restructure: Created .env file in apps/web/ with DATABASE_URL
+  - Verified: Login API working, database connected, all 4 users intact
 
 ---
 
