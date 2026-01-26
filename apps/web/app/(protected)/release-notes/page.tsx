@@ -1,23 +1,51 @@
 'use client';
 
-import { getAllReleaseNotes } from '@/lib/release-notes';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Navigation } from '@/components/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+interface ReleaseNote {
+  version: string;
+  date: string;
+  type: 'major' | 'minor' | 'patch';
+  content: string;
+  slug: string;
+}
 
 export default function ReleaseNotesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const releaseNotes = getAllReleaseNotes();
+  const [releaseNotes, setReleaseNotes] = useState<ReleaseNote[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user) {
+      fetchReleaseNotes();
+    }
+  }, [user]);
+
+  const fetchReleaseNotes = async () => {
+    try {
+      const response = await fetch('/api/release-notes/all');
+      if (response.ok) {
+        const data = await response.json();
+        setReleaseNotes(data);
+      }
+    } catch (error) {
+      console.error('Error fetching release notes:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
@@ -59,7 +87,11 @@ export default function ReleaseNotesPage() {
               </p>
             </div>
 
-            {releaseNotes.length === 0 ? (
+            {dataLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+              </div>
+            ) : releaseNotes.length === 0 ? (
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 text-center border border-slate-700">
                 <p className="text-slate-400">No release notes available yet.</p>
               </div>
