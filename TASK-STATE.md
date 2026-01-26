@@ -1,16 +1,16 @@
 # QuantShift Task State
 
-**Last updated:** 2026-01-25 (end of day - 6:15pm)  
+**Last updated:** 2026-01-25 (end of day - 7:30pm)  
 **Current branch:** main  
-**Working on:** Release notes integration complete
+**Working on:** User-facing release notes complete, versions synced
 
 ---
 
 ## Current Task
-**Release notes integration complete** - Markdown-based system fully operational
+**User-facing release notes complete** - All versions synced, control plane standard created
 
 ### What I'm doing right now
-Ready for next work. Release notes displaying correctly, VersionBanner integrated into dashboard.
+Ready for next work. Release notes are user-focused, banner shows v1.2.0, standard documented for all apps.
 
 ### Lessons Learned
 - .env files are container-local (not in git) - must be recreated after path changes
@@ -75,6 +75,15 @@ Ready for next work. Release notes displaying correctly, VersionBanner integrate
   - Release notes page displaying v1.0.0 and v1.1.0 correctly
   - Markdown parsing with GitHub Flavored Markdown working
   - Accessible at http://10.92.3.29:3001/release-notes
+- ✅ User-facing release notes (2026-01-25 evening):
+  - Created v1.2.0 release notes (matches package.json version)
+  - Rewrote v1.0.0 and v1.1.0 to be user-focused (not developer-focused)
+  - Removed technical jargon, focused on benefits and features
+  - Fixed banner API to use markdown files instead of database
+  - Banner now shows v1.2.0 (latest version)
+  - Created RELEASE-NOTES-STANDARD.md in control plane
+  - Standard applies to all Cloudy-Work apps
+  - All versions synced: package.json, footer, banner, markdown files
 
 ---
 
