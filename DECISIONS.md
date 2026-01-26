@@ -52,7 +52,7 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 
 ## D-QS-007: Industry-standard monorepo structure
 - **Decision:** Restructure to industry-standard monorepo with all apps in `apps/` directory
-- **Why:** Eliminate confusion, consistent organization, matches industry best practices (Vercel, Turborepo)
+- **Why:** Eliminate confusion, consistent organization, matches industry best practices
 - **When:** 2026-01-25
 - **Implementation:** Move Next.js app from root to `apps/web/`, Python bots already in `apps/bots/`
 - **Structure:** `apps/web/` (Next.js), `apps/bots/` (Python), `packages/` (shared code)
@@ -60,3 +60,27 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Benefit:** Crystal clear organization, no future confusion about app locations
 - **Critical lesson:** .env files don't move with git - must be recreated on container after restructure
 - **Container .env location:** `/opt/quantshift/apps/web/.env` (not in git, contains DATABASE_URL, JWT_SECRET)
+
+## D-QS-008: User-Facing Release Notes Standard
+
+**Date:** 2026-01-25  
+**Status:** Implemented  
+**Context:** Release notes were developer-focused (technical details, infrastructure changes) instead of user-facing (benefits, features, improvements).
+
+**Decision:**
+- Release notes must be written for end users, not developers
+- Focus on benefits and what users can do, not implementation details
+- Use clear, simple language without technical jargon
+- Follow standard format: New Features, Improvements, Bug Fixes
+- Created control plane standard at `.cloudy-work/_cloudy-ops/standards/RELEASE-NOTES-STANDARD.md`
+- Standard applies to all Cloudy-Work apps (TheoShift, LDC Tools, QuantShift)
+
+**Rationale:**
+- Users don't care about "Configured LXC 101 as hot-standby" - they care about "99.9% uptime"
+- Release notes are communication tools, not technical documentation
+- Consistent format across all apps improves user experience
+
+**Implementation:**
+- Rewrote v1.0.0, v1.1.0, v1.2.0 to be user-facing
+- Banner now shows latest version from markdown files (not database)
+- All future releases must follow the standard
