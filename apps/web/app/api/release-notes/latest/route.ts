@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getLatestReleaseNote } from '@/lib/release-notes';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,34 +14,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Get the latest published release
-    const latestRelease = await prisma.releaseNote.findFirst({
-      where: {
-        isPublished: true,
-      },
-      orderBy: {
-        releaseDate: 'desc',
-      },
-    });
+    // Get the latest release from markdown files
+    const latestRelease = getLatestReleaseNote();
 
     if (!latestRelease) {
       return NextResponse.json({ success: true, data: null, showBanner: false });
     }
 
-    // Get the user's last seen version
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: { lastSeenReleaseVersion: true },
-    });
-
-    // Show banner if user hasn't seen this version
-    const showBanner = !user?.lastSeenReleaseVersion || 
-                       user.lastSeenReleaseVersion !== latestRelease.version;
+    // Format to match expected structure
+    const formattedRelease = {
+      version: latestRelease.version,
+      title: `Release v${latestRelease.version}`,
+      releaseDate: latestRelease.date,
+      isPublished: true,
+      type: latestRelease.type,
+    };
 
     return NextResponse.json({
       success: true,
-      data: latestRelease,
-      showBanner,
+      data: formattedRelease,
+      showBanner: true,
     });
   } catch (error) {
     console.error('Error fetching latest release:', error);
