@@ -84,3 +84,43 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - Rewrote v1.0.0, v1.1.0, v1.2.0 to be user-facing
 - Banner now shows latest version from markdown files (not database)
 - All future releases must follow the standard
+
+---
+
+## D-QS-009: Blue-Green Deployment Infrastructure
+
+**Date:** 2026-01-26  
+**Status:** ✅ Implemented  
+**Context:** QuantShift was using single container deployment (qs-dashboard). Needed to migrate to blue-green model for zero-downtime deployments and to align with TheoShift/LDC Tools patterns.
+
+**Decision:**
+- Implement blue-green deployment infrastructure for QuantShift admin web application
+- CT 137 renamed to `quantshift-blue` @ 10.92.3.29:3001 (Blue environment)
+- CT 138 cloned as `quantshift-green` @ 10.92.3.30:3001 (Green environment)
+- HAProxy (10.92.3.26) routes traffic to LIVE environment
+- Both environments share PostgreSQL database (10.92.3.21)
+- NPM handles SSL termination, routes to HAProxy
+- Blue is initial LIVE environment
+
+**Rationale:**
+- Zero-downtime deployments - deploy to STANDBY, test, then switch
+- Quick rollback capability - switch back to previous environment instantly
+- Safe testing - validate new releases on STANDBY before going LIVE
+- Consistency - matches TheoShift and LDC Tools deployment patterns
+- Enables generic `/bump` workflow integration
+
+**Implementation:**
+- Cloned CT 137 to CT 138 (full disk clone)
+- Configured HAProxy backends for blue and green
+- Fixed HAProxy health check (uses `/` instead of `/api/health`)
+- Updated NPM proxy host for trader.cloudigan.net to route through HAProxy
+- Both environments operational and healthy
+
+**References:**
+- `docs/BLUE-GREEN-SWITCHING.md` - Switching runbook
+- `docs/HAPROXY-QUANTSHIFT-CONFIG.md` - HAProxy configuration
+- `docs/NPM-PROXY-HOSTS-CONFIG.md` - NPM configuration
+- `docs/DNS-SETUP-GUIDE.md` - DNS setup
+
+**Supersedes:** D-QS-002 (Single container deployment)  
+**Related:** D-QS-004 (Blue-green deployment migration - now complete)
