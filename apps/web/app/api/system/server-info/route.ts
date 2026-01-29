@@ -7,18 +7,25 @@ const execAsync = promisify(exec);
 
 async function queryHAProxyConfig(): Promise<'BLUE' | 'GREEN' | null> {
   try {
-    const { stdout } = await execAsync(
+    console.log('[server-info] Querying HAProxy config...');
+    const { stdout, stderr } = await execAsync(
       'ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no root@10.92.3.26 "grep \'use_backend quantshift.*if is_quantshift$\' /etc/haproxy/haproxy.cfg"',
       { timeout: 3000 }
     );
     
+    console.log('[server-info] HAProxy query stdout:', stdout);
+    if (stderr) console.log('[server-info] HAProxy query stderr:', stderr);
+    
     if (stdout.includes('quantshift-green-backend')) {
+      console.log('[server-info] Detected GREEN as LIVE');
       return 'GREEN';
     } else if (stdout.includes('quantshift-blue-backend')) {
+      console.log('[server-info] Detected BLUE as LIVE');
       return 'BLUE';
     }
+    console.log('[server-info] Could not determine LIVE server from HAProxy config');
   } catch (error) {
-    console.error('HAProxy config query failed:', error);
+    console.error('[server-info] HAProxy config query failed:', error);
   }
   return null;
 }
