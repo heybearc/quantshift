@@ -9,8 +9,11 @@ async function queryHAProxyConfig(): Promise<'BLUE' | 'GREEN' | null> {
   try {
     console.log('[server-info] Querying HAProxy config...');
     const { stdout, stderr } = await execAsync(
-      'ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no root@10.92.3.26 "grep \'use_backend quantshift.*if is_quantshift$\' /etc/haproxy/haproxy.cfg"',
-      { timeout: 3000 }
+      'ssh -i /root/.ssh/id_rsa -o ConnectTimeout=2 -o StrictHostKeyChecking=no root@10.92.3.26 "grep \'use_backend quantshift.*if is_quantshift$\' /etc/haproxy/haproxy.cfg"',
+      { 
+        timeout: 3000,
+        env: { ...process.env, HOME: '/root' }
+      }
     );
     
     console.log('[server-info] HAProxy query stdout:', stdout);
