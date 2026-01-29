@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "post_write_code": {
+      "script": ".windsurf/hooks/auto-deploy.sh",
+      "description": "Automatically deploy code changes to container during debugging"
+    }
+  }
+}
