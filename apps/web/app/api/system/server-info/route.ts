@@ -12,9 +12,9 @@ async function queryHAProxyConfig(): Promise<'BLUE' | 'GREEN' | null> {
       { timeout: 3000 }
     );
     
-    if (stdout.includes('quantshift_green')) {
+    if (stdout.includes('quantshift-green-backend')) {
       return 'GREEN';
-    } else if (stdout.includes('quantshift_blue')) {
+    } else if (stdout.includes('quantshift-blue-backend')) {
       return 'BLUE';
     }
   } catch (error) {
