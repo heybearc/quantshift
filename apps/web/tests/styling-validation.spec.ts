@@ -8,7 +8,7 @@ const TEST_USER = {
 
 test.describe("QuantShift - Styling and Theme Validation", () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USER.email, TEST_USER.password);
+    await login(page);
   });
 
   test("Dashboard has dark theme background", async ({ page }) => {
@@ -79,36 +79,46 @@ test.describe("QuantShift - Styling and Theme Validation", () => {
 
 test.describe("QuantShift - Route Validation", () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USER.email, TEST_USER.password);
+    await login(page);
   });
 
   test("Dashboard route exists and loads", async ({ page }) => {
     const response = await page.goto("/dashboard");
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("h1")).toContainText("Dashboard");
   });
 
   test("Positions route exists and loads", async ({ page }) => {
     const response = await page.goto("/positions");
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("h1")).toContainText("Positions");
   });
 
   test("Trades route exists and loads", async ({ page }) => {
     const response = await page.goto("/trades");
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("h1")).toContainText("Trade");
   });
 
   test("Performance route exists and loads", async ({ page }) => {
     const response = await page.goto("/performance");
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("h1")).toContainText("Performance");
   });
 
   test("Email notifications route exists and loads", async ({ page }) => {
     const response = await page.goto("/settings/notifications");
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("h1")).toContainText("Notification");
   });
 
@@ -125,6 +135,7 @@ test.describe("QuantShift - Route Validation", () => {
     for (const route of routes) {
       const response = await page.goto(route);
       expect(response?.status()).not.toBe(404);
+      await page.waitForLoadState("networkidle");
       
       // Check page doesn't contain "404" text
       const content = await page.textContent("body");
@@ -136,7 +147,7 @@ test.describe("QuantShift - Route Validation", () => {
 
 test.describe("QuantShift - Dashboard Data Display", () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USER.email, TEST_USER.password);
+    await login(page);
   });
 
   test("Dashboard displays all key metrics", async ({ page }) => {
