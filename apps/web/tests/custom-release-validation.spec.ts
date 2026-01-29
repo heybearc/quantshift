@@ -68,7 +68,7 @@ test.describe('QuantShift - Release Validation (Custom)', () => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
       
-      const h1 = page.locator('h1').first();
+      const h1 = page.locator('main h1').first();
       await expect(h1).toBeVisible();
       await expect(h1).toContainText('Dashboard');
     });
@@ -77,7 +77,7 @@ test.describe('QuantShift - Release Validation (Custom)', () => {
       await page.goto('/positions');
       await page.waitForLoadState('networkidle');
       
-      const h1 = page.locator('h1').first();
+      const h1 = page.locator('main h1').first();
       await expect(h1).toBeVisible();
       await expect(h1).toContainText('Positions');
     });
@@ -86,7 +86,7 @@ test.describe('QuantShift - Release Validation (Custom)', () => {
       await page.goto('/trades');
       await page.waitForLoadState('networkidle');
       
-      const h1 = page.locator('h1').first();
+      const h1 = page.locator('main h1').first();
       await expect(h1).toBeVisible();
       await expect(h1).toContainText('Trades');
     });
@@ -95,7 +95,7 @@ test.describe('QuantShift - Release Validation (Custom)', () => {
       await page.goto('/performance');
       await page.waitForLoadState('networkidle');
       
-      const h1 = page.locator('h1').first();
+      const h1 = page.locator('main h1').first();
       await expect(h1).toBeVisible();
       await expect(h1).toContainText('Performance');
     });

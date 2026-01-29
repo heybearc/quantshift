@@ -86,40 +86,40 @@ test.describe("QuantShift - Route Validation", () => {
     const response = await page.goto("/dashboard");
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Dashboard");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator("main h1")).toContainText("Dashboard");
   });
 
   test("Positions route exists and loads", async ({ page }) => {
     const response = await page.goto("/positions");
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Positions");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator("main h1")).toContainText("Positions");
   });
 
   test("Trades route exists and loads", async ({ page }) => {
     const response = await page.goto("/trades");
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Trade");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator("main h1")).toContainText("Trade");
   });
 
   test("Performance route exists and loads", async ({ page }) => {
     const response = await page.goto("/performance");
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Performance");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator("main h1")).toContainText("Performance");
   });
 
   test("Email notifications route exists and loads", async ({ page }) => {
     const response = await page.goto("/settings/notifications");
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator("h1")).toContainText("Notification");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator("main h1")).toContainText("Notification");
   });
 
   test("No 404 errors on main routes", async ({ page }) => {
