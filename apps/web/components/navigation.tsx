@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { APP_VERSION, APP_NAME } from "@/lib/version";
+import { ServerIndicator } from "@/components/server-indicator";
 
 export function Navigation() {
   const { user, logout } = useAuth();
@@ -172,10 +173,13 @@ export function Navigation() {
             </button>
             
             {/* Version Display */}
-            <div className="mt-4 px-4 text-center">
-              <p className="text-xs text-slate-500">
-                {`${APP_NAME} v${APP_VERSION}`}
-              </p>
+            <div className="mt-4 px-4">
+              <div className="flex items-center justify-center space-x-3">
+                <p className="text-xs text-slate-500">
+                  {`${APP_NAME} v${APP_VERSION}`}
+                </p>
+                <ServerIndicator />
+              </div>
             </div>
           </div>
         </div>

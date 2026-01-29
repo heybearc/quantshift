@@ -96,7 +96,7 @@ export default function TradesPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold text-white">Trade History</h1>
+                <h1 className="text-3xl font-bold text-white">Trades</h1>
                 <p className="text-slate-400 mt-2">{filteredTrades.length} total trades</p>
               </div>
               <div className="relative">
