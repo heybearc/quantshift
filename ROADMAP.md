@@ -1,8 +1,8 @@
 # QuantShift Development Roadmap
 
-**Last Updated:** 2026-01-25  
+**Last Updated:** 2026-01-29  
 **Status:** Active Development  
-**Current Focus:** Infrastructure standardization and blue-green deployment preparation
+**Current Focus:** Admin platform enhancements and trading bot validation
 
 ---
 
@@ -23,14 +23,16 @@ QuantShift is a quantum trading intelligence platform combining algorithmic trad
 ### ✅ What's Working
 
 **Infrastructure:**
-- LXC container: qs-dashboard (10.92.3.29)
-- PostgreSQL database
+- Blue-green deployment: quantshift-blue (10.92.3.29), quantshift-green (10.92.3.30)
+- HAProxy traffic routing (10.92.3.26)
+- PostgreSQL database (shared)
 - Redis state management
 - PM2 process management (quantshift-admin)
 - Container-first development workflow
+- LIVE/STANDBY environment indicator
 
 **Application:**
-- Next.js 14 admin platform (root `/app/` directory)
+- Next.js 14 admin platform (`apps/web/`)
 - Route groups: `(auth)`, `(protected)`
 - Authentication system (username or email login)
 - User management (CRUD operations)
@@ -38,8 +40,9 @@ QuantShift is a quantum trading intelligence platform combining algorithmic trad
 - Audit logs
 - Settings page (email/SMTP configuration)
 - Help documentation system
-- Database-driven release notes (Prisma)
+- Markdown file-based release notes
 - Version banner system
+- LIVE/STANDBY environment indicator
 
 **Trading Bots:**
 - Python trading bots in `apps/bots/`
@@ -56,16 +59,14 @@ QuantShift is a quantum trading intelligence platform combining algorithmic trad
 
 ### 🔄 In Progress
 
-**Repository Cleanup:**
-- ✅ Archived zombie apps (apps/admin-web, apps/dashboard)
-- ✅ Archived outdated documentation
-- ✅ Quarantined uncertain documentation for review
-- ⏳ Consolidating roadmaps and planning documents
+**Admin Platform:**
+- ⏳ Enhanced dashboard with statistics cards
+- ⏳ Trading pages integration (Trades, Positions, Performance)
+- ⏳ Real-time bot monitoring
 
-**Infrastructure Planning:**
-- ⏳ Release notes standardization (markdown files)
-- ⏳ Blue-green deployment preparation
-- ⏳ /bump workflow compatibility analysis
+**Trading Bot Validation:**
+- ⏳ Paper trading performance monitoring (30-day validation)
+- ⏳ Trade tracking and metrics calculation
 
 ---
 
@@ -78,55 +79,59 @@ QuantShift is a quantum trading intelligence platform combining algorithmic trad
 **Goal:** Standardize QuantShift infrastructure to match TheoShift and LDC Tools patterns
 
 #### 1.1 Release Notes Standardization
-**Status:** Planning  
-**Timeline:** Week of Jan 27, 2026
+**Status:** ✅ COMPLETE  
+**Completed:** Jan 2026 (v1.3.0)
 
-**Tasks:**
-- [ ] Migrate from database-driven to markdown file-based release notes
-- [ ] Create `/release-notes/` directory structure
-- [ ] Convert existing database releases to markdown files
-- [ ] Create `lib/release-notes.ts` parsing functions
-- [ ] Update version banner to parse markdown files
-- [ ] Create release notes page using markdown files
-- [ ] Remove database dependency (optional - keep for history)
+**Completed Tasks:**
+- ✅ Migrated from database-driven to markdown file-based release notes
+- ✅ Created `/release-notes/` directory structure
+- ✅ Converted existing database releases to markdown files (v1.0.0, v1.1.0, v1.2.0)
+- ✅ Created `lib/release-notes.ts` parsing functions
+- ✅ Updated version banner to parse markdown files
+- ✅ Created release notes page using markdown files
+- ✅ Implemented user-facing release notes standard (D-QS-008)
 
-**Why:** 
-- Industry standard for SaaS applications
-- Atomic deployment with code (no timing issues)
-- Version controlled with code
+**Outcome:** 
+- Release notes now deploy atomically with code
+- Version controlled in git
 - Blue-green deployment compatible
+- User-facing format (not developer-focused)
 
-**Reference:** `RELEASE-NOTES-STANDARDIZATION-REVISED.md`
+**Reference:** `_archive/RELEASE-NOTES-STANDARDIZATION-REVISED.md`
 
 #### 1.2 Blue-Green Deployment Migration
-**Status:** Planning  
-**Timeline:** Q1 2026 (after release notes standardization)
+**Status:** ✅ COMPLETE  
+**Completed:** Jan 2026 (v1.3.0)
 
-**Tasks:**
-- [ ] Provision second LXC container (qs-standby or similar)
-- [ ] Configure HAProxy routing for QuantShift
-- [ ] Set up shared PostgreSQL database
-- [ ] Test blue-green deployment workflow
-- [ ] Update deployment scripts for blue-green
-- [ ] Document rollback procedures
-- [ ] Test MCP server integration
+**Completed Tasks:**
+- ✅ Provisioned second LXC container (quantshift-green, CT 138)
+- ✅ Configured HAProxy routing for QuantShift
+- ✅ Set up shared PostgreSQL database
+- ✅ Tested blue-green deployment workflow
+- ✅ Updated deployment scripts for blue-green
+- ✅ Documented rollback procedures
+- ✅ Implemented LIVE/STANDBY environment indicator
+- ✅ Configured SSH keys (containers → HAProxy)
+- ✅ Promoted patterns to control plane
+- ✅ Retired legacy URLs (trader.cloudigan.net)
 
-**Why:**
-- Zero-downtime deployments
-- Safe testing on STANDBY before traffic switch
-- Matches TheoShift and LDC Tools deployment model
-- Enables use of generic /bump workflow
+**Outcome:**
+- Zero-downtime deployments operational
+- Blue container (10.92.3.29) currently LIVE
+- Green container (10.92.3.30) currently STANDBY
+- HAProxy health checks working
+- Direct access URLs: blue.quantshift.io, green.quantshift.io
 
-**Reference:** `BUMP-WORKFLOW-COMPATIBILITY-ANALYSIS.md`
+**Reference:** `_archive/BUMP-WORKFLOW-COMPATIBILITY-ANALYSIS.md`, `DECISIONS.md` (D-QS-009)
 
 #### 1.3 Generic /bump Workflow Integration
-**Status:** Planning  
-**Timeline:** After blue-green deployment
+**Status:** Ready for Testing  
+**Timeline:** Feb 2026
 
 **Tasks:**
 - [ ] Test generic /bump workflow with QuantShift
 - [ ] Verify MCP server compatibility
-- [ ] Update deployment scripts
+- [ ] Verify deployment scripts work with blue-green
 - [ ] Test release workflow end-to-end
 - [ ] Document QuantShift-specific steps (if any)
 
@@ -135,6 +140,8 @@ QuantShift is a quantum trading intelligence platform combining algorithmic trad
 - Automated deployment via MCP server
 - Help documentation analysis built-in
 - Test enforcement before release
+
+**Prerequisite:** ✅ Blue-green deployment complete
 
 **Reference:** `.cloudy-work/.windsurf/workflows/bump.md`
 
@@ -343,9 +350,9 @@ See `.cloudy-work/_cloudy-ops/context/DECISIONS.md` for shared decisions.
 
 | Initiative | Priority | Timeline | Status |
 |-----------|----------|----------|--------|
-| Release notes standardization | 🔴 Critical | Week of Jan 27 | Planning |
-| Blue-green deployment | 🔴 Critical | Q1 2026 | Planning |
-| /bump workflow integration | 🔴 Critical | After blue-green | Planning |
+| Release notes standardization | 🔴 Critical | Week of Jan 27 | ✅ Complete |
+| Blue-green deployment | 🔴 Critical | Q1 2026 | ✅ Complete |
+| /bump workflow integration | 🔴 Critical | Feb 2026 | Ready for Testing |
 | Enhanced dashboard | 🟡 High | Weeks 3-4 Jan | Planned |
 | Trading pages integration | 🟡 High | Feb 2026 | Planned |
 | Paper trading validation | 🟡 High | 30 days | In Progress |
@@ -358,25 +365,24 @@ See `.cloudy-work/_cloudy-ops/context/DECISIONS.md` for shared decisions.
 
 ## Next Immediate Steps
 
-### This Week (Jan 25-31, 2026):
-1. ✅ Consolidate roadmaps and planning documents
-2. [ ] Review quarantined documentation
-3. [ ] Plan release notes standardization implementation
-4. [ ] Update DECISIONS.md with new decisions
-5. [ ] Archive old roadmap documents
+### This Week (Jan 29 - Feb 4, 2026):
+1. ✅ Update ROADMAP.md to reflect completed work
+2. ✅ Update DECISIONS.md with recent decisions
+3. [ ] Test generic /bump workflow with QuantShift
+4. [ ] Begin enhanced dashboard implementation
+5. [ ] Continue paper trading validation monitoring
 
-### Next Week (Feb 1-7, 2026):
-1. [ ] Implement markdown file-based release notes
-2. [ ] Test release notes parsing and display
-3. [ ] Update version banner component
-4. [ ] Plan blue-green deployment infrastructure
+### Next Week (Feb 5-11, 2026):
+1. [ ] Complete admin dashboard statistics cards
+2. [ ] Implement health monitor dashboard
+3. [ ] Add API status monitoring
+4. [ ] Continue paper trading validation
 
 ### Next Month (Feb 2026):
-1. [ ] Complete release notes migration
-2. [ ] Provision second LXC container
-3. [ ] Configure HAProxy for QuantShift
-4. [ ] Test blue-green deployment workflow
-5. [ ] Build trading pages integration
+1. [ ] Complete enhanced dashboard
+2. [ ] Build trading pages integration (Trades, Positions, Performance)
+3. [ ] Evaluate paper trading results (30-day validation)
+4. [ ] Decide on live trading go/no-go
 
 ---
 

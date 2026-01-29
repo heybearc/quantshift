@@ -124,3 +124,93 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 
 **Supersedes:** D-QS-002 (Single container deployment)  
 **Related:** D-QS-004 (Blue-green deployment migration - now complete)
+
+---
+
+## D-QS-010: LIVE/STANDBY Environment Indicator
+
+**Date:** 2026-01-29  
+**Status:** ✅ Implemented  
+**Context:** Users needed visual feedback about which environment (LIVE or STANDBY) they were viewing in the blue-green deployment setup.
+
+**Decision:**
+- Implement discrete LIVE/STANDBY environment indicator in navigation footer
+- Indicator shows container color (blue/green) with opacity and emoji for status
+- Component queries HAProxy via SSH to determine authoritative LIVE/STANDBY status
+- Pattern promoted to control plane for all blue-green apps
+
+**Implementation:**
+- Created `ServerIndicator` React component (`apps/web/components/server-indicator.tsx`)
+- Created `/api/system/server-info` API endpoint to query HAProxy
+- Container color determines dot color (blue container = blue dot, green = green)
+- Status determines opacity (LIVE = 100%, STANDBY = 50%) and emoji (⚡ LIVE, ○ STANDBY)
+- Tooltip shows full details: server, status, container ID, IP
+
+**Rationale:**
+- Prevents accidental changes to wrong environment
+- Provides immediate visual feedback
+- Non-intrusive design (discrete dot in footer)
+- HAProxy is authoritative source of truth (D-008)
+
+**Control Plane Policy:** `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
+
+---
+
+## D-QS-011: SSH Key Setup for Blue-Green Containers
+
+**Date:** 2026-01-29  
+**Status:** ✅ Implemented  
+**Context:** LIVE/STANDBY indicator requires containers to query HAProxy configuration via SSH.
+
+**Decision:**
+- Configure passwordless SSH access from both blue and green containers to HAProxy
+- Use RSA 4096-bit keys for authentication
+- Add HAProxy to containers' known_hosts
+- Create automated setup script for all blue-green apps
+
+**Implementation:**
+- Generated SSH keys on quantshift-blue (10.92.3.29)
+- Generated SSH keys on quantshift-green (10.92.3.30)
+- Copied public keys to HAProxy authorized_keys (10.92.3.26)
+- Created `setup-blue-green-ssh.sh` automation script
+- Script supports all apps (theoshift, ldc-tools, quantshift)
+
+**Rationale:**
+- Enables real-time HAProxy config queries
+- Secure authentication without passwords
+- Automated setup reduces manual errors
+- Reusable pattern for all blue-green deployments
+
+**Control Plane Script:** `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
+
+---
+
+## D-QS-012: Control Plane Promotion of Blue-Green Patterns
+
+**Date:** 2026-01-29  
+**Status:** ✅ Implemented  
+**Context:** Blue-green deployment patterns and LIVE/STANDBY indicator needed to be standardized across all apps.
+
+**Decision:**
+- Promote HAProxy blue-green configuration standard to control plane
+- Promote LIVE/STANDBY indicator pattern to control plane
+- Promote SSH setup requirements and automation to control plane
+- Document all patterns for reuse across TheoShift, LDC Tools, and QuantShift
+
+**Implementation:**
+- Created `haproxy-blue-green-standard.md` policy
+- Enhanced `live-standby-indicator.md` with SSH setup documentation
+- Created `setup-blue-green-ssh.sh` automation script
+- Updated validation checklists
+- Added troubleshooting guides
+
+**Rationale:**
+- Consistent deployment patterns across all apps
+- Reduces duplication of effort
+- Standardized troubleshooting procedures
+- Single source of truth for blue-green deployments
+
+**Control Plane Policies:**
+- `.cloudy-work/_cloudy-ops/policy/haproxy-blue-green-standard.md`
+- `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
+- `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
