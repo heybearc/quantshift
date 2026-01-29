@@ -134,13 +134,14 @@ test.describe("QuantShift - Route Validation", () => {
 
     for (const route of routes) {
       const response = await page.goto(route);
-      expect(response?.status()).not.toBe(404);
-      await page.waitForLoadState("networkidle");
+      expect(response?.status()).toBe(200);
+
+      // Check for visible 404 error (not in Next.js internal data)
+      const notFoundHeading = page.locator('h1:has-text("404")');
+      await expect(notFoundHeading).not.toBeVisible();
       
-      // Check page doesn't contain "404" text
-      const content = await page.textContent("body");
-      expect(content).not.toContain("404");
-      expect(content).not.toContain("This page could not be found");
+      const notFoundMessage = page.locator('text="This page could not be found"');
+      await expect(notFoundMessage).not.toBeVisible();
     }
   });
 });
