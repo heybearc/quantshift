@@ -1,35 +1,13 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { cookies } from 'next/headers';
+import { getCurrentUser } from '@/lib/auth';
 
 const prisma = new PrismaClient();
-
-async function getUserFromSession() {
-  const cookieStore = cookies();
-  const sessionToken = cookieStore.get('session_token');
-  
-  if (!sessionToken) {
-    return null;
-  }
-
-  const session = await prisma.session.findFirst({
-    where: {
-      tokenHash: sessionToken.value,
-      isActive: true,
-      expiresAt: { gt: new Date() }
-    },
-    include: {
-      user: true
-    }
-  });
-
-  return session?.user || null;
-}
 
 export async function GET() {
   try {
     // Check authentication and admin role
-    const user = await getUserFromSession();
+    const user = await getCurrentUser();
     
     if (!user) {
       return NextResponse.json(
