@@ -7,6 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap } from "lucide-react";
+import { WinRateCard } from "@/components/dashboard/WinRateCard";
+import { MaxDrawdownCard } from "@/components/dashboard/MaxDrawdownCard";
+import { StrategyCard } from "@/components/dashboard/StrategyCard";
 
 interface BotStatus {
   status: string;
@@ -22,10 +25,24 @@ interface BotStatus {
   errorMessage?: string;
 }
 
+interface BotMetrics {
+  winRate: number;
+  totalWins: number;
+  totalLosses: number;
+  totalTrades: number;
+  maxDrawdown: number;
+  maxDrawdownAmount: number;
+  avgTradesPerDay: number;
+  lastTradeTime: string | null;
+  currentStrategy: string;
+  strategySuccessRate: number;
+}
+
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
+  const [botMetrics, setBotMetrics] = useState<BotMetrics | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +55,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchBotStatus();
-      const interval = setInterval(fetchBotStatus, 30000);
+      fetchBotMetrics();
+      const interval = setInterval(() => {
+        fetchBotStatus();
+        fetchBotMetrics();
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -57,6 +78,18 @@ export default function DashboardPage() {
       setError("Error connecting to bot");
     } finally {
       setDataLoading(false);
+    }
+  };
+
+  const fetchBotMetrics = async () => {
+    try {
+      const response = await fetch("/api/bot/metrics");
+      if (response.ok) {
+        const data = await response.json();
+        setBotMetrics(data);
+      }
+    } catch (err) {
+      console.error("Error fetching bot metrics:", err);
     }
   };
 
@@ -141,6 +174,30 @@ export default function DashboardPage() {
                       Realized: {formatCurrency(botStatus?.realizedPl || 0)}
                     </p>
                   </div>
+                </div>
+
+                {/* Enhanced Trading Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {botMetrics && (
+                    <>
+                      <WinRateCard
+                        winRate={botMetrics.winRate}
+                        totalWins={botMetrics.totalWins}
+                        totalLosses={botMetrics.totalLosses}
+                        totalTrades={botMetrics.totalTrades}
+                      />
+                      <MaxDrawdownCard
+                        maxDrawdown={botMetrics.maxDrawdown}
+                        maxDrawdownAmount={botMetrics.maxDrawdownAmount}
+                        formatCurrency={formatCurrency}
+                      />
+                      <StrategyCard
+                        currentStrategy={botMetrics.currentStrategy}
+                        strategySuccessRate={botMetrics.strategySuccessRate}
+                        avgTradesPerDay={botMetrics.avgTradesPerDay}
+                      />
+                    </>
+                  )}
                 </div>
 
                 {/* Secondary Metrics - Quick Glance */}
