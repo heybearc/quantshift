@@ -84,6 +84,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      console.log('[Dashboard] User role:', user.role);
+      console.log('[Dashboard] Is admin?', user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN');
       fetchBotStatus();
       fetchBotMetrics();
       if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
@@ -131,10 +133,16 @@ export default function DashboardPage() {
 
   const fetchAdminStats = async () => {
     try {
+      console.log('[Dashboard] Fetching admin stats...');
       const response = await fetch("/api/admin/stats");
+      console.log('[Dashboard] Admin stats response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('[Dashboard] Admin stats data:', data);
         setAdminStats(data);
+      } else {
+        const error = await response.json();
+        console.error('[Dashboard] Admin stats error:', error);
       }
     } catch (err) {
       console.error("Error fetching admin stats:", err);
@@ -325,7 +333,11 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Admin Statistics Section */}
-                {(user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN') && adminStats && (
+                {(() => {
+                  const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
+                  console.log('[Dashboard] Render check - isAdmin:', isAdmin, 'hasAdminStats:', !!adminStats);
+                  return isAdmin && adminStats;
+                })() && adminStats && (
                   <>
                     <div className="mt-8">
                       <h2 className="text-2xl font-bold text-white mb-4">System Overview</h2>
