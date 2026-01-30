@@ -1,1 +1,0 @@
-../../.cloudy-work/.windsurf/skills/auto-deploy.md
