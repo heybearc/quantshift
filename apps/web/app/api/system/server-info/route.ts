@@ -64,10 +64,15 @@ export async function GET() {
     let statusSource = 'default';
     
     const haproxyLiveServer = await queryHAProxyConfig();
+    console.log('[server-info] Current server:', server);
+    console.log('[server-info] HAProxy LIVE server:', haproxyLiveServer);
+    
     if (haproxyLiveServer) {
       status = haproxyLiveServer === server ? 'LIVE' : 'STANDBY';
       statusSource = 'haproxy-config';
+      console.log('[server-info] Comparison:', haproxyLiveServer, '===', server, '→', status);
     } else {
+      console.log('[server-info] HAProxy query failed, using fallback');
       if (process.env.SERVER_STATUS) {
         status = process.env.SERVER_STATUS as 'LIVE' | 'STANDBY';
         statusSource = 'env';
