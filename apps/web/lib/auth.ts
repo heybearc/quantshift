@@ -112,6 +112,41 @@ export async function storeRefreshToken(userId: string, token: string, ipAddress
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
+  // Clean up expired sessions before creating new one
+  await prisma.session.deleteMany({
+    where: {
+      userId,
+      expiresAt: {
+        lt: new Date()
+      }
+    }
+  });
+
+  // Enforce max concurrent sessions (keep only 3 most recent)
+  const existingSessions = await prisma.session.findMany({
+    where: {
+      userId,
+      expiresAt: {
+        gt: new Date()
+      }
+    },
+    orderBy: {
+      lastActivityAt: 'desc'
+    }
+  });
+
+  // If user already has 3+ sessions, delete the oldest ones
+  if (existingSessions.length >= 3) {
+    const sessionsToDelete = existingSessions.slice(2); // Keep 2, delete rest (new one will be 3rd)
+    await prisma.session.deleteMany({
+      where: {
+        id: {
+          in: sessionsToDelete.map(s => s.id)
+        }
+      }
+    });
+  }
+
   await prisma.session.create({
     data: {
       userId,
