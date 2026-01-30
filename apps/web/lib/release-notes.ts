@@ -33,29 +33,38 @@ export function getAllReleaseNotes(): ReleaseNote[] {
   const releaseNotes = fileNames
     .filter((fileName: string) => fileName.endsWith('.md') && fileName !== 'README.md')
     .map((fileName: string) => {
-      const slug = fileName.replace(/\.md$/, '');
-      const fullPath = path.join(releaseNotesDirectory, fileName);
-      const fileContents = fs.readFileSync(fullPath, 'utf8');
-      
-      const { data, content } = matter(fileContents);
-      const frontmatter = data as ReleaseNoteFrontmatter;
-      
-      return {
-        version: frontmatter.version,
-        date: frontmatter.date,
-        type: frontmatter.type,
-        content,
-        slug,
-      };
+      try {
+        const slug = fileName.replace(/\.md$/, '');
+        const fullPath = path.join(releaseNotesDirectory, fileName);
+        const fileContents = fs.readFileSync(fullPath, 'utf8');
+        
+        const { data, content } = matter(fileContents);
+        const frontmatter = data as ReleaseNoteFrontmatter;
+        
+        return {
+          version: frontmatter.version || '0.0.0',
+          date: frontmatter.date || new Date().toISOString(),
+          type: frontmatter.type || 'patch',
+          content,
+          slug,
+        };
+      } catch (error) {
+        console.error(`Error reading release note ${fileName}:`, error);
+        return null;
+      }
     })
+    .filter((note): note is ReleaseNote => note !== null)
     .sort((a: ReleaseNote, b: ReleaseNote) => {
       // Sort by version number (descending)
       const versionA = a.version.split('.').map(Number);
       const versionB = b.version.split('.').map(Number);
       
       for (let i = 0; i < 3; i++) {
-        if (versionA[i] !== versionB[i]) {
-          return versionB[i] - versionA[i];
+        const partA = versionA[i] || 0;
+        const partB = versionB[i] || 0;
+        
+        if (partA !== partB) {
+          return partB - partA;
         }
       }
       return 0;
