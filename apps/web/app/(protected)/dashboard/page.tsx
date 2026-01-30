@@ -10,6 +10,10 @@ import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap } from
 import { WinRateCard } from "@/components/dashboard/WinRateCard";
 import { MaxDrawdownCard } from "@/components/dashboard/MaxDrawdownCard";
 import { StrategyCard } from "@/components/dashboard/StrategyCard";
+import { UsersStatsCard } from "@/components/dashboard/admin/UsersStatsCard";
+import { SessionsStatsCard } from "@/components/dashboard/admin/SessionsStatsCard";
+import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
+import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard";
 
 interface BotStatus {
   status: string;
@@ -38,11 +42,37 @@ interface BotMetrics {
   strategySuccessRate: number;
 }
 
+interface AdminStats {
+  users: {
+    total: number;
+    active: number;
+    pending: number;
+    inactive: number;
+  };
+  sessions: {
+    current: number;
+    peakToday: number;
+    avgDuration: number;
+  };
+  auditLogs: {
+    last24h: number;
+    critical: number;
+    warnings: number;
+  };
+  systemHealth: {
+    status: 'healthy' | 'degraded' | 'down';
+    apiResponseTime: number;
+    databaseConnections: number;
+    uptime: number;
+  };
+}
+
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
   const [botMetrics, setBotMetrics] = useState<BotMetrics | null>(null);
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,9 +86,15 @@ export default function DashboardPage() {
     if (user) {
       fetchBotStatus();
       fetchBotMetrics();
+      if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
+        fetchAdminStats();
+      }
       const interval = setInterval(() => {
         fetchBotStatus();
         fetchBotMetrics();
+        if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
+          fetchAdminStats();
+        }
       }, 30000);
       return () => clearInterval(interval);
     }
@@ -90,6 +126,18 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Error fetching bot metrics:", err);
+    }
+  };
+
+  const fetchAdminStats = async () => {
+    try {
+      const response = await fetch("/api/admin/stats");
+      if (response.ok) {
+        const data = await response.json();
+        setAdminStats(data);
+      }
+    } catch (err) {
+      console.error("Error fetching admin stats:", err);
     }
   };
 
@@ -275,6 +323,38 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Admin Statistics Section */}
+                {(user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN') && adminStats && (
+                  <>
+                    <div className="mt-8">
+                      <h2 className="text-2xl font-bold text-white mb-4">System Overview</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <UsersStatsCard
+                          total={adminStats.users.total}
+                          active={adminStats.users.active}
+                          pending={adminStats.users.pending}
+                          inactive={adminStats.users.inactive}
+                        />
+                        <SessionsStatsCard
+                          current={adminStats.sessions.current}
+                          peakToday={adminStats.sessions.peakToday}
+                          avgDuration={adminStats.sessions.avgDuration}
+                        />
+                        <AuditStatsCard
+                          last24h={adminStats.auditLogs.last24h}
+                          critical={adminStats.auditLogs.critical}
+                          warnings={adminStats.auditLogs.warnings}
+                        />
+                        <SystemHealthCard
+                          status={adminStats.systemHealth.status}
+                          apiResponseTime={adminStats.systemHealth.apiResponseTime}
+                          databaseConnections={adminStats.systemHealth.databaseConnections}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Quick Actions */}
                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
