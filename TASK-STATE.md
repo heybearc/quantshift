@@ -1,8 +1,8 @@
 # QuantShift Task State
 
-**Last updated:** 2026-01-30 (11:13am)  
+**Last updated:** 2026-01-31 (6:23am)  
 **Current branch:** main  
-**Working on:** Dashboard enhancements and system improvements
+**Working on:** Dashboard testing and deployment preparation
 
 ---
 
@@ -10,9 +10,18 @@
 **Dashboard Statistics Cards & Session Management** - ✅ COMPLETE
 
 ### What I'm doing right now
-Completed Phase 1-3 of dashboard enhancements (trading metrics, admin statistics, trend components). Implemented industry-standard session management to fix excessive session accumulation. Fixed release notes API errors. All features deployed to STANDBY and working correctly.
+Dashboard enhancements (Phase 1-3) are complete and deployed to STANDBY. Session management implemented and working. Ready to test on STANDBY and deploy to LIVE. Next priority is validating all dashboard features work correctly, then switching traffic to STANDBY to make it LIVE.
 
-### Today's Accomplishments (2026-01-30)
+### Today's Accomplishments (2026-01-31)
+- ✅ **Governance Sync**
+  - Synced Cloudy-Work submodule (6 new commits)
+  - Updated HAProxy ACL detection fix
+  - Pulled BNI toolkit exception policy
+  - Pulled D-020 container subnet requirement
+  - Pulled skills setup guide
+  - No promotions to control plane today
+
+### Yesterday's Accomplishments (2026-01-30)
 - ✅ **Phase 1: Enhanced Trading Metrics Cards**
   - Created Win Rate Card (shows W/L ratio, percentage)
   - Created Max Drawdown Card (severity-based colors)
@@ -190,25 +199,28 @@ See `/ROADMAP.md` for comprehensive roadmap.
 
 ## Exact Next Command
 
-**Dashboard enhancements deployed to STANDBY. Next priority:**
+**Dashboard enhancements are on STANDBY and ready for deployment.**
 
-**Option 1: Test and deploy to LIVE**
+**Next Session Priority: Test and Release Dashboard**
+
+1. **Test STANDBY environment** (http://10.92.3.30:3001 - Green)
+   - Verify all dashboard cards display correctly
+   - Test admin statistics cards (Users, Sessions, Audit, System Health)
+   - Test trading metrics cards (Win Rate, Max Drawdown, Strategy)
+   - Verify session management (max 3 sessions per user)
+   - Check release notes page works
+
+2. **Run /release workflow**
+   - Switch traffic from Blue (LIVE) to Green (STANDBY)
+   - Verify new LIVE environment works correctly
+   - Confirm LIVE/STANDBY indicator updates
+
+3. **After successful release:**
+   - Run /sync to update Blue with Green's code
+   - Consider /bump workflow testing as next feature
+
+**Recommended first command:**
 ```bash
-# Test all dashboard features on STANDBY
-# Run /release to switch traffic to STANDBY
-# Verify LIVE deployment
+# Open STANDBY in browser to test dashboard
+open http://10.92.3.30:3001
 ```
-
-**Option 2: Test /bump workflow**
-```bash
-# Make a small change to QuantShift
-# Run /bump workflow
-# Verify it works with blue-green deployment
-```
-
-**Option 3: Add historical data tracking**
-- Create DailyMetrics table for trend data
-- Add background job to record daily stats
-- Integrate sparkline charts into cards
-
-**Recommended:** Test dashboard on STANDBY, then deploy to LIVE when ready.
