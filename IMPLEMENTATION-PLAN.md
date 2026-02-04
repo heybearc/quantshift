@@ -86,13 +86,15 @@ None currently identified.
 
 **Items explicitly deferred with rationale:**
 
-- [ ] Roadmap consolidation - **Deferred because:** Consolidated into IMPLEMENTATION-PLAN.md - **Revisit:** Archive old roadmap files after migration
-- [ ] Planning documents review - **Deferred because:** Consolidated into IMPLEMENTATION-PLAN.md - **Revisit:** Archive completed planning docs
+None currently. All deferred items have been completed.
 
 ---
 
 ## ✅ Recently Completed (Last 30 Days)
 
+- [x] D-022 migration (single implementation plan standard) - Date: 2026-02-02
+- [x] Document archival (6 historical planning docs) - Date: 2026-02-02
+- [x] Governance sync (D-022 policy update) - Date: 2026-02-02
 - [x] Dashboard statistics cards (Phase 1-3) - Date: 2026-01-30
 - [x] Session management (max 3 per user) - Date: 2026-01-30
 - [x] Admin stats API with JWT auth - Date: 2026-01-30
