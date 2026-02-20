@@ -161,8 +161,28 @@ class QuantShiftEquityBotV2:
         if self.db_writer:
             self.db_writer.disconnect()
     
+    def _ensure_db_connection(self):
+        """Ensure db_writer connection is alive, reconnect if needed."""
+        if not self.db_writer:
+            return False
+        try:
+            # Test connection with a simple query
+            cursor = self.db_writer.conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+            return True
+        except Exception:
+            try:
+                self.db_writer.connect()
+                return True
+            except Exception as e:
+                logger.warning(f"Could not reconnect to database: {e}")
+                return False
+
     def sync_trades_to_database(self):
-        """Sync recent trades from Alpaca to PostgreSQL."""
+        """Sync recent trades from Alpaca to PostgreSQL via db_writer connection."""
+        if not self.db_writer or not self._ensure_db_connection():
+            return 0
         try:
             from datetime import timedelta
             
@@ -175,51 +195,47 @@ class QuantShiftEquityBotV2:
             orders = self.alpaca_client.get_orders(filter=request)
             
             new_trades = 0
+            cursor = self.db_writer.conn.cursor()
             
-            with get_db().session() as db:
-                for order in orders:
-                    # Skip if already processed
-                    if order.id == self.last_processed_order_id:
-                        break
-                    
-                    # Check if trade already exists
-                    existing = db.query(Trade).filter(Trade.order_id == order.id).first()
-                    if existing:
-                        continue
-                    
-                    # Calculate costs
-                    fill_price = float(order.filled_avg_price) if order.filled_avg_price else 0
-                    quantity = float(order.filled_qty)
-                    slippage_cost = fill_price * quantity * (self.slippage_bps / 10000)
-                    total_value = fill_price * quantity
-                    
-                    # Create trade record
-                    trade = Trade(
-                        bot_name=self.bot_name,
-                        symbol=order.symbol,
-                        side=order.side.value,
-                        quantity=quantity,
-                        price=fill_price,
-                        total_value=total_value,
-                        commission=self.commission_per_trade,
-                        order_id=order.id,
-                        status=order.status.value,
-                        timestamp=order.filled_at or order.created_at,
-                        metadata={
-                            'order_type': order.type.value,
-                            'time_in_force': order.time_in_force.value,
-                            'estimated_slippage': slippage_cost,
-                            'paper_trading': True,
-                            'strategy': self.strategy.name
-                        }
-                    )
-                    
-                    db.add(trade)
-                    new_trades += 1
-                    logger.info(f"Synced trade: {order.side.value} {quantity} {order.symbol} @ ${fill_price:.2f}")
+            for order in orders:
+                # Skip if already processed
+                if order.id == self.last_processed_order_id:
+                    break
                 
-                if new_trades > 0:
-                    logger.info(f"Synced {new_trades} new trades to database")
+                # Only sync filled orders
+                if not order.filled_avg_price or not order.filled_qty:
+                    continue
+                
+                # Check if trade already exists
+                cursor.execute('SELECT id FROM "Trade" WHERE "orderId" = %s', (str(order.id),))
+                if cursor.fetchone():
+                    continue
+                
+                fill_price = float(order.filled_avg_price)
+                quantity = float(order.filled_qty)
+                
+                cursor.execute("""
+                    INSERT INTO "Trade" (
+                        "botName", symbol, side, quantity, "entryPrice",
+                        status, strategy, "orderId", "enteredAt", "createdAt", "updatedAt"
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                """, (
+                    self.bot_name,
+                    order.symbol,
+                    order.side.value.upper(),
+                    quantity,
+                    fill_price,
+                    'CLOSED',
+                    self.strategy.name,
+                    str(order.id),
+                    order.filled_at or order.created_at,
+                ))
+                new_trades += 1
+                logger.info(f"Synced trade: {order.side.value} {quantity} {order.symbol} @ ${fill_price:.2f}")
+            
+            if new_trades > 0:
+                self.db_writer.conn.commit()
+                logger.info(f"Synced {new_trades} new trades to database")
             
             # Update last processed order
             if orders:
@@ -229,6 +245,10 @@ class QuantShiftEquityBotV2:
             
         except Exception as e:
             logger.error(f"Error syncing trades: {e}", exc_info=True)
+            try:
+                self.db_writer.conn.rollback()
+            except Exception:
+                pass
             return 0
     
     def update_state(self):
@@ -286,11 +306,10 @@ class QuantShiftEquityBotV2:
         self.state_manager.heartbeat()
         
         # Also write to DB so the dashboard shows RUNNING
-        if self.db_writer:
+        if self.db_writer and self._ensure_db_connection():
             try:
                 account = self.executor.get_account()
                 positions = self.executor.get_positions()
-                # Get trade count via psycopg2 (same connection as db_writer)
                 trades_count = 0
                 try:
                     cursor = self.db_writer.conn.cursor()
