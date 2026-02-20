@@ -51,26 +51,26 @@ class DatabaseWriter:
             
             # Upsert bot status
             cursor.execute("""
-                INSERT INTO "BotStatus" (
-                    "botName", status, "lastHeartbeat", "accountEquity", 
-                    "accountCash", "buyingPower", "portfolioValue",
-                    "unrealizedPl", "realizedPl", "positionsCount", "tradesCount",
-                    "createdAt", "updatedAt"
+                INSERT INTO bot_status (
+                    bot_name, status, last_heartbeat, account_equity,
+                    account_cash, buying_power, portfolio_value,
+                    unrealized_pl, realized_pl, positions_count, trades_count,
+                    created_at, updated_at
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT ("botName") 
+                ON CONFLICT (bot_name)
                 DO UPDATE SET
                     status = EXCLUDED.status,
-                    "lastHeartbeat" = EXCLUDED."lastHeartbeat",
-                    "accountEquity" = EXCLUDED."accountEquity",
-                    "accountCash" = EXCLUDED."accountCash",
-                    "buyingPower" = EXCLUDED."buyingPower",
-                    "portfolioValue" = EXCLUDED."portfolioValue",
-                    "unrealizedPl" = EXCLUDED."unrealizedPl",
-                    "realizedPl" = EXCLUDED."realizedPl",
-                    "positionsCount" = EXCLUDED."positionsCount",
-                    "tradesCount" = EXCLUDED."tradesCount",
-                    "updatedAt" = EXCLUDED."updatedAt"
+                    last_heartbeat = EXCLUDED.last_heartbeat,
+                    account_equity = EXCLUDED.account_equity,
+                    account_cash = EXCLUDED.account_cash,
+                    buying_power = EXCLUDED.buying_power,
+                    portfolio_value = EXCLUDED.portfolio_value,
+                    unrealized_pl = EXCLUDED.unrealized_pl,
+                    realized_pl = EXCLUDED.realized_pl,
+                    positions_count = EXCLUDED.positions_count,
+                    trades_count = EXCLUDED.trades_count,
+                    updated_at = EXCLUDED.updated_at
             """, (
                 self.bot_name,
                 'RUNNING',
@@ -110,11 +110,11 @@ class DatabaseWriter:
             cursor = self.conn.cursor()
             
             cursor.execute("""
-                INSERT INTO "Trade" (
-                    "botName", symbol, side, quantity, "entryPrice",
-                    "stopLoss", "takeProfit", status, strategy,
-                    "signalType", "entryReason", "enteredAt",
-                    "createdAt", "updatedAt"
+                INSERT INTO trades (
+                    bot_name, symbol, side, quantity, entry_price,
+                    stop_loss, take_profit, status, strategy,
+                    signal_type, entry_reason, entered_at,
+                    created_at, updated_at
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
@@ -161,7 +161,7 @@ class DatabaseWriter:
             
             # Get trade details
             cursor.execute("""
-                SELECT * FROM "Trade" WHERE id = %s
+                SELECT * FROM trades WHERE id = %s
             """, (trade_id,))
             
             trade = cursor.fetchone()
@@ -177,19 +177,19 @@ class DatabaseWriter:
                 pnl = (float(exit_price) - entry_price) * quantity
             else:  # SELL/SHORT
                 pnl = (entry_price - float(exit_price)) * quantity
-                
+
             pnl_percent = (pnl / (entry_price * quantity)) * 100
             
             # Update trade
             cursor.execute("""
-                UPDATE "Trade"
-                SET "exitPrice" = %s,
+                UPDATE trades
+                SET exit_price = %s,
                     status = %s,
-                    "exitReason" = %s,
-                    "exitedAt" = %s,
+                    exit_reason = %s,
+                    exited_at = %s,
                     pnl = %s,
-                    "pnlPercent" = %s,
-                    "updatedAt" = %s
+                    pnl_percent = %s,
+                    updated_at = %s
                 WHERE id = %s
             """, (
                 float(exit_price),
@@ -221,18 +221,18 @@ class DatabaseWriter:
             
             # Delete existing positions for this bot
             cursor.execute("""
-                DELETE FROM "Position" WHERE "botName" = %s
+                DELETE FROM positions WHERE bot_name = %s
             """, (self.bot_name,))
-            
+
             # Insert current positions
             for pos in positions:
                 cursor.execute("""
-                    INSERT INTO "Position" (
-                        "botName", symbol, quantity, "entryPrice",
-                        "currentPrice", "marketValue", "costBasis",
-                        "unrealizedPl", "unrealizedPlPct", "stopLoss",
-                        "takeProfit", strategy, "enteredAt",
-                        "createdAt", "updatedAt"
+                    INSERT INTO positions (
+                        bot_name, symbol, quantity, entry_price,
+                        current_price, market_value, cost_basis,
+                        unrealized_pl, unrealized_pl_pct, stop_loss,
+                        take_profit, strategy, entered_at,
+                        created_at, updated_at
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
@@ -289,23 +289,23 @@ class DatabaseWriter:
             
             # Insert or update daily metrics
             cursor.execute("""
-                INSERT INTO "PerformanceMetrics" (
-                    "botName", date, "totalTrades", "winningTrades",
-                    "losingTrades", "winRate", "profitFactor",
-                    "sharpeRatio", "maxDrawdown", "totalPnl",
-                    "totalPnlPct", "createdAt", "updatedAt"
+                INSERT INTO performance_metrics (
+                    bot_name, date, total_trades, winning_trades,
+                    losing_trades, win_rate, profit_factor,
+                    sharpe_ratio, max_drawdown, total_pnl,
+                    total_pnl_pct, created_at, updated_at
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT ("botName", date)
+                ON CONFLICT (bot_name, date)
                 DO UPDATE SET
-                    "totalTrades" = EXCLUDED."totalTrades",
-                    "winningTrades" = EXCLUDED."winningTrades",
-                    "losingTrades" = EXCLUDED."losingTrades",
-                    "winRate" = EXCLUDED."winRate",
-                    "profitFactor" = EXCLUDED."profitFactor",
-                    "totalPnl" = EXCLUDED."totalPnl",
-                    "totalPnlPct" = EXCLUDED."totalPnlPct",
-                    "updatedAt" = EXCLUDED."updatedAt"
+                    total_trades = EXCLUDED.total_trades,
+                    winning_trades = EXCLUDED.winning_trades,
+                    losing_trades = EXCLUDED.losing_trades,
+                    win_rate = EXCLUDED.win_rate,
+                    profit_factor = EXCLUDED.profit_factor,
+                    total_pnl = EXCLUDED.total_pnl,
+                    total_pnl_pct = EXCLUDED.total_pnl_pct,
+                    updated_at = EXCLUDED.updated_at
             """, (
                 self.bot_name,
                 datetime.now().date(),

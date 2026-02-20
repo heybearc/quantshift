@@ -206,8 +206,11 @@ class QuantShiftEquityBotV2:
                 if not order.filled_avg_price or not order.filled_qty:
                     continue
                 
-                # Check if trade already exists
-                cursor.execute('SELECT id FROM "Trade" WHERE "orderId" = %s', (str(order.id),))
+                # Check if trade already exists (no order_id col, use symbol+entered_at)
+                cursor.execute(
+                    'SELECT id FROM trades WHERE bot_name = %s AND symbol = %s AND entered_at = %s',
+                    (self.bot_name, order.symbol, order.filled_at or order.created_at)
+                )
                 if cursor.fetchone():
                     continue
                 
@@ -215,10 +218,10 @@ class QuantShiftEquityBotV2:
                 quantity = float(order.filled_qty)
                 
                 cursor.execute("""
-                    INSERT INTO "Trade" (
-                        "botName", symbol, side, quantity, "entryPrice",
-                        status, strategy, "orderId", "enteredAt", "createdAt", "updatedAt"
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    INSERT INTO trades (
+                        bot_name, symbol, side, quantity, entry_price,
+                        status, strategy, entered_at, created_at, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                 """, (
                     self.bot_name,
                     order.symbol,
@@ -227,7 +230,6 @@ class QuantShiftEquityBotV2:
                     fill_price,
                     'CLOSED',
                     self.strategy.name,
-                    str(order.id),
                     order.filled_at or order.created_at,
                 ))
                 new_trades += 1
@@ -313,7 +315,7 @@ class QuantShiftEquityBotV2:
                 trades_count = 0
                 try:
                     cursor = self.db_writer.conn.cursor()
-                    cursor.execute('SELECT COUNT(*) FROM "Trade" WHERE "botName" = %s', (self.bot_name,))
+                    cursor.execute('SELECT COUNT(*) FROM trades WHERE bot_name = %s', (self.bot_name,))
                     trades_count = cursor.fetchone()[0]
                 except Exception:
                     pass
