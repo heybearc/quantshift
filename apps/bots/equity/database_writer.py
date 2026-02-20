@@ -228,28 +228,30 @@ class DatabaseWriter:
 
             # Insert current positions
             for pos in positions:
+                cost_basis = pos.get('cost_basis', pos.get('market_value', 0))
                 cursor.execute("""
                     INSERT INTO positions (
-                        bot_name, symbol, quantity, entry_price,
+                        id, bot_name, symbol, quantity, entry_price,
                         current_price, market_value, cost_basis,
                         unrealized_pl, unrealized_pl_pct, stop_loss,
                         take_profit, strategy, entered_at,
                         created_at, updated_at
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
+                    str(uuid.uuid4()),
                     self.bot_name,
                     pos['symbol'],
                     float(pos['quantity']),
                     float(pos['entry_price']),
                     float(pos['current_price']),
                     float(pos['market_value']),
-                    float(pos['cost_basis']),
+                    float(cost_basis),
                     float(pos['unrealized_pl']),
-                    float(pos['unrealized_plpc']) * 100,  # Convert to percentage
-                    None,  # stop_loss - add if available
-                    None,  # take_profit - add if available
-                    'MA_CROSSOVER',
+                    float(pos.get('unrealized_plpc', pos.get('unrealized_pl_pct', 0))) * 100,
+                    pos.get('stop_loss'),
+                    pos.get('take_profit'),
+                    pos.get('strategy', 'MA_CROSSOVER'),
                     datetime.now(),
                     datetime.now(),
                     datetime.now()

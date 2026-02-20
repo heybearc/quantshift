@@ -23,7 +23,7 @@ class CryptoStrategy:
         
         # Convert to DataFrame
         df = pd.DataFrame(candles)
-        df['start'] = pd.to_datetime(df['start'], unit='s')
+        df['start'] = pd.to_datetime(pd.to_numeric(df['start'], errors='coerce'), unit='s')
         df = df.sort_values('start')
         
         # Convert to numeric
