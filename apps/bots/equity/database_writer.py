@@ -5,6 +5,7 @@ Writes bot data to PostgreSQL for the Next.js admin dashboard
 """
 import os
 import asyncio
+import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import psycopg2
@@ -52,12 +53,12 @@ class DatabaseWriter:
             # Upsert bot status
             cursor.execute("""
                 INSERT INTO bot_status (
-                    bot_name, status, last_heartbeat, account_equity,
+                    id, bot_name, status, last_heartbeat, account_equity,
                     account_cash, buying_power, portfolio_value,
                     unrealized_pl, realized_pl, positions_count, trades_count,
                     created_at, updated_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (bot_name)
                 DO UPDATE SET
                     status = EXCLUDED.status,
@@ -72,6 +73,7 @@ class DatabaseWriter:
                     trades_count = EXCLUDED.trades_count,
                     updated_at = EXCLUDED.updated_at
             """, (
+                str(uuid.uuid4()),
                 self.bot_name,
                 'RUNNING',
                 datetime.now(),
@@ -170,7 +172,7 @@ class DatabaseWriter:
                 return
                 
             # Calculate P&L
-            entry_price = float(trade['entryPrice'])
+            entry_price = float(trade['entry_price'])
             quantity = float(trade['quantity'])
             
             if trade['side'] == 'BUY':
