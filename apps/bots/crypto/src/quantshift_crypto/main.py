@@ -2,8 +2,9 @@
 
 import os
 import sys
+import json
+import logging
 from dotenv import load_dotenv
-import structlog
 
 from quantshift_crypto.bot import CryptoBot
 
@@ -11,35 +12,53 @@ from quantshift_crypto.bot import CryptoBot
 load_dotenv()
 
 # Configure logging
-structlog.configure(
-    processors=[
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.add_log_level,
-        structlog.processors.JSONRenderer()
-    ]
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logger = logging.getLogger(__name__)
 
-logger = structlog.get_logger()
+
+def load_credentials():
+    """
+    Load Coinbase API credentials.
+    Supports two formats:
+      1. CDP JSON key file: COINBASE_KEY_FILE=/path/to/cdp_api_key.json
+         File contains {"name": "...", "privateKey": "..."}
+      2. Environment variables: COINBASE_API_KEY + COINBASE_API_SECRET
+    """
+    key_file = os.getenv("COINBASE_KEY_FILE")
+    if key_file and os.path.exists(key_file):
+        with open(key_file, "r") as f:
+            data = json.load(f)
+        api_key = data.get("name")
+        api_secret = data.get("privateKey")
+        logger.info(f"Loaded credentials from CDP key file: {key_file}")
+        return api_key, api_secret
+
+    api_key = os.getenv("COINBASE_API_KEY")
+    api_secret = os.getenv("COINBASE_API_SECRET")
+    return api_key, api_secret
 
 
 def main() -> None:
     """Main function."""
-    # Get API credentials from environment
-    api_key = os.getenv("COINBASE_API_KEY")
-    api_secret = os.getenv("COINBASE_API_SECRET")
-    
+    api_key, api_secret = load_credentials()
+
     if not api_key or not api_secret:
-        logger.error("missing_credentials", message="COINBASE_API_KEY and COINBASE_API_SECRET required")
+        logger.error(
+            "Missing Coinbase credentials. Set COINBASE_KEY_FILE or "
+            "COINBASE_API_KEY + COINBASE_API_SECRET environment variables."
+        )
         sys.exit(1)
-    
-    # Initialize and run bot
+
     try:
         bot = CryptoBot(api_key=api_key, api_secret=api_secret)
         bot.run()
     except KeyboardInterrupt:
-        logger.info("bot_stopped_by_user")
+        logger.info("Bot stopped by user")
     except Exception as e:
-        logger.error("bot_failed", error=str(e))
+        logger.error(f"Bot failed: {e}", exc_info=True)
         sys.exit(1)
 
 

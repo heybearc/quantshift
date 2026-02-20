@@ -13,7 +13,7 @@ import time
 import signal
 import logging
 import yaml
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # Add the core package to the path
@@ -80,17 +80,12 @@ class QuantShiftEquityBotV2:
         # Initialize Alpaca executor
         symbols = self.config.get('strategy', {}).get('symbols', ['SPY'])
         
-        # Get simulated capital if configured
-        simulated_capital = None
-        if self.config.get('risk_management', {}).get('use_simulated_capital', False):
-            simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
-        
         self.executor = AlpacaExecutor(
             strategy=self.strategy,
             alpaca_client=self.alpaca_client,
             data_client=self.data_client,
             symbols=symbols,
-            simulated_capital=simulated_capital
+            simulated_capital=None  # Use real Alpaca account equity
         )
         
         # Trading cost assumptions
@@ -117,7 +112,47 @@ class QuantShiftEquityBotV2:
         logger.info(f"Strategy: {self.strategy.name}")
         logger.info(f"Symbols: {symbols}")
         logger.info(f"Paper Trading: Enabled")
+        
+        # Seed bot_config table so dashboard shows strategy name
+        self._seed_bot_config()
     
+    def _seed_bot_config(self):
+        """Ensure bot_config table has an entry so dashboard shows strategy name."""
+        if not self.db_writer:
+            return
+        try:
+            cursor = self.db_writer.conn.cursor()
+            symbols = self.config.get('strategy', {}).get('symbols', ['SPY', 'QQQ'])
+            import uuid as _uuid
+            cursor.execute("""
+                INSERT INTO bot_config (
+                    id, name, strategy, symbols, enabled, paper_trading,
+                    risk_per_trade, max_position_size, max_portfolio_heat,
+                    created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                ON CONFLICT (name) DO UPDATE SET
+                    strategy = EXCLUDED.strategy,
+                    updated_at = NOW()
+            """, (
+                str(_uuid.uuid4()),
+                self.bot_name,
+                self.strategy.name,
+                symbols,
+                True,
+                True,
+                self.config.get('risk_management', {}).get('risk_per_trade', 0.01),
+                self.config.get('risk_management', {}).get('max_position_size', 0.20),
+                self.config.get('risk_management', {}).get('max_portfolio_heat', 0.10),
+            ))
+            self.db_writer.conn.commit()
+            logger.info(f"Bot config seeded: strategy={self.strategy.name}")
+        except Exception as e:
+            logger.warning(f"Could not seed bot_config: {e}")
+            try:
+                self.db_writer.conn.rollback()
+            except Exception:
+                pass
+
     def _load_config(self, config_path: str) -> dict:
         """Load configuration from YAML file."""
         try:
@@ -184,13 +219,11 @@ class QuantShiftEquityBotV2:
         if not self.db_writer or not self._ensure_db_connection():
             return 0
         try:
-            from datetime import timedelta
-            
             # Get orders from last 24 hours
             request = GetOrdersRequest(
                 status=QueryOrderStatus.CLOSED,
                 limit=100,
-                after=datetime.utcnow() - timedelta(days=1)
+                after=datetime.now(timezone.utc) - timedelta(days=1)
             )
             orders = self.alpaca_client.get_orders(filter=request)
             
@@ -260,21 +293,13 @@ class QuantShiftEquityBotV2:
             account = self.executor.get_account()
             positions = self.executor.get_positions()
             
-            # Use simulated capital if configured
-            if self.config.get('risk_management', {}).get('use_simulated_capital', False):
-                simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
-                account.equity = simulated_capital
-                account.cash = simulated_capital
-                account.buying_power = simulated_capital
-                account.portfolio_value = simulated_capital
-            
             # Calculate total unrealized P&L
             total_unrealized_pl = sum(p.unrealized_pl for p in positions)
             
             state = {
                 'status': 'running',
                 'mode': 'paper',
-                'last_update': datetime.utcnow().isoformat(),
+                'last_update': datetime.now(timezone.utc).isoformat(),
                 'strategy': self.strategy.name,
                 'strategy_config': self.strategy.config,
                 'account_balance': account.cash,
@@ -319,6 +344,7 @@ class QuantShiftEquityBotV2:
                     trades_count = cursor.fetchone()[0]
                 except Exception:
                     pass
+                pos_dicts = [p.to_dict() for p in positions]
                 self.db_writer.update_status(
                     account_info={
                         'equity': account.equity,
@@ -326,9 +352,12 @@ class QuantShiftEquityBotV2:
                         'buying_power': account.buying_power,
                         'portfolio_value': account.portfolio_value,
                     },
-                    positions=[p.to_dict() for p in positions],
+                    positions=pos_dicts,
                     trades_count=trades_count
                 )
+                # Sync live positions to positions table
+                if pos_dicts:
+                    self.db_writer.update_positions(pos_dicts)
             except Exception as e:
                 logger.warning(f"Could not write DB heartbeat: {e}", exc_info=True)
     
@@ -346,11 +375,6 @@ class QuantShiftEquityBotV2:
                 return
             
             logger.info("Running strategy cycle...")
-            
-            # Override account equity with simulated capital if configured
-            if self.config.get('risk_management', {}).get('use_simulated_capital', False):
-                simulated_capital = self.config.get('risk_management', {}).get('simulated_capital', 1000.0)
-                logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
             
             results = self.executor.run_strategy_cycle()
             
