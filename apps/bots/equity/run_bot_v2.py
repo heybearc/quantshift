@@ -290,9 +290,14 @@ class QuantShiftEquityBotV2:
             try:
                 account = self.executor.get_account()
                 positions = self.executor.get_positions()
+                # Get trade count via psycopg2 (same connection as db_writer)
                 trades_count = 0
-                with get_db().session() as db:
-                    trades_count = db.query(Trade).filter(Trade.bot_name == self.bot_name).count()
+                try:
+                    cursor = self.db_writer.conn.cursor()
+                    cursor.execute('SELECT COUNT(*) FROM "Trade" WHERE "botName" = %s', (self.bot_name,))
+                    trades_count = cursor.fetchone()[0]
+                except Exception:
+                    pass
                 self.db_writer.update_status(
                     account_info={
                         'equity': account.equity,
