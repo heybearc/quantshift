@@ -24,6 +24,9 @@ from quantshift_core.database import get_db
 from quantshift_core.models import Trade
 from quantshift_core.strategies import MACrossoverStrategy
 
+# Admin platform integration
+from database_writer import DatabaseWriter
+
 # Alpaca SDK
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
@@ -97,6 +100,15 @@ class QuantShiftEquityBotV2:
         # Track last processed order
         self.last_processed_order_id = None
         
+        # Initialize database writer for admin platform heartbeats
+        self.db_writer = DatabaseWriter(bot_name=self.bot_name)
+        try:
+            self.db_writer.connect()
+            logger.info("Connected to admin platform database")
+        except Exception as e:
+            logger.warning(f"Could not connect to admin platform database: {e}")
+            self.db_writer = None
+        
         # Set up signal handlers
         signal.signal(signal.SIGINT, self.handle_shutdown)
         signal.signal(signal.SIGTERM, self.handle_shutdown)
@@ -146,6 +158,8 @@ class QuantShiftEquityBotV2:
         """Handle graceful shutdown."""
         logger.info(f"Received signal {signum}, shutting down gracefully...")
         self.running = False
+        if self.db_writer:
+            self.db_writer.disconnect()
     
     def sync_trades_to_database(self):
         """Sync recent trades from Alpaca to PostgreSQL."""
@@ -160,59 +174,57 @@ class QuantShiftEquityBotV2:
             )
             orders = self.alpaca_client.get_orders(filter=request)
             
-            db = next(get_db())
             new_trades = 0
             
-            for order in orders:
-                # Skip if already processed
-                if order.id == self.last_processed_order_id:
-                    break
+            with get_db().session() as db:
+                for order in orders:
+                    # Skip if already processed
+                    if order.id == self.last_processed_order_id:
+                        break
+                    
+                    # Check if trade already exists
+                    existing = db.query(Trade).filter(Trade.order_id == order.id).first()
+                    if existing:
+                        continue
+                    
+                    # Calculate costs
+                    fill_price = float(order.filled_avg_price) if order.filled_avg_price else 0
+                    quantity = float(order.filled_qty)
+                    slippage_cost = fill_price * quantity * (self.slippage_bps / 10000)
+                    total_value = fill_price * quantity
+                    
+                    # Create trade record
+                    trade = Trade(
+                        bot_name=self.bot_name,
+                        symbol=order.symbol,
+                        side=order.side.value,
+                        quantity=quantity,
+                        price=fill_price,
+                        total_value=total_value,
+                        commission=self.commission_per_trade,
+                        order_id=order.id,
+                        status=order.status.value,
+                        timestamp=order.filled_at or order.created_at,
+                        metadata={
+                            'order_type': order.type.value,
+                            'time_in_force': order.time_in_force.value,
+                            'estimated_slippage': slippage_cost,
+                            'paper_trading': True,
+                            'strategy': self.strategy.name
+                        }
+                    )
+                    
+                    db.add(trade)
+                    new_trades += 1
+                    logger.info(f"Synced trade: {order.side.value} {quantity} {order.symbol} @ ${fill_price:.2f}")
                 
-                # Check if trade already exists
-                existing = db.query(Trade).filter(Trade.order_id == order.id).first()
-                if existing:
-                    continue
-                
-                # Calculate costs
-                fill_price = float(order.filled_avg_price) if order.filled_avg_price else 0
-                quantity = float(order.filled_qty)
-                slippage_cost = fill_price * quantity * (self.slippage_bps / 10000)
-                total_value = fill_price * quantity
-                
-                # Create trade record
-                trade = Trade(
-                    bot_name=self.bot_name,
-                    symbol=order.symbol,
-                    side=order.side.value,
-                    quantity=quantity,
-                    price=fill_price,
-                    total_value=total_value,
-                    commission=self.commission_per_trade,
-                    order_id=order.id,
-                    status=order.status.value,
-                    timestamp=order.filled_at or order.created_at,
-                    metadata={
-                        'order_type': order.type.value,
-                        'time_in_force': order.time_in_force.value,
-                        'estimated_slippage': slippage_cost,
-                        'paper_trading': True,
-                        'strategy': self.strategy.name
-                    }
-                )
-                
-                db.add(trade)
-                new_trades += 1
-                logger.info(f"Synced trade: {order.side.value} {quantity} {order.symbol} @ ${fill_price:.2f}")
-            
-            if new_trades > 0:
-                db.commit()
-                logger.info(f"Synced {new_trades} new trades to database")
+                if new_trades > 0:
+                    logger.info(f"Synced {new_trades} new trades to database")
             
             # Update last processed order
             if orders:
                 self.last_processed_order_id = orders[0].id
             
-            db.close()
             return new_trades
             
         except Exception as e:
@@ -270,8 +282,29 @@ class QuantShiftEquityBotV2:
             logger.error(f"Error updating state: {e}", exc_info=True)
     
     def send_heartbeat(self):
-        """Send heartbeat to Redis."""
+        """Send heartbeat to Redis and PostgreSQL bot_status table."""
         self.state_manager.heartbeat()
+        
+        # Also write to DB so the dashboard shows RUNNING
+        if self.db_writer:
+            try:
+                account = self.executor.get_account()
+                positions = self.executor.get_positions()
+                trades_count = 0
+                with get_db().session() as db:
+                    trades_count = db.query(Trade).filter(Trade.bot_name == self.bot_name).count()
+                self.db_writer.update_status(
+                    account_info={
+                        'equity': account.equity,
+                        'balance': account.cash,
+                        'buying_power': account.buying_power,
+                        'portfolio_value': account.portfolio_value,
+                    },
+                    positions=[p.to_dict() for p in positions],
+                    trades_count=trades_count
+                )
+            except Exception as e:
+                logger.warning(f"Could not write DB heartbeat: {e}")
     
     def run_strategy(self):
         """Run strategy cycle to generate and execute signals."""
