@@ -330,7 +330,7 @@ class QuantShiftEquityBotV2:
                     trades_count=trades_count
                 )
             except Exception as e:
-                logger.warning(f"Could not write DB heartbeat: {e}")
+                logger.warning(f"Could not write DB heartbeat: {e}", exc_info=True)
     
     def run_strategy(self):
         """Run strategy cycle to generate and execute signals."""
