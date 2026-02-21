@@ -22,7 +22,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 from quantshift_core.state_manager import StateManager
 from quantshift_core.database import get_db
 from quantshift_core.models import Trade
-from quantshift_core.strategies import MeanReversion
+from quantshift_core.strategies import BollingerBounce
 
 # Admin platform integration
 from database_writer import DatabaseWriter
@@ -72,13 +72,13 @@ class QuantShiftEquityBotV2:
         
         # Initialize strategy (broker-agnostic) - Bollinger Band Bounce
         # Using winning backtest strategy: 58.6% win rate, 37.57% return over 3 years
-        self.strategy = MeanReversion(
-            capital_allocation=1.0,
+        self.strategy = BollingerBounce(
             rsi_period=14,
             rsi_entry_threshold=40,
             bb_period=20,
             bb_std=2.0,
-            atr_multiplier=1.5
+            atr_period=14,
+            atr_sl_multiplier=1.5
         )
         
         # Initialize Alpaca executor

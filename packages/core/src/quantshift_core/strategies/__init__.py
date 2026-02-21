@@ -7,6 +7,7 @@ and for backtesting.
 
 from .base_strategy import BaseStrategy, Signal, SignalType, Account, Position
 from .ma_crossover import MACrossoverStrategy
+from .bollinger_bounce import BollingerBounce
 
 __all__ = [
     'BaseStrategy',
@@ -15,4 +16,5 @@ __all__ = [
     'Account',
     'Position',
     'MACrossoverStrategy',
+    'BollingerBounce',
 ]
