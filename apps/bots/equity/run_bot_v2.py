@@ -72,14 +72,16 @@ class QuantShiftEquityBotV2:
         
         # Initialize strategy (broker-agnostic) - Bollinger Band Bounce
         # Using winning backtest strategy: 58.6% win rate, 37.57% return over 3 years
-        self.strategy = BollingerBounce(
-            rsi_period=14,
-            rsi_entry_threshold=40,
-            bb_period=20,
-            bb_std=2.0,
-            atr_period=14,
-            atr_sl_multiplier=1.5
-        )
+        strategy_config = {
+            'bb_period': 20,
+            'bb_std': 2.0,
+            'rsi_period': 14,
+            'rsi_entry_threshold': 40,
+            'atr_period': 14,
+            'atr_sl_multiplier': 1.5,
+            'risk_per_trade': 0.01  # 1% risk per trade
+        }
+        self.strategy = BollingerBounce(config=strategy_config)
         
         # Initialize Alpaca executor
         symbols = self.config.get('strategy', {}).get('symbols', ['SPY'])
