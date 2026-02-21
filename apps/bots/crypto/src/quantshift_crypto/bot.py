@@ -341,8 +341,7 @@ class CryptoBot:
             }
 
             self.db_writer.update_status(account_info, positions, trades_count)
-            if positions:
-                self.db_writer.update_positions(positions)
+            self.db_writer.update_positions(positions)
             logger.debug(
                 f"Heartbeat — paper equity: ${paper_equity:.2f}, "
                 f"open: {len(self.open_trades)}, trades: {trades_count}"
