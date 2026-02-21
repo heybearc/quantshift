@@ -9,14 +9,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const botName = searchParams.get('botName');
+    const where: any = {};
+    if (botName) where.botName = botName;
+
     const positions = await prisma.position.findMany({
-      where: { botName: 'equity-bot' },
+      where,
       orderBy: { enteredAt: 'desc' },
     });
 
     return NextResponse.json({
       positions: positions.map(position => ({
         id: position.id,
+        botName: position.botName,
         symbol: position.symbol,
         quantity: position.quantity,
         entryPrice: position.entryPrice,

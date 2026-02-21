@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const symbol = searchParams.get('symbol');
 
-    const where: any = { botName: 'equity-bot' };
+    const botName = searchParams.get('botName');
+    const where: any = {};
+    if (botName) where.botName = botName;
     if (status) where.status = status;
     if (symbol) where.symbol = symbol;
 
