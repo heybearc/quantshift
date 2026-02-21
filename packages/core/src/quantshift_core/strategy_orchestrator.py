@@ -2,14 +2,16 @@
 Strategy Orchestrator - Multi-Strategy Execution Manager
 
 Manages multiple trading strategies simultaneously with capital allocation,
-conflict resolution, and performance tracking.
+conflict resolution, performance tracking, and market regime adaptation.
 """
 
 from typing import List, Dict, Optional, Any
 from datetime import datetime
+import pandas as pd
 import structlog
 
 from .strategies.base_strategy import BaseStrategy, Signal, SignalType, Account, Position
+from .market_regime import MarketRegimeDetector, MarketRegime
 
 logger = structlog.get_logger()
 
@@ -20,16 +22,19 @@ class StrategyOrchestrator:
     
     Responsibilities:
     - Manage multiple strategies simultaneously
-    - Allocate capital per strategy
+    - Allocate capital per strategy (static or regime-based)
     - Aggregate signals from all strategies
     - Resolve conflicts (multiple strategies signaling same symbol)
     - Track performance per strategy
+    - Adapt to market regimes
     """
     
     def __init__(
         self,
         strategies: List[BaseStrategy],
-        capital_allocation: Optional[Dict[str, float]] = None
+        capital_allocation: Optional[Dict[str, float]] = None,
+        use_regime_detection: bool = False,
+        regime_detector: Optional[MarketRegimeDetector] = None
     ):
         """
         Initialize the orchestrator.
@@ -38,32 +43,52 @@ class StrategyOrchestrator:
             strategies: List of strategy instances
             capital_allocation: Dict mapping strategy name to allocation % (0-1)
                                If None, equal allocation across all strategies
+            use_regime_detection: Enable dynamic allocation based on market regime
+            regime_detector: MarketRegimeDetector instance (created if None and use_regime_detection=True)
         """
         self.name = "MultiStrategy"  # For compatibility with AlpacaExecutor
         self.strategies = strategies
+        self.use_regime_detection = use_regime_detection
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
-        # Set capital allocation
-        if capital_allocation is None:
-            # Equal allocation
-            allocation_pct = 1.0 / len(strategies)
-            self.capital_allocation = {
-                strategy.name: allocation_pct for strategy in strategies
-            }
+        # Initialize regime detector if needed
+        if use_regime_detection:
+            self.regime_detector = regime_detector or MarketRegimeDetector()
+            self.base_allocation = capital_allocation  # Store base allocation
+            self.capital_allocation = capital_allocation or self._equal_allocation()
         else:
-            self.capital_allocation = capital_allocation
+            self.regime_detector = None
+            self.base_allocation = None
+            # Set capital allocation
+            if capital_allocation is None:
+                # Equal allocation
+                allocation_pct = 1.0 / len(strategies)
+                self.capital_allocation = {
+                    strategy.name: allocation_pct for strategy in strategies
+                }
+            else:
+                self.capital_allocation = capital_allocation
             
         # Validate allocation sums to 1.0
         total_allocation = sum(self.capital_allocation.values())
         if not (0.99 <= total_allocation <= 1.01):  # Allow small floating point error
             raise ValueError(f"Capital allocation must sum to 1.0, got {total_allocation}")
         
+        self.current_regime = MarketRegime.UNKNOWN
+        self.regime_risk_multiplier = 1.0
+        
         self.logger.info(
             "orchestrator_initialized",
             num_strategies=len(strategies),
             strategies=[s.name for s in strategies],
-            allocation=self.capital_allocation
+            allocation=self.capital_allocation,
+            regime_detection=use_regime_detection
         )
+    
+    def _equal_allocation(self) -> Dict[str, float]:
+        """Create equal allocation across all strategies."""
+        allocation_pct = 1.0 / len(self.strategies)
+        return {strategy.name: allocation_pct for strategy in self.strategies}
     
     def generate_signals(
         self,
@@ -83,6 +108,29 @@ class StrategyOrchestrator:
             List of aggregated signals from all strategies
         """
         all_signals = []
+        
+        # Update regime detection if enabled
+        if self.use_regime_detection and self.regime_detector:
+            # Use SPY data for regime detection (or first symbol if SPY not available)
+            regime_symbol = 'SPY' if 'SPY' in market_data else list(market_data.keys())[0]
+            regime_data = market_data[regime_symbol]
+            
+            # Detect current regime
+            regime, indicators = self.regime_detector.detect_regime(regime_data)
+            
+            # Update allocation if regime changed
+            if regime != self.current_regime:
+                self.current_regime = regime
+                self.capital_allocation = self.regime_detector.get_regime_allocation(regime)
+                self.regime_risk_multiplier = self.regime_detector.get_risk_multiplier(regime)
+                
+                self.logger.info(
+                    "regime_allocation_updated",
+                    regime=regime.value,
+                    allocation=self.capital_allocation,
+                    risk_multiplier=self.regime_risk_multiplier,
+                    indicators=indicators
+                )
         
         # Generate signals from each strategy
         for strategy in self.strategies:
@@ -107,12 +155,20 @@ class StrategyOrchestrator:
                         strategy_positions
                     )
                     
-                    # Tag signals with strategy name
+                    # Tag signals with strategy name and apply regime risk adjustment
                     for signal in signals:
                         if signal.metadata is None:
                             signal.metadata = {}
                         signal.metadata['strategy'] = strategy.name
                         signal.metadata['capital_allocation'] = self.capital_allocation[strategy.name]
+                        
+                        # Apply regime risk multiplier to position size
+                        if self.use_regime_detection and signal.position_size:
+                            original_size = signal.position_size
+                            signal.position_size = int(signal.position_size * self.regime_risk_multiplier)
+                            signal.metadata['regime'] = self.current_regime.value
+                            signal.metadata['risk_multiplier'] = self.regime_risk_multiplier
+                            signal.metadata['original_position_size'] = original_size
                     
                     all_signals.extend(signals)
                     
