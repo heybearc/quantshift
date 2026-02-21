@@ -137,12 +137,14 @@ class QuantShiftUnifiedBot:
         orchestrator_config = self.config.get('orchestrator', {})
         capital_allocation = orchestrator_config.get('capital_allocation')
         use_regime_detection = orchestrator_config.get('use_regime_detection', True)
+        use_ml_regime = orchestrator_config.get('use_ml_regime', False)
         use_risk_management = orchestrator_config.get('use_risk_management', True)
         
         self.strategy = StrategyOrchestrator(
             strategies=self.strategies,
             capital_allocation=capital_allocation,
             use_regime_detection=use_regime_detection,
+            use_ml_regime=use_ml_regime,
             use_risk_management=use_risk_management
         )
         
@@ -150,6 +152,7 @@ class QuantShiftUnifiedBot:
             "orchestrator_initialized",
             num_strategies=len(self.strategies),
             regime_detection=use_regime_detection,
+            ml_regime=use_ml_regime,
             risk_management=use_risk_management
         )
     

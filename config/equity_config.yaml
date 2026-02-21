@@ -40,6 +40,7 @@ orchestrator:
     BollingerBounce: 0.60
     RSIMeanReversion: 0.40
   use_regime_detection: true
+  use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)
   use_risk_management: true
 
 # Risk management configuration

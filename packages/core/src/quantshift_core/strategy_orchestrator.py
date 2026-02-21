@@ -13,6 +13,7 @@ import structlog
 from .strategies.base_strategy import BaseStrategy, Signal, SignalType, Account, Position
 from .market_regime import MarketRegimeDetector, MarketRegime
 from .risk_manager import RiskManager, CircuitBreakerStatus
+from .ml_regime_classifier import MLRegimeClassifier
 
 logger = structlog.get_logger()
 
@@ -37,6 +38,8 @@ class StrategyOrchestrator:
         capital_allocation: Optional[Dict[str, float]] = None,
         use_regime_detection: bool = False,
         regime_detector: Optional[MarketRegimeDetector] = None,
+        use_ml_regime: bool = False,
+        ml_regime_classifier: Optional[MLRegimeClassifier] = None,
         use_risk_management: bool = True,
         risk_manager: Optional[RiskManager] = None
     ):
@@ -49,22 +52,36 @@ class StrategyOrchestrator:
                                If None, equal allocation across all strategies
             use_regime_detection: Enable dynamic allocation based on market regime
             regime_detector: MarketRegimeDetector instance (created if None and use_regime_detection=True)
+            use_ml_regime: Use ML-based regime classifier instead of rule-based
+            ml_regime_classifier: MLRegimeClassifier instance (created if None and use_ml_regime=True)
             use_risk_management: Enable portfolio-level risk management
             risk_manager: RiskManager instance (created if None and use_risk_management=True)
         """
         self.name = "MultiStrategy"  # For compatibility with AlpacaExecutor
         self.strategies = strategies
         self.use_regime_detection = use_regime_detection
+        self.use_ml_regime = use_ml_regime
         self.use_risk_management = use_risk_management
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
         if use_regime_detection:
-            self.regime_detector = regime_detector or MarketRegimeDetector()
+            if use_ml_regime:
+                # Use ML-based regime classifier
+                self.ml_regime_classifier = ml_regime_classifier or MLRegimeClassifier()
+                self.regime_detector = None
+                self.logger.info("Using ML-based regime classifier")
+            else:
+                # Use rule-based regime detector
+                self.regime_detector = regime_detector or MarketRegimeDetector()
+                self.ml_regime_classifier = None
+                self.logger.info("Using rule-based regime detector")
+            
             self.base_allocation = capital_allocation  # Store base allocation
             self.capital_allocation = capital_allocation or self._equal_allocation()
         else:
             self.regime_detector = None
+            self.ml_regime_classifier = None
             self.base_allocation = None
             # Set capital allocation
             if capital_allocation is None:
@@ -124,23 +141,38 @@ class StrategyOrchestrator:
         all_signals = []
         
         # Update regime detection if enabled
-        if self.use_regime_detection and self.regime_detector:
+        if self.use_regime_detection:
             # Use SPY data for regime detection (or first symbol if SPY not available)
             regime_symbol = 'SPY' if 'SPY' in market_data else list(market_data.keys())[0]
             regime_data = market_data[regime_symbol]
             
-            # Detect current regime
-            regime, indicators = self.regime_detector.detect_regime(regime_data)
+            # Detect current regime (ML or rule-based)
+            if self.use_ml_regime and self.ml_regime_classifier:
+                # ML-based regime detection
+                regime_name, confidence = self.ml_regime_classifier.predict_regime(regime_data)
+                regime = MarketRegime[regime_name]
+                
+                # Get allocation and risk multiplier from ML classifier
+                allocation_dict = self.ml_regime_classifier.get_regime_allocation(regime_name)
+                risk_multiplier = self.ml_regime_classifier.get_risk_multiplier(regime_name)
+                
+                indicators = {'ml_confidence': confidence, 'regime': regime_name}
+            else:
+                # Rule-based regime detection
+                regime, indicators = self.regime_detector.detect_regime(regime_data)
+                allocation_dict = self.regime_detector.get_regime_allocation(regime)
+                risk_multiplier = self.regime_detector.get_risk_multiplier(regime)
             
             # Update allocation if regime changed
             if regime != self.current_regime:
                 self.current_regime = regime
-                self.capital_allocation = self.regime_detector.get_regime_allocation(regime)
-                self.regime_risk_multiplier = self.regime_detector.get_risk_multiplier(regime)
+                self.capital_allocation = allocation_dict
+                self.regime_risk_multiplier = risk_multiplier
                 
                 self.logger.info(
                     "regime_allocation_updated",
-                    regime=regime.value,
+                    regime=regime.value if hasattr(regime, 'value') else regime,
+                    method='ml' if self.use_ml_regime else 'rule_based',
                     allocation=self.capital_allocation,
                     risk_multiplier=self.regime_risk_multiplier,
                     indicators=indicators
