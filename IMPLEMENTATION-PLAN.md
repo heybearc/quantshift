@@ -18,7 +18,7 @@
 - Feb 13: 500 SPY BUY orders fired simultaneously at market open — runaway loop bug (old bot version, not v2)
 - Only real equity trade: AAPL BUY Jan 30 @ $260.49 (still open, +$4.09)
 - **Go/no-go criteria cannot be evaluated** — insufficient trade history
-- **Action required:** Reset paper account, restart 30-day validation clock with v2 bot
+- **Action taken (2026-02-21):** Legacy `alpaca-trader-million.service` stopped + disabled (root cause of runaway orders). Paper account reset — AAPL close order pending market open. 30-day validation clock starts Feb 21, 2026. Go/no-go decision: Mar 21, 2026.
 
 **Go/No-Go Criteria for Live Trading:**
 - Minimum 10 trades in 30 days
@@ -34,10 +34,11 @@
 
 - [x] Diagnose and fix stale bot status (effort: S) — DONE 2026-02-21
 - [x] Fix positions duplicate key + wire trade recording (effort: S) — DONE 2026-02-21
-- [ ] Investigate Feb 13 runaway SPY order bug — 500 orders in 2 min, find root cause (effort: S)
-- [ ] Reset Alpaca paper account to clear runaway SPY positions (effort: S)
-- [ ] Restart 30-day paper trading validation clock (effort: S)
-- [ ] Monitor equity-bot v2 for first real MA crossover signal + trade record (effort: S)
+- [x] Investigate Feb 13 runaway SPY bug — root cause: legacy `alpaca-trader-million.service` sharing paper account (effort: S) — DONE 2026-02-21
+- [x] Stop + disable legacy bot service (effort: S) — DONE 2026-02-21
+- [x] Reset Alpaca paper account — AAPL close order pending market open (effort: S) — DONE 2026-02-21
+- [ ] Monitor equity-bot v2 for first real MA crossover signal + confirm trade recorded in DB (effort: S)
+- [ ] Go/no-go decision by Mar 21, 2026 (effort: S)
 
 ---
 
@@ -49,9 +50,11 @@
 - [x] SSH to bot container and check process status — DONE (effort: S)
 - [x] Fix positions duplicate key bug — DONE (effort: S)
 - [x] Wire trade recording to strategy cycle — DONE (effort: S)
-- [ ] Find and fix root cause of Feb 13 runaway SPY order bug (effort: S)
-- [ ] Reset Alpaca paper account (effort: S)
-- [ ] Restart 30-day validation clock, monitor for real signals (effort: S)
+- [x] Find root cause of Feb 13 runaway SPY bug — legacy bot service (effort: S) — DONE 2026-02-21
+- [x] Stop legacy `alpaca-trader-million.service` (effort: S) — DONE 2026-02-21
+- [x] Reset Alpaca paper account (effort: S) — DONE 2026-02-21
+- [ ] Monitor for first real MA crossover signal + DB trade record (effort: S)
+- [ ] Go/no-go decision by Mar 21, 2026 (effort: S)
 
 #### Phase 1: Advanced Risk Management (Before Live Trading)
 - [ ] Portfolio heat tracking — max 10% total risk exposure (effort: M)
@@ -179,7 +182,7 @@
 ## 🐛 Known Bugs
 
 ### Critical (Fix Immediately)
-- [ ] **Runaway SPY order bug** — 500 BUY orders fired simultaneously on Feb 13 at market open. Root cause unknown — likely a loop in old bot code that ran on this account. Needs investigation before paper account reset.
+None currently identified.
 
 ### Non-Critical (Backlog)
 None currently identified.
