@@ -27,14 +27,13 @@ from typing import Dict, Any, Optional
 
 # Add packages to path
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
-sys.path.insert(0, '/opt/quantshift/packages/state-manager/src')
 
 import structlog
 
 from quantshift_core.strategies import BollingerBounce, RSIMeanReversion
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
-from quantshift_state_manager import StateManager
+from quantshift_core.state_manager import StateManager
 
 # Configure structured logging
 structlog.configure(
