@@ -6,6 +6,7 @@ It bridges the gap between broker-agnostic strategies and Alpaca's API.
 """
 
 import sys
+import time
 import logging
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -15,8 +16,8 @@ import pandas as pd
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest, LimitOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
+from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest, LimitOrderRequest, StopOrderRequest, GetOrderByIdRequest
+from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus, OrderStatus
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -43,7 +44,8 @@ class AlpacaExecutor:
         alpaca_client: TradingClient,
         data_client: Optional[StockHistoricalDataClient] = None,
         symbols: Optional[List[str]] = None,
-        simulated_capital: Optional[float] = None
+        simulated_capital: Optional[float] = None,
+        risk_config: Optional[Dict[str, Any]] = None
     ):
         """
         Initialize Alpaca executor.
@@ -60,6 +62,12 @@ class AlpacaExecutor:
         self.data_client = data_client
         self.symbols = symbols or ['SPY']
         self.simulated_capital = simulated_capital
+        self.risk_config = risk_config or {}
+        # Circuit breaker state (reset daily)
+        self._daily_trades = 0
+        self._daily_loss = 0.0
+        self._circuit_breaker_open = False
+        self._last_reset_date = datetime.utcnow().date()
         
         logger.info(
             f"AlpacaExecutor initialized with {strategy.name} strategy for symbols: {self.symbols}"
@@ -185,6 +193,22 @@ class AlpacaExecutor:
             logger.error(f"Error fetching market data for {symbol}: {e}", exc_info=True)
             raise
     
+    def _wait_for_fill(self, order_id: str, timeout: int = 10) -> Optional[Any]:
+        """
+        Poll Alpaca until an order is filled or timeout is reached.
+        Returns the filled order object, or None if not filled in time.
+        """
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                o = self.alpaca_client.get_order_by_id(order_id)
+                if o.status in (OrderStatus.FILLED, OrderStatus.PARTIALLY_FILLED):
+                    return o
+            except Exception:
+                pass
+            time.sleep(1)
+        return None
+
     def execute_signal(self, signal: Signal) -> Optional[Dict[str, Any]]:
         """
         Execute a trading signal via Alpaca API.
@@ -202,58 +226,67 @@ class AlpacaExecutor:
             # Determine order side
             side = OrderSide.BUY if signal.signal_type == SignalType.BUY else OrderSide.SELL
             
-            # Create market order
+            # Create and submit market order
             order_request = MarketOrderRequest(
                 symbol=signal.symbol,
                 qty=signal.position_size or 1,
                 side=side,
                 time_in_force=TimeInForce.DAY
             )
-            
-            # Submit order
             order = self.alpaca_client.submit_order(order_request)
-            
             logger.info(
                 f"Order submitted: {side.value} {signal.position_size} {signal.symbol} @ market"
             )
-            
-            # Submit stop loss if provided
-            if signal.stop_loss and signal.signal_type == SignalType.BUY:
-                try:
-                    stop_order = MarketOrderRequest(
-                        symbol=signal.symbol,
-                        qty=signal.position_size,
-                        side=OrderSide.SELL,
-                        time_in_force=TimeInForce.GTC,
-                        stop_price=signal.stop_loss
-                    )
-                    self.alpaca_client.submit_order(stop_order)
-                    logger.info(f"Stop loss order placed at ${signal.stop_loss:.2f}")
-                except Exception as e:
-                    logger.warning(f"Failed to place stop loss: {e}")
-            
-            # Submit take profit if provided
-            if signal.take_profit and signal.signal_type == SignalType.BUY:
-                try:
-                    tp_order = LimitOrderRequest(
-                        symbol=signal.symbol,
-                        qty=signal.position_size,
-                        side=OrderSide.SELL,
-                        time_in_force=TimeInForce.GTC,
-                        limit_price=signal.take_profit
-                    )
-                    self.alpaca_client.submit_order(tp_order)
-                    logger.info(f"Take profit order placed at ${signal.take_profit:.2f}")
-                except Exception as e:
-                    logger.warning(f"Failed to place take profit: {e}")
-            
+
+            fill_price = signal.price  # fallback
+
+            # For BUY signals: wait for fill then place SL/TP bracket orders
+            if signal.signal_type == SignalType.BUY:
+                filled_order = self._wait_for_fill(str(order.id), timeout=15)
+                if filled_order and filled_order.filled_avg_price:
+                    fill_price = float(filled_order.filled_avg_price)
+                    filled_qty = float(filled_order.filled_qty)
+                else:
+                    filled_qty = float(order.qty)
+
+                # Stop loss — use StopOrderRequest (GTC sell stop)
+                if signal.stop_loss:
+                    try:
+                        sl_request = StopOrderRequest(
+                            symbol=signal.symbol,
+                            qty=filled_qty,
+                            side=OrderSide.SELL,
+                            time_in_force=TimeInForce.GTC,
+                            stop_price=round(signal.stop_loss, 2)
+                        )
+                        self.alpaca_client.submit_order(sl_request)
+                        logger.info(f"Stop loss placed: SELL {filled_qty} {signal.symbol} stop @ ${signal.stop_loss:.2f}")
+                    except Exception as e:
+                        logger.warning(f"Failed to place stop loss for {signal.symbol}: {e}")
+
+                # Take profit — limit order after confirmed fill
+                if signal.take_profit:
+                    try:
+                        tp_request = LimitOrderRequest(
+                            symbol=signal.symbol,
+                            qty=filled_qty,
+                            side=OrderSide.SELL,
+                            time_in_force=TimeInForce.GTC,
+                            limit_price=round(signal.take_profit, 2)
+                        )
+                        self.alpaca_client.submit_order(tp_request)
+                        logger.info(f"Take profit placed: SELL {filled_qty} {signal.symbol} limit @ ${signal.take_profit:.2f}")
+                    except Exception as e:
+                        logger.warning(f"Failed to place take profit for {signal.symbol}: {e}")
+
             return {
-                'id': order.id,
+                'id': str(order.id),
                 'symbol': order.symbol,
                 'qty': float(order.qty),
                 'side': order.side.value,
                 'type': order.type.value,
                 'status': order.status.value,
+                'fill_price': fill_price,
                 'submitted_at': order.submitted_at.isoformat() if order.submitted_at else None,
                 'signal_reason': signal.reason
             }
@@ -271,14 +304,55 @@ class AlpacaExecutor:
             logger.warning(f"Could not check market clock: {e} — assuming closed")
             return False
 
+    def _reset_daily_counters_if_needed(self):
+        """Reset daily circuit breaker counters at the start of each trading day."""
+        today = datetime.utcnow().date()
+        if today != self._last_reset_date:
+            self._daily_trades = 0
+            self._daily_loss = 0.0
+            self._circuit_breaker_open = False
+            self._last_reset_date = today
+            logger.info("Daily circuit breaker counters reset")
+
+    def _check_circuit_breakers(self, account: Any) -> Optional[str]:
+        """
+        Check all circuit breaker conditions.
+        Returns a reason string if trading should be halted, None if clear.
+        """
+        limits = self.risk_config.get('limits', {})
+        max_daily_trades = limits.get('max_daily_trades', 10)
+        max_daily_loss = self.risk_config.get('max_daily_loss', 0.05)
+        max_drawdown = self.risk_config.get('max_drawdown', 0.15)
+        max_positions = limits.get('max_positions', 5)
+
+        if self._circuit_breaker_open:
+            return "Circuit breaker already open from earlier this session"
+
+        if self._daily_trades >= max_daily_trades:
+            return f"Max daily trades reached ({self._daily_trades}/{max_daily_trades})"
+
+        # Daily loss check: unrealized + realized vs equity
+        if account.equity > 0:
+            daily_loss_pct = self._daily_loss / account.equity
+            if daily_loss_pct >= max_daily_loss:
+                return f"Max daily loss breached ({daily_loss_pct:.1%} >= {max_daily_loss:.1%})"
+
+        # Drawdown check: unrealized P&L vs portfolio value
+        if hasattr(account, 'unrealized_pl') and account.portfolio_value > 0:
+            drawdown = -account.unrealized_pl / account.portfolio_value
+            if drawdown >= max_drawdown:
+                return f"Max drawdown breached ({drawdown:.1%} >= {max_drawdown:.1%})"
+
+        return None
+
     def run_strategy_cycle(self) -> Dict[str, Any]:
         """
         Run one complete strategy cycle:
         1. Check market hours — skip execution if market is closed
-        2. Fetch account and positions
-        3. Fetch market data for all symbols
-        4. Generate signals from strategy
-        5. Execute valid signals
+        2. Reset daily counters if new day
+        3. Check circuit breakers — halt if limits breached
+        4. Enforce max positions cap
+        5. Fetch market data, generate signals, execute
         
         Returns:
             Summary of cycle execution
@@ -295,12 +369,27 @@ class AlpacaExecutor:
         if not self.is_market_open():
             logger.debug("Market is closed — skipping signal execution this cycle")
             return results
+
+        # Reset daily counters if it's a new trading day
+        self._reset_daily_counters_if_needed()
         
         try:
             # Get account and positions
             account = self.get_account()
             positions = self.get_positions()
             account.positions_count = len(positions)
+
+            # Circuit breaker check
+            halt_reason = self._check_circuit_breakers(account)
+            if halt_reason:
+                self._circuit_breaker_open = True
+                logger.warning(f"CIRCUIT BREAKER OPEN — halting strategy: {halt_reason}")
+                results['errors'].append(f"Circuit breaker: {halt_reason}")
+                return results
+
+            # Max positions cap — skip BUY signals if at limit
+            max_positions = self.risk_config.get('limits', {}).get('max_positions', 5)
+            at_max_positions = len(positions) >= max_positions
             
             logger.info(
                 f"Strategy cycle started - Account: ${account.equity:.2f}, "
@@ -330,11 +419,17 @@ class AlpacaExecutor:
                             'price': signal.price,
                             'reason': signal.reason
                         })
-                        
+
+                        # Skip BUY signals if at max positions
+                        if signal.signal_type == SignalType.BUY and at_max_positions:
+                            logger.info(f"Skipping BUY {symbol} — at max positions ({max_positions})")
+                            continue
+
                         # Execute the signal
                         order = self.execute_signal(signal)
                         if order:
                             results['orders_executed'].append(order)
+                            self._daily_trades += 1
                     
                 except Exception as e:
                     error_msg = f"Error processing {symbol}: {str(e)}"

@@ -80,12 +80,14 @@ class QuantShiftEquityBotV2:
         # Initialize Alpaca executor
         symbols = self.config.get('strategy', {}).get('symbols', ['SPY'])
         
+        risk_config = self.config.get('risk_management', {})
         self.executor = AlpacaExecutor(
             strategy=self.strategy,
             alpaca_client=self.alpaca_client,
             data_client=self.data_client,
             symbols=symbols,
-            simulated_capital=None  # Use real Alpaca account equity
+            simulated_capital=None,  # Use real Alpaca paper account equity for position sizing
+            risk_config=risk_config
         )
         
         # Trading cost assumptions
