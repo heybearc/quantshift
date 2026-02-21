@@ -1,0 +1,47 @@
+# QuantShift Crypto Trading Strategy Configuration
+# Multi-indicator: MA Crossover + RSI + MACD on hourly candles
+# Broker: Alpaca paper trading (spot only — SELL signals close longs)
+
+strategy:
+  name: "CRYPTO_MA_RSI_MACD"
+  type: "multi_indicator"
+  enabled: true
+
+  parameters:
+    short_window: 20        # Fast SMA
+    long_window: 50         # Slow SMA
+    rsi_period: 14
+    atr_period: 14
+    rsi_overbought: 70
+    rsi_oversold: 30
+
+  symbols:
+    - "BTC/USD"
+    - "ETH/USD"
+    - "SOL/USD"
+
+  schedule:
+    check_interval: 300     # Every 5 minutes (hourly candles — no need for faster)
+
+risk_management:
+  risk_per_trade: 0.01      # 1% of equity risked per trade
+  max_position_size: 0.20   # Max 20% of portfolio per position
+
+  stop_loss:
+    atr_multiplier: 2.0     # Stop = entry - (2 * ATR)
+
+  take_profit:
+    risk_reward_ratio: 2.0  # TP = entry + (2 * ATR * RR ratio) = 4x ATR
+
+  limits:
+    max_positions: 3        # Max 3 concurrent crypto positions
+    max_daily_trades: 20    # Crypto trades more frequently than equity
+
+paper_trading:
+  enabled: true
+  validation_period_days: 30
+
+logging:
+  level: "INFO"
+  log_trades: true
+  log_signals: true

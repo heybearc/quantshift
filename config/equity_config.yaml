@@ -1,0 +1,61 @@
+# QuantShift Equity Bot Configuration
+# Uses Alpaca for US stock trading
+
+bot_name: "quantshift-equity"
+bot_type: "equity"
+
+# Executor configuration
+executor:
+  type: "alpaca"
+  paper: true  # Use paper trading account
+  symbols:
+    - SPY
+  simulated_capital: null  # Use actual account balance
+
+# Strategy configuration
+strategies:
+  - type: "BollingerBounce"
+    params:
+      bb_period: 20
+      bb_std: 2.0
+      rsi_period: 14
+      rsi_entry_threshold: 40
+      atr_period: 14
+      atr_sl_multiplier: 1.5
+      risk_per_trade: 0.01
+  
+  - type: "RSIMeanReversion"
+    params:
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      atr_period: 14
+      atr_sl_multiplier: 2.0
+      atr_tp_multiplier: 3.0
+      risk_per_trade: 0.01
+
+# Strategy orchestrator configuration
+orchestrator:
+  capital_allocation:
+    BollingerBounce: 0.60
+    RSIMeanReversion: 0.40
+  use_regime_detection: true
+  use_risk_management: true
+
+# Risk management configuration
+risk_management:
+  max_portfolio_heat: 0.10  # 10% max total risk
+  max_position_correlation: 0.7
+  max_sector_exposure: 0.30
+  daily_loss_limit: 0.05  # 5% daily loss limit
+  max_drawdown_limit: 0.15  # 15% max drawdown
+
+# Redis configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+# Bot timing
+cycle_interval_seconds: 60  # Run strategy every 60 seconds
+heartbeat_interval_seconds: 30  # Send heartbeat every 30 seconds
