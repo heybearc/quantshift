@@ -135,9 +135,9 @@
 - [ ] Realistic slippage and commission modeling (effort: M)
 - [ ] Parameter optimization — Bayesian / genetic algorithms (effort: XL)
 
-#### Phase 9: Monitoring Infrastructure
-- [ ] Prometheus metrics collection (effort: L)
-- [ ] Grafana dashboards for bot performance (effort: L)
+#### Phase 9: Bot Monitoring Infrastructure
+- [ ] Prometheus metrics collection for bot performance (effort: L)
+- [ ] Grafana dashboard for bot trades/P&L/drawdown (effort: L)
 - [ ] Sentry error tracking integration (effort: M)
 - [ ] Complete trade audit trail with justification logging (effort: M)
 - [ ] Pattern day trader monitoring (effort: S)
@@ -265,6 +265,8 @@ None currently identified.
 **Items explicitly deferred with rationale:**
 
 - **Help documentation pages** — Deferred until feature set stabilizes. Current help page is functional. (2026-02-18)
+
+> **Homelab infrastructure backlog** has been moved to the control plane: `_cloudy-ops/docs/infrastructure/homelab-backlog.md` and is tracked in the homelab-nexus repo.
 
 ---
 

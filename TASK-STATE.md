@@ -230,23 +230,15 @@ None
 See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ### Immediate Next Steps (Next Session)
-1. **Run /release workflow** - Switch traffic from Blue to Green (deploy v1.4.0 to LIVE)
-2. **Verify LIVE environment** - Test dashboard on new LIVE after traffic switch
-3. **Run /sync workflow** - Update Blue container with Green's code
-4. **Monitor production** - Watch for any issues in first 24 hours
-
-### This Week (Feb 18-25, 2026)
-1. ✅ Test /bump workflow with QuantShift (COMPLETE)
-2. [ ] Deploy v1.4.0 to LIVE (ready for /release)
-3. [ ] Sync Blue container after successful release
-4. [ ] Monitor dashboard performance in production
-5. [ ] Continue paper trading validation monitoring
+1. **Diagnose stale bot** — SSH to CT100, check process/logs/Alpaca connection
+2. **Reactivate paper trading bot** — restart, verify heartbeat in dashboard
+3. **Review paper trading results** — Dec 26 – Jan 26 validation period, go/no-go decision
 
 ### Next Priorities
-1. [ ] Add historical data tracking for trends
-2. [ ] Implement sparkline charts for 7-day trends
-3. [ ] Add API status monitoring
-4. [ ] Admin platform trading pages
+1. [ ] Diagnose + reactivate stale bot (CT100)
+2. [ ] Review paper trading results (Dec 26 – Jan 26), make go/no-go decision
+3. [ ] Admin platform trading pages (connect Trades/Positions/Performance to live data)
+4. [ ] Historical data tracking + sparkline charts
 
 ### Strategic Initiatives
 - ✅ **Release notes standardization** (Q1 2026) - COMPLETE
@@ -262,30 +254,15 @@ See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ## Exact Next Command
 
-**v1.4.0 is ready for production deployment.**
-
-**Next Session Priority: Deploy v1.4.0 to LIVE**
+**Next Session Priority: Diagnose stale bot on CT100**
 
 **Status:**
-- ✅ All tests passed on STANDBY (81/81 - 100%)
-- ✅ Version bumped to 1.4.0
-- ✅ Release notes created
-- ✅ Changes committed and pushed to GitHub
-- ✅ Ready for /release workflow
+- ✅ v1.4.0 deployed to LIVE (Green), Blue synced — production is healthy
+- 🚨 Bot Status STALE — bots not actively trading, root cause unknown
+- ⚠️ Homelab backlog moved to control plane (`_cloudy-ops/docs/infrastructure/homelab-backlog.md`)
 
-**Recommended first command:**
+**Recommended first action:**
 ```bash
-/release
+ssh quantshift-primary  # CT100 @ 10.92.3.27
+# Check: pm2 status, pm2 logs quantshift-equity, Alpaca API connection
 ```
-
-This will:
-1. Switch HAProxy traffic from Blue (current LIVE) to Green (STANDBY with v1.4.0)
-2. Verify new LIVE environment
-3. Update LIVE/STANDBY indicators
-
-**After successful release:**
-```bash
-/sync
-```
-
-This will update Blue container with Green's code for true hot-standby.
