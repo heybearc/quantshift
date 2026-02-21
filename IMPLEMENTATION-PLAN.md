@@ -194,10 +194,10 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ---
 
-### **PHASE 4: Adaptive Optimization** (Week 5)
-**Goal:** Self-optimizing parameters and strategy performance monitoring
+### **PHASE 4: Adaptive Optimization + ML Learning** (Week 5-6)
+**Goal:** Self-optimizing parameters with AI/ML learning capabilities
 
-#### 4.1 Walk-Forward Optimization (3 days)
+#### 4.1 Traditional Walk-Forward Optimization (2 days)
 - [ ] Create `ParameterOptimizer` class
   - Monthly re-optimization of strategy parameters
   - Train on last 6 months, test on next month
@@ -217,16 +217,29 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Penalize high drawdown
   - Require minimum 10 trades in test period
 
-#### 4.2 Adaptive Parameters by Regime (2 days)
-- [ ] Bollinger Bands regime adaptation:
-  - High vol: bb_std = 2.5 (wider bands)
-  - Normal vol: bb_std = 2.0
-  - Low vol: bb_std = 1.5 (tighter bands)
+#### 4.2 ML-Based Regime Classifier (3 days)
+- [ ] Create `MLRegimeClassifier` using scikit-learn
+  - **Features:** SMA slope, ATR ratio, VIX, volume, RSI, MACD
+  - **Labels:** Bull, Bear, High Vol Choppy, Low Vol Range, Crisis
+  - **Model:** RandomForestClassifier (proven, explainable)
+  - Train on 2 years of SPY historical data
   
-- [ ] RSI regime adaptation:
-  - Uptrend: thresholds 35/75 (more aggressive)
-  - Downtrend: thresholds 25/65 (more conservative)
-  - Sideways: thresholds 30/70 (standard)
+- [ ] Feature engineering
+  - Rolling 20/50/200 day SMA slopes
+  - ATR ratios (20d/100d)
+  - Volume z-scores
+  - Price momentum indicators
+  
+- [ ] Model validation
+  - 80/20 train/test split
+  - Cross-validation (5-fold)
+  - Compare accuracy vs rule-based regime detector
+  - Deploy if accuracy > 75%
+  
+- [ ] Integration
+  - Drop-in replacement for `MarketRegimeDetector`
+  - Save model to `/opt/quantshift/models/regime_classifier.pkl`
+  - Retrain monthly with new data
 
 #### 4.3 Strategy Performance Monitoring (1 day)
 - [ ] Rolling 30-day metrics per strategy
@@ -238,8 +251,13 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Disable if win rate < 40% for 30 days
   - Disable if Sharpe < 0.5 for 30 days
   - Re-enable when backtest shows improvement
+  
+- [ ] ML model performance tracking
+  - Track regime prediction accuracy
+  - Compare ML vs rule-based regime detection
+  - A/B test: 50% capital on ML, 50% on rules
 
-**Deliverable:** Bot self-optimizes monthly and disables strategies that stop working
+**Deliverable:** Bot self-optimizes with traditional methods + ML regime prediction
 
 ---
 
@@ -355,30 +373,170 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ---
 
-### **PHASE 6: Production Validation** (Week 7-8)
+### **PHASE 6: Sentiment Analysis Integration** (Week 7)
+**Goal:** Add news/social sentiment as signal filter and risk indicator
+
+#### 6.1 Sentiment Data Pipeline (2 days)
+- [ ] Create `SentimentAnalyzer` class
+  - **News API:** NewsAPI.org or Alpha Vantage
+  - **Social:** Twitter/X API (optional)
+  - **Model:** FinBERT (pre-trained financial sentiment)
+  
+- [ ] Data collection
+  - Fetch news for traded symbols (SPY, QQQ, etc.)
+  - Analyze sentiment: Positive, Negative, Neutral
+  - Calculate sentiment score (-1 to +1)
+  - Store in `sentiment_data` table
+  
+- [ ] Real-time sentiment updates
+  - Fetch news every 15 minutes
+  - Cache results to avoid API limits
+  - Track sentiment changes over time
+
+#### 6.2 Sentiment-Based Signal Filtering (2 days)
+- [ ] Signal enhancement rules
+  - **Block BUY** if sentiment < -0.3 (very negative)
+  - **Boost confidence** if sentiment aligns with signal
+  - **Reduce position size** if sentiment conflicts
+  
+- [ ] Sentiment-regime interaction
+  - Crisis regime + negative sentiment = halt trading
+  - Bull regime + positive sentiment = increase allocation
+  - Track sentiment accuracy vs actual price moves
+  
+- [ ] Dashboard integration
+  - Show current sentiment for each symbol
+  - Sentiment history chart (7-day trend)
+  - Sentiment vs price correlation
+
+#### 6.3 Sentiment Model Validation (1 day)
+- [ ] Backtest with sentiment data
+  - Compare returns with vs without sentiment filter
+  - Measure false positive reduction
+  - Validate sentiment improves Sharpe ratio
+  
+- [ ] A/B testing framework
+  - 50% capital uses sentiment, 50% doesn't
+  - Track performance difference
+  - Deploy full sentiment if improvement > 5%
+
+**Deliverable:** Bot uses AI sentiment analysis to filter bad trades and boost good ones
+
+---
+
+### **PHASE 7: Deep Reinforcement Learning Agent** (Week 8-10)
+**Goal:** AI agent learns optimal position sizing and trade timing
+
+#### 7.1 RL Environment Setup (3 days)
+- [ ] Create `TradingEnvironment` (OpenAI Gym compatible)
+  - **State:** Price, volume, indicators, positions, account balance
+  - **Actions:** Buy (size 0-100%), Sell (size 0-100%), Hold
+  - **Reward:** Sharpe ratio over rolling 30-day window
+  
+- [ ] Environment features
+  - Historical price data (OHLCV)
+  - Technical indicators (RSI, MACD, BB)
+  - Current regime (from ML classifier)
+  - Current sentiment score
+  - Portfolio state (positions, P&L, risk)
+  
+- [ ] Reward shaping
+  - Positive reward for profitable trades
+  - Penalty for drawdown
+  - Bonus for high Sharpe ratio
+  - Penalty for excessive trading (transaction costs)
+
+#### 7.2 RL Agent Training (5 days)
+- [ ] Model selection: **PPO** (Proximal Policy Optimization)
+  - Library: Stable-Baselines3
+  - Proven for trading applications
+  - Handles continuous action spaces
+  
+- [ ] Training pipeline
+  - Train on 2 years of SPY historical data
+  - Validate on 6 months of held-out data
+  - Hyperparameter tuning (learning rate, batch size, etc.)
+  - Track training metrics (reward, episode length, loss)
+  
+- [ ] Model checkpointing
+  - Save best model based on validation Sharpe
+  - Version models by date
+  - Store in `/opt/quantshift/models/rl_agent_v{date}.zip`
+
+#### 7.3 RL Agent Integration (3 days)
+- [ ] Create `RLPositionSizer` class
+  - Load trained RL model
+  - Use for position sizing decisions
+  - Override traditional position sizing
+  
+- [ ] Hybrid approach (safety first)
+  - Traditional strategies generate signals
+  - RL agent decides position size
+  - Risk manager validates final decision
+  - Fallback to fixed sizing if RL fails
+  
+- [ ] Paper trading validation
+  - Run RL agent in paper trading for 2 weeks
+  - Compare to traditional position sizing
+  - Deploy to live if Sharpe improves by >10%
+  
+- [ ] Continuous learning
+  - Retrain RL agent monthly with new data
+  - Track performance degradation
+  - Auto-rollback if performance drops
+
+#### 7.4 RL Monitoring & Explainability (2 days)
+- [ ] RL metrics dashboard
+  - Current policy performance
+  - Action distribution (buy/sell/hold %)
+  - Average position sizes by regime
+  - Reward trends over time
+  
+- [ ] Explainability tools
+  - SHAP values for action decisions
+  - Feature importance visualization
+  - Action heatmaps by market condition
+  - Confidence scores per decision
+  
+- [ ] Safety controls
+  - Max position size limits (RL can't exceed)
+  - Emergency override (admin can disable RL)
+  - Automatic fallback if RL behaves erratically
+
+**Deliverable:** Deep RL agent optimizes position sizing, learns from market continuously
+
+---
+
+### **PHASE 8: Production Validation & Go-Live** (Week 11-12)
 **Goal:** Comprehensive testing before live trading decision
 
-#### 6.1 Integration Testing (3 days)
+#### 8.1 Integration Testing (3 days)
 - [ ] Test all strategies simultaneously
-- [ ] Test regime transitions
+- [ ] Test regime transitions (rule-based + ML)
 - [ ] Test circuit breakers (simulate losses)
 - [ ] Test correlation limits
 - [ ] Test parameter optimization
+- [ ] Test sentiment filtering
+- [ ] Test RL agent position sizing
 - [ ] Stress test with volatile market data
 
-#### 6.2 Performance Validation (5 days)
-- [ ] Run full system in paper trading for 1 week
+#### 8.2 Performance Validation (5 days)
+- [ ] Run full system in paper trading for 2 weeks
 - [ ] Verify all strategies generating signals
-- [ ] Verify regime detection working correctly
+- [ ] Verify ML regime detection working correctly
+- [ ] Verify sentiment analysis filtering bad trades
+- [ ] Verify RL agent position sizing
 - [ ] Verify risk limits enforced
 - [ ] Compare paper results to backtest expectations
 
-#### 6.3 Go-Live Checklist (2 days)
-- [ ] All phases 1-5 complete and tested
-- [ ] Paper trading shows positive results
+#### 8.3 Go-Live Checklist (2 days)
+- [ ] All phases 1-7 complete and tested
+- [ ] Paper trading shows positive results (Sharpe > 1.5)
 - [ ] All circuit breakers tested
 - [ ] Monitoring and alerting working
 - [ ] Emergency kill switch tested
+- [ ] ML models validated and performing
+- [ ] RL agent outperforming traditional sizing
 - [ ] Alpaca live API credentials configured
 - [ ] Final review and approval
 
