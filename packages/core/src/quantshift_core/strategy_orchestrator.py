@@ -12,6 +12,7 @@ import structlog
 
 from .strategies.base_strategy import BaseStrategy, Signal, SignalType, Account, Position
 from .market_regime import MarketRegimeDetector, MarketRegime
+from .risk_manager import RiskManager, CircuitBreakerStatus
 
 logger = structlog.get_logger()
 
@@ -27,6 +28,7 @@ class StrategyOrchestrator:
     - Resolve conflicts (multiple strategies signaling same symbol)
     - Track performance per strategy
     - Adapt to market regimes
+    - Enforce portfolio-level risk limits
     """
     
     def __init__(
@@ -34,7 +36,9 @@ class StrategyOrchestrator:
         strategies: List[BaseStrategy],
         capital_allocation: Optional[Dict[str, float]] = None,
         use_regime_detection: bool = False,
-        regime_detector: Optional[MarketRegimeDetector] = None
+        regime_detector: Optional[MarketRegimeDetector] = None,
+        use_risk_management: bool = True,
+        risk_manager: Optional[RiskManager] = None
     ):
         """
         Initialize the orchestrator.
@@ -45,10 +49,13 @@ class StrategyOrchestrator:
                                If None, equal allocation across all strategies
             use_regime_detection: Enable dynamic allocation based on market regime
             regime_detector: MarketRegimeDetector instance (created if None and use_regime_detection=True)
+            use_risk_management: Enable portfolio-level risk management
+            risk_manager: RiskManager instance (created if None and use_risk_management=True)
         """
         self.name = "MultiStrategy"  # For compatibility with AlpacaExecutor
         self.strategies = strategies
         self.use_regime_detection = use_regime_detection
+        self.use_risk_management = use_risk_management
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
@@ -68,6 +75,12 @@ class StrategyOrchestrator:
                 }
             else:
                 self.capital_allocation = capital_allocation
+        
+        # Initialize risk manager if needed
+        if use_risk_management:
+            self.risk_manager = risk_manager or RiskManager()
+        else:
+            self.risk_manager = None
             
         # Validate allocation sums to 1.0
         total_allocation = sum(self.capital_allocation.values())
@@ -82,7 +95,8 @@ class StrategyOrchestrator:
             num_strategies=len(strategies),
             strategies=[s.name for s in strategies],
             allocation=self.capital_allocation,
-            regime_detection=use_regime_detection
+            regime_detection=use_regime_detection,
+            risk_management=use_risk_management
         )
     
     def _equal_allocation(self) -> Dict[str, float]:
@@ -182,13 +196,47 @@ class StrategyOrchestrator:
         # Resolve conflicts
         resolved_signals = self._resolve_conflicts(all_signals)
         
-        self.logger.info(
-            "signals_generated",
-            total_signals=len(all_signals),
-            resolved_signals=len(resolved_signals)
-        )
-        
-        return resolved_signals
+        # Validate signals against risk limits
+        if self.use_risk_management and self.risk_manager:
+            validated_signals = []
+            rejected_count = 0
+            
+            for signal in resolved_signals:
+                is_valid, reason = self.risk_manager.validate_signal(
+                    signal,
+                    account,
+                    positions,
+                    market_data
+                )
+                
+                if is_valid:
+                    validated_signals.append(signal)
+                else:
+                    rejected_count += 1
+                    self.logger.warning(
+                        "signal_rejected_by_risk_manager",
+                        symbol=signal.symbol,
+                        signal_type=signal.signal_type.value,
+                        reason=reason
+                    )
+            
+            self.logger.info(
+                "signals_generated",
+                total_signals=len(all_signals),
+                resolved_signals=len(resolved_signals),
+                validated_signals=len(validated_signals),
+                rejected_by_risk=rejected_count
+            )
+            
+            return validated_signals
+        else:
+            self.logger.info(
+                "signals_generated",
+                total_signals=len(all_signals),
+                resolved_signals=len(resolved_signals)
+            )
+            
+            return resolved_signals
     
     def _create_allocated_account(
         self,
