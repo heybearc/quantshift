@@ -39,6 +39,7 @@ class StrategyOrchestrator:
             capital_allocation: Dict mapping strategy name to allocation % (0-1)
                                If None, equal allocation across all strategies
         """
+        self.name = "MultiStrategy"  # For compatibility with AlpacaExecutor
         self.strategies = strategies
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
