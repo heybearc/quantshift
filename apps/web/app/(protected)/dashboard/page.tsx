@@ -319,7 +319,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-slate-400 mb-1">Last Heartbeat</p>
                       <p className="text-lg font-semibold text-white">
                         {botStatus?.lastHeartbeat 
-                          ? new Date(botStatus.lastHeartbeat).toLocaleTimeString()
+                          ? new Date(botStatus.lastHeartbeat).toLocaleString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
                           : "No heartbeat"}
                       </p>
                     </div>

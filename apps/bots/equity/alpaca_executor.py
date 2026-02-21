@@ -262,13 +262,23 @@ class AlpacaExecutor:
             logger.error(f"Error executing signal for {signal.symbol}: {e}", exc_info=True)
             return None
     
+    def is_market_open(self) -> bool:
+        """Check if the US stock market is currently open via Alpaca clock API."""
+        try:
+            clock = self.alpaca_client.get_clock()
+            return clock.is_open
+        except Exception as e:
+            logger.warning(f"Could not check market clock: {e} — assuming closed")
+            return False
+
     def run_strategy_cycle(self) -> Dict[str, Any]:
         """
         Run one complete strategy cycle:
-        1. Fetch account and positions
-        2. Fetch market data for all symbols
-        3. Generate signals from strategy
-        4. Execute valid signals
+        1. Check market hours — skip execution if market is closed
+        2. Fetch account and positions
+        3. Fetch market data for all symbols
+        4. Generate signals from strategy
+        5. Execute valid signals
         
         Returns:
             Summary of cycle execution
@@ -280,6 +290,11 @@ class AlpacaExecutor:
             'orders_executed': [],
             'errors': []
         }
+
+        # Guard: only execute orders during market hours
+        if not self.is_market_open():
+            logger.debug("Market is closed — skipping signal execution this cycle")
+            return results
         
         try:
             # Get account and positions
