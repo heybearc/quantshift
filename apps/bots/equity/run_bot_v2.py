@@ -22,7 +22,8 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 from quantshift_core.state_manager import StateManager
 from quantshift_core.database import get_db
 from quantshift_core.models import Trade
-from quantshift_core.strategies import BollingerBounce
+from quantshift_core.strategies import BollingerBounce, RSIMeanReversion
+from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 
 # Admin platform integration
 from database_writer import DatabaseWriter
@@ -70,18 +71,41 @@ class QuantShiftEquityBotV2:
             secret_key=os.getenv('APCA_API_SECRET_KEY')
         )
         
-        # Initialize strategy (broker-agnostic) - Bollinger Band Bounce
-        # Using winning backtest strategy: 58.6% win rate, 37.57% return over 3 years
-        strategy_config = {
+        # Initialize multi-strategy framework (Phase 1.1)
+        # Running 2 strategies simultaneously with capital allocation
+        
+        # Bollinger Bands: 58.6% WR, 37.57% return (60% allocation)
+        bb_config = {
             'bb_period': 20,
             'bb_std': 2.0,
             'rsi_period': 14,
             'rsi_entry_threshold': 40,
             'atr_period': 14,
             'atr_sl_multiplier': 1.5,
-            'risk_per_trade': 0.01  # 1% risk per trade
+            'risk_per_trade': 0.01
         }
-        self.strategy = BollingerBounce(config=strategy_config)
+        bollinger_strategy = BollingerBounce(config=bb_config)
+        
+        # RSI Mean Reversion: 57.5% WR, 16.82% return (40% allocation)
+        rsi_config = {
+            'rsi_period': 14,
+            'rsi_oversold': 30,
+            'rsi_overbought': 70,
+            'atr_period': 14,
+            'atr_sl_multiplier': 2.0,
+            'atr_tp_multiplier': 3.0,
+            'risk_per_trade': 0.01
+        }
+        rsi_strategy = RSIMeanReversion(config=rsi_config)
+        
+        # Create orchestrator with capital allocation
+        self.strategy = StrategyOrchestrator(
+            strategies=[bollinger_strategy, rsi_strategy],
+            capital_allocation={
+                'BollingerBounce': 0.60,  # 60% to Bollinger Bands
+                'RSIMeanReversion': 0.40  # 40% to RSI
+            }
+        )
         
         # Initialize Alpaca executor
         symbols = self.config.get('strategy', {}).get('symbols', ['SPY'])
