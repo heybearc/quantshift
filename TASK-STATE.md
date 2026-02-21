@@ -1,16 +1,29 @@
 # QuantShift Task State
 
-**Last updated:** 2026-02-18 (8:58am)  
+**Last updated:** 2026-02-21 (8:35am)  
 **Current branch:** main  
-**Working on:** v1.4.0 release preparation complete - ready for deployment
+**Working on:** Homelab infrastructure — TrueNAS integration complete, disk RMA deferred to next week
 
 ---
 
 ## Current Task
-**v1.4.0 Release - Enhanced Dashboard Analytics** - ✅ READY FOR DEPLOYMENT
+**v1.4.0 Release - Enhanced Dashboard Analytics** - ✅ READY FOR DEPLOYMENT (deferred — homelab work took priority today)
 
 ### What I'm doing right now
-Completed comprehensive testing and version bump for v1.4.0. All 81 tests passed on STANDBY (100% pass rate). Version bumped to 1.4.0, release notes created, and changes committed to GitHub. Dashboard enhancements (Phase 1-3) are fully validated and ready for production deployment via /release workflow.
+v1.4.0 is fully tested and ready. Homelab session today completed TrueNAS full integration (SSH, API, monitoring, app updates, Grafana dashboard). Next QuantShift session: run /release to deploy v1.4.0 to LIVE.
+
+### Today's Accomplishments (2026-02-21) — Homelab Session
+- ✅ **Netbox cleanup** — 25 VMs match Proxmox exactly, plex/calibre-web VMIDs corrected, no stale entries
+- ✅ **TrueNAS SSH access** — `homelab_root` key pushed to `truenas_admin`, keyless SSH working on port 222
+- ✅ **TrueNAS API key** — generated `homelab-automation` key, stored in `/opt/sync/.env` on CT150
+- ✅ **TrueNAS app scan** — found Vaultwarden, MinIO, Nextcloud all RUNNING on `10.92.5.200`
+- ✅ **TrueNAS app updates** — Vaultwarden 1.5.1→1.5.2, Nextcloud 2.1.24→2.2.2 (chart 2.2.2 / app 32.0.6)
+- ✅ **TrueNAS Prometheus exporter** — custom exporter on CT150:9200, systemd service, polls pool/disk/app/alerts
+- ✅ **6 alert rules** added to `homelab.yml` — pool degraded, disk faulted, app down, critical alerts, exporter down
+- ✅ **Grafana dashboard** — "TrueNAS — Storage & Apps" live at CT150:3000/d/truenas-storage
+- ✅ **Netbox updated** — TrueNAS device services (vaultwarden, minio-s3, minio-console, nextcloud), app IP 10.92.5.200
+- ✅ **Control plane** — D-027 added to DECISIONS.md, APP-MAP.md updated with Physical Infrastructure section
+- ⚠️ **DEFERRED** — `/dev/sde` (ST12000DM0007, serial ZJV28SCB) FAULTED in media-pool raidz1-1. RMA in progress. Replace disk → resilver → then apply TrueNAS OS update.
 
 ### Today's Accomplishments (2026-02-18)
 - ✅ **Comprehensive Testing on STANDBY**
