@@ -7,13 +7,18 @@
 
 ## 🚨 CRITICAL: Bot Status
 
-**Dashboard shows Bot Status: STALE** — bots are not actively trading.
+**Bot is RUNNING** — equity-bot + crypto-bot both active on CT100, heartbeating every 30s. (2026-02-21)
 
-**Immediate investigation required:**
-- [ ] Diagnose why bots are stale (effort: S) - Check bot process on container, logs, Alpaca connection
-- [ ] Reactivate paper trading bot (effort: S) - Restart bot, verify Alpaca paper API connection
-- [ ] Confirm paper trading validation status (effort: S) - 30-day validation started Dec 26, 2025 — did it complete?
-- [ ] Evaluate paper trading results against go/no-go criteria (effort: S)
+**Bugs fixed (2026-02-21):**
+- ✅ `positions` table duplicate key error — fixed with UPSERT in `database_writer.py`
+- ✅ Trade recording wired into `run_strategy` — executed orders now written to `trades` table
+
+**Paper trading validation — NOT COMPLETE. Reset required.**
+- Dec 26 – Jan 26 validation period: **0 meaningful equity trades recorded**
+- Feb 13: 500 SPY BUY orders fired simultaneously at market open — runaway loop bug (old bot version, not v2)
+- Only real equity trade: AAPL BUY Jan 30 @ $260.49 (still open, +$4.09)
+- **Go/no-go criteria cannot be evaluated** — insufficient trade history
+- **Action required:** Reset paper account, restart 30-day validation clock with v2 bot
 
 **Go/No-Go Criteria for Live Trading:**
 - Minimum 10 trades in 30 days
@@ -25,12 +30,14 @@
 
 ## 🎯 Active Work (This Week)
 
-**Current Focus:** Bot reactivation + production trading path
+**Current Focus:** Reset paper trading validation, fix runaway order bug
 
-- [ ] Diagnose and fix stale bot status (effort: S)
-- [ ] Review paper trading results from Dec 26 - Jan 26 validation period (effort: S)
-- [ ] Make go/no-go decision for live trading (effort: S)
-- [ ] Monitor v1.4.0 production dashboard for 24 hours (effort: S)
+- [x] Diagnose and fix stale bot status (effort: S) — DONE 2026-02-21
+- [x] Fix positions duplicate key + wire trade recording (effort: S) — DONE 2026-02-21
+- [ ] Investigate Feb 13 runaway SPY order bug — 500 orders in 2 min, find root cause (effort: S)
+- [ ] Reset Alpaca paper account to clear runaway SPY positions (effort: S)
+- [ ] Restart 30-day paper trading validation clock (effort: S)
+- [ ] Monitor equity-bot v2 for first real MA crossover signal + trade record (effort: S)
 
 ---
 
@@ -38,12 +45,13 @@
 
 ### 🔴 Critical — Bot Production Path
 
-#### Phase 0: Bot Reactivation (Do First)
-- [ ] SSH to bot container and check process status (effort: S)
-- [ ] Review bot logs for errors or crashes (effort: S)
-- [ ] Verify Alpaca paper trading API credentials still valid (effort: S)
-- [ ] Restart bot and confirm heartbeat updating in dashboard (effort: S)
-- [ ] Document root cause of stale status (effort: S)
+#### Phase 0: Paper Trading Reset (Do First)
+- [x] SSH to bot container and check process status — DONE (effort: S)
+- [x] Fix positions duplicate key bug — DONE (effort: S)
+- [x] Wire trade recording to strategy cycle — DONE (effort: S)
+- [ ] Find and fix root cause of Feb 13 runaway SPY order bug (effort: S)
+- [ ] Reset Alpaca paper account (effort: S)
+- [ ] Restart 30-day validation clock, monitor for real signals (effort: S)
 
 #### Phase 1: Advanced Risk Management (Before Live Trading)
 - [ ] Portfolio heat tracking — max 10% total risk exposure (effort: M)
@@ -171,7 +179,7 @@
 ## 🐛 Known Bugs
 
 ### Critical (Fix Immediately)
-- [ ] **Bot Status STALE** — bots not actively trading, heartbeat stale. Root cause unknown. (Discovered: 2026-02-19)
+- [ ] **Runaway SPY order bug** — 500 BUY orders fired simultaneously on Feb 13 at market open. Root cause unknown — likely a loop in old bot code that ran on this account. Needs investigation before paper account reset.
 
 ### Non-Critical (Backlog)
 None currently identified.
