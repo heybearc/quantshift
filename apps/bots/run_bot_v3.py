@@ -101,12 +101,8 @@ class QuantShiftUnifiedBot:
     def _init_state_manager(self):
         """Initialize Redis state manager."""
         try:
-            redis_config = self.config.get('redis', {})
             self.state_manager = StateManager(
-                bot_name=self.config.get('bot_name', 'quantshift-bot'),
-                redis_host=redis_config.get('host', 'localhost'),
-                redis_port=redis_config.get('port', 6379),
-                redis_db=redis_config.get('db', 0)
+                bot_name=self.config.get('bot_name', 'quantshift-bot')
             )
             logger.info("state_manager_initialized")
         except Exception as e:
