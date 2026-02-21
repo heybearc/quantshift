@@ -217,20 +217,20 @@ class MeanReversion(Strategy):
 
     def __init__(
         self,
-        capital_allocation: float = 0.33,
+        capital_allocation: float = 1.0,
         rsi_period: int = 14,
-        rsi_oversold: float = 30,
-        rsi_overbought: float = 70,
+        rsi_entry_threshold: float = 40,
         bb_period: int = 20,
-        bb_std: float = 2.0
+        bb_std: float = 2.0,
+        atr_multiplier: float = 1.5
     ):
-        """Initialize Mean Reversion strategy."""
-        super().__init__("Mean_Reversion", capital_allocation)
+        """Initialize Mean Reversion strategy (Bollinger Band Bounce)."""
+        super().__init__("BB_Bounce", capital_allocation)
         self.rsi_period = rsi_period
-        self.rsi_oversold = rsi_oversold
-        self.rsi_overbought = rsi_overbought
+        self.rsi_entry_threshold = rsi_entry_threshold
         self.bb_period = bb_period
         self.bb_std = bb_std
+        self.atr_multiplier = atr_multiplier
 
     def generate_signal(
         self,
@@ -239,7 +239,11 @@ class MeanReversion(Strategy):
         daily_data: Optional[pd.DataFrame] = None,
         hourly_data: Optional[pd.DataFrame] = None
     ) -> Signal:
-        """Generate signal based on mean reversion."""
+        """
+        Generate signal based on Bollinger Band bounce.
+        Entry: Price touches lower BB + RSI < 40
+        Exit: Price reaches middle BB (mean reversion complete)
+        """
         if len(data) < max(self.rsi_period, self.bb_period):
             return Signal.HOLD
         
@@ -250,49 +254,47 @@ class MeanReversion(Strategy):
         )
         
         current_price = data['close'].iloc[-1]
+        current_low = data['low'].iloc[-1]
+        current_high = data['high'].iloc[-1]
         current_rsi = rsi.iloc[-1]
-        prev_rsi = rsi.iloc[-2]
         
-        # Oversold condition (buy signal)
-        if current_rsi < self.rsi_oversold and prev_rsi >= self.rsi_oversold:
-            # Confirm with Bollinger Band
-            if current_price <= bb_lower.iloc[-1]:
-                logger.info("signal_generated", strategy=self.name, signal="BUY", reason="oversold_bb_lower")
+        # Check if we have an active position for this symbol
+        has_position = symbol in self.active_positions
+        
+        # Entry signal: price touches lower BB + RSI < threshold
+        if not has_position:
+            if current_low <= bb_lower.iloc[-1] and current_rsi < self.rsi_entry_threshold:
+                logger.info("signal_generated", strategy=self.name, signal="BUY", 
+                           reason="bb_lower_touch", rsi=current_rsi, 
+                           price=current_price, bb_lower=bb_lower.iloc[-1])
                 return Signal.BUY
         
-        # Overbought condition (sell signal)
-        elif current_rsi > self.rsi_overbought and prev_rsi <= self.rsi_overbought:
-            # Confirm with Bollinger Band
-            if current_price >= bb_upper.iloc[-1]:
-                logger.info("signal_generated", strategy=self.name, signal="SELL", reason="overbought_bb_upper")
+        # Exit signal: price reaches middle band (mean reversion)
+        else:
+            if current_high >= bb_middle.iloc[-1]:
+                logger.info("signal_generated", strategy=self.name, signal="SELL", 
+                           reason="bb_middle_reached", price=current_price, 
+                           bb_middle=bb_middle.iloc[-1])
                 return Signal.SELL
-        
-        # Mean reversion from extremes
-        if current_price < bb_lower.iloc[-1] and current_rsi < 35:
-            logger.info("signal_generated", strategy=self.name, signal="BUY", reason="extreme_oversold")
-            return Signal.BUY
-        
-        if current_price > bb_upper.iloc[-1] and current_rsi > 65:
-            logger.info("signal_generated", strategy=self.name, signal="SELL", reason="extreme_overbought")
-            return Signal.SELL
         
         return Signal.HOLD
 
     def calculate_stop_loss(self, entry_price: float, data: pd.DataFrame) -> float:
-        """Calculate stop loss using Bollinger Bands."""
-        _, bb_middle, bb_lower = self.indicators.bollinger_bands(
+        """Calculate stop loss below lower BB using ATR."""
+        _, _, bb_lower = self.indicators.bollinger_bands(
             data['close'], self.bb_period, self.bb_std
         )
-        # Stop loss below lower band
-        return bb_lower.iloc[-1] * 0.98
+        atr = self.indicators.atr(data['high'], data['low'], data['close']).iloc[-1]
+        # Stop loss = lower BB - 1.5×ATR
+        return bb_lower.iloc[-1] - (atr * self.atr_multiplier)
 
     def calculate_take_profit(self, entry_price: float, data: pd.DataFrame) -> float:
-        """Calculate take profit at middle band."""
-        _, bb_middle, _ = self.indicators.bollinger_bands(
+        """Calculate take profit at upper Bollinger Band."""
+        bb_upper, _, _ = self.indicators.bollinger_bands(
             data['close'], self.bb_period, self.bb_std
         )
-        # Take profit at middle band
-        return bb_middle.iloc[-1]
+        # Take profit at upper band
+        return bb_upper.iloc[-1]
 
 
 class Breakout(Strategy):
