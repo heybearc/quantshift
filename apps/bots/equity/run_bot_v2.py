@@ -98,13 +98,15 @@ class QuantShiftEquityBotV2:
         }
         rsi_strategy = RSIMeanReversion(config=rsi_config)
         
-        # Create orchestrator with capital allocation
+        # Create orchestrator with regime detection enabled
+        # Allocation will be dynamically adjusted based on market regime
         self.strategy = StrategyOrchestrator(
             strategies=[bollinger_strategy, rsi_strategy],
             capital_allocation={
-                'BollingerBounce': 0.60,  # 60% to Bollinger Bands
-                'RSIMeanReversion': 0.40  # 40% to RSI
-            }
+                'BollingerBounce': 0.60,  # Base: 60% to Bollinger Bands
+                'RSIMeanReversion': 0.40  # Base: 40% to RSI
+            },
+            use_regime_detection=True  # Enable adaptive allocation
         )
         
         # Initialize Alpaca executor
