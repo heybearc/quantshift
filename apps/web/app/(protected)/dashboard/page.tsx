@@ -16,8 +16,9 @@ import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
 import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard";
 
 interface BotStatus {
+  botName: string;
   status: string;
-  lastHeartbeat: string;
+  lastHeartbeat: string | null;
   accountEquity: number;
   accountCash: number;
   buyingPower: number;
@@ -26,7 +27,7 @@ interface BotStatus {
   realizedPl: number;
   positionsCount: number;
   tradesCount: number;
-  errorMessage?: string;
+  errorMessage?: string | null;
 }
 
 interface BotMetrics {
@@ -70,7 +71,7 @@ interface AdminStats {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
+  const [allBotStatus, setAllBotStatus] = useState<BotStatus[]>([]);
   const [botMetrics, setBotMetrics] = useState<BotMetrics | null>(null);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
@@ -86,13 +87,13 @@ export default function DashboardPage() {
     if (user) {
       console.log('[Dashboard] User role:', user.role);
       console.log('[Dashboard] Is admin?', user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN');
-      fetchBotStatus();
+      fetchAllBotStatus();
       fetchBotMetrics();
       if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
         fetchAdminStats();
       }
       const interval = setInterval(() => {
-        fetchBotStatus();
+        fetchAllBotStatus();
         fetchBotMetrics();
         if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
           fetchAdminStats();
@@ -102,22 +103,25 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const fetchBotStatus = async () => {
+  const fetchAllBotStatus = async () => {
     try {
-      const response = await fetch("/api/bot/status");
+      const response = await fetch("/api/bot/status/all");
       if (response.ok) {
         const data = await response.json();
-        setBotStatus(data);
+        setAllBotStatus(data.bots || []);
         setError(null);
       } else {
         setError("Failed to fetch bot status");
       }
     } catch (err) {
-      setError("Error connecting to bot");
+      setError("Error connecting to bots");
     } finally {
       setDataLoading(false);
     }
   };
+
+  const equityBot = allBotStatus.find(b => b.botName === 'equity-bot');
+  const cryptoBot = allBotStatus.find(b => b.botName === 'crypto-bot');
 
   const fetchBotMetrics = async () => {
     try {
@@ -203,31 +207,31 @@ export default function DashboardPage() {
                       <DollarSign className="h-6 w-6 text-cyan-400" />
                     </div>
                     <p className="text-4xl font-bold text-white mb-2">
-                      {formatCurrency(botStatus?.accountEquity || 0)}
+                      {formatCurrency(equityBot?.accountEquity || 0)}
                     </p>
                     <p className="text-sm text-cyan-300">
-                      Cash: {formatCurrency(botStatus?.accountCash || 0)}
+                      Cash: {formatCurrency(equityBot?.accountCash || 0)}
                     </p>
                   </div>
 
                   <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-700/50">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-purple-300 text-sm font-medium">Total P&L</span>
-                      {((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0)) >= 0 ? (
+                      {((equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0)) >= 0 ? (
                         <TrendingUp className="h-6 w-6 text-green-400" />
                       ) : (
                         <TrendingDown className="h-6 w-6 text-red-400" />
                       )}
                     </div>
                     <p className={`text-4xl font-bold mb-2 ${
-                      ((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0)) >= 0 
+                      ((equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0)) >= 0 
                         ? "text-green-400" 
                         : "text-red-400"
                     }`}>
-                      {formatCurrency((botStatus?.realizedPl || 0) + (botStatus?.unrealizedPl || 0))}
+                      {formatCurrency((equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0))}
                     </p>
                     <p className="text-sm text-purple-300">
-                      Realized: {formatCurrency(botStatus?.realizedPl || 0)}
+                      Realized: {formatCurrency(equityBot?.realizedPl || 0)}
                     </p>
                   </div>
                 </div>
@@ -264,7 +268,7 @@ export default function DashboardPage() {
                       <Activity className="h-5 w-5 text-blue-500" />
                     </div>
                     <p className="text-2xl font-bold text-white">
-                      {formatCurrency(botStatus?.buyingPower || 0)}
+                      {formatCurrency(equityBot?.buyingPower || 0)}
                     </p>
                   </div>
 
@@ -273,7 +277,9 @@ export default function DashboardPage() {
                       <span className="text-slate-400 text-sm">Open Positions</span>
                       <TrendingUp className="h-5 w-5 text-purple-500" />
                     </div>
-                    <p className="text-3xl font-bold text-white">{botStatus?.positionsCount || 0}</p>
+                    <p className="text-3xl font-bold text-white">
+                      {(equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0)}
+                    </p>
                   </div>
 
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700">
@@ -281,54 +287,89 @@ export default function DashboardPage() {
                       <span className="text-slate-400 text-sm">Total Trades</span>
                       <Zap className="h-5 w-5 text-cyan-500" />
                     </div>
-                    <p className="text-3xl font-bold text-white">{botStatus?.tradesCount || 0}</p>
+                    <p className="text-3xl font-bold text-white">
+                      {(equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0)}
+                    </p>
                   </div>
 
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-slate-400 text-sm">Unrealized P&L</span>
-                      {(botStatus?.unrealizedPl || 0) >= 0 ? (
+                      {((equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0)) >= 0 ? (
                         <TrendingUp className="h-5 w-5 text-green-500" />
                       ) : (
                         <TrendingDown className="h-5 w-5 text-red-500" />
                       )}
                     </div>
                     <p className={`text-2xl font-bold ${
-                      (botStatus?.unrealizedPl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                      ((equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0)) >= 0 ? "text-green-500" : "text-red-500"
                     }`}>
-                      {formatCurrency(botStatus?.unrealizedPl || 0)}
+                      {formatCurrency((equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0))}
                     </p>
                   </div>
                 </div>
 
-                {/* Bot Status Info */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
-                  <h3 className="text-lg font-semibold text-white mb-4">Bot Status</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-sm text-slate-400 mb-1">Status</p>
-                      <p className={`text-lg font-semibold ${
-                        botStatus?.status === "RUNNING" ? "text-green-500" :
-                        botStatus?.status === "STALE" ? "text-yellow-500" :
-                        "text-red-500"
-                      }`}>
-                        {botStatus?.status || "UNKNOWN"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-400 mb-1">Last Heartbeat</p>
-                      <p className="text-lg font-semibold text-white">
-                        {botStatus?.lastHeartbeat 
-                          ? new Date(botStatus.lastHeartbeat).toLocaleString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
-                          : "No heartbeat"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-400 mb-1">Portfolio Value</p>
-                      <p className="text-lg font-semibold text-white">
-                        {formatCurrency(botStatus?.portfolioValue || 0)}
-                      </p>
-                    </div>
+                {/* Active Bots */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Active Bots</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[equityBot, cryptoBot].map((bot) => {
+                      if (!bot) return null;
+                      const isRunning = bot.status === 'RUNNING';
+                      const isStale = bot.status === 'STALE';
+                      const label = bot.botName === 'equity-bot' ? 'Equity Bot' : 'Crypto Bot';
+                      const subtitle = bot.botName === 'equity-bot' ? 'Alpaca Paper · MA Crossover' : 'Coinbase · MA/RSI/MACD';
+                      const borderColor = isRunning ? 'border-green-700/50' : isStale ? 'border-yellow-700/50' : 'border-red-700/50';
+                      const statusColor = isRunning ? 'text-green-400' : isStale ? 'text-yellow-400' : 'text-red-400';
+                      const dotColor = isRunning ? 'bg-green-400' : isStale ? 'bg-yellow-400' : 'bg-red-400';
+                      return (
+                        <div key={bot.botName} className={`bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border ${borderColor}`}>
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h4 className="text-white font-semibold text-base">{label}</h4>
+                              <p className="text-slate-400 text-xs mt-0.5">{subtitle}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-block w-2 h-2 rounded-full ${dotColor} ${isRunning ? 'animate-pulse' : ''}`} />
+                              <span className={`text-sm font-semibold ${statusColor}`}>{bot.status}</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                            <div>
+                              <p className="text-slate-400 text-xs">Portfolio Value</p>
+                              <p className="text-white font-semibold">{formatCurrency(bot.portfolioValue)}</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 text-xs">Unrealized P&L</p>
+                              <p className={`font-semibold ${ bot.unrealizedPl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {formatCurrency(bot.unrealizedPl)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 text-xs">Open Positions</p>
+                              <p className="text-white font-semibold">{bot.positionsCount}</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 text-xs">Total Trades</p>
+                              <p className="text-white font-semibold">{bot.tradesCount}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-slate-400 text-xs">Last Heartbeat</p>
+                              <p className="text-white font-medium">
+                                {bot.lastHeartbeat
+                                  ? new Date(bot.lastHeartbeat).toLocaleString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                                  : 'No heartbeat'}
+                              </p>
+                            </div>
+                            {bot.errorMessage && (
+                              <div className="col-span-2">
+                                <p className="text-red-400 text-xs truncate">{bot.errorMessage}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
