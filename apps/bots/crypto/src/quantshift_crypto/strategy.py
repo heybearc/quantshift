@@ -71,7 +71,7 @@ class CryptoStrategy:
 
     def generate_signal(self, df: pd.DataFrame) -> Optional[str]:
         """Generate trading signal based on indicators."""
-        if df.empty or len(df) < 200:
+        if df.empty or len(df) < 60:
             return None
         
         latest = df.iloc[-1]
