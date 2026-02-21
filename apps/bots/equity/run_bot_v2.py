@@ -394,7 +394,39 @@ class QuantShiftEquityBotV2:
                 logger.info(
                     f"Signal: {signal['type']} {signal['symbol']} @ ${signal['price']:.2f} - {signal['reason']}"
                 )
-            
+
+            # Record executed orders to trades table
+            if results['orders_executed'] and self.db_writer and self._ensure_db_connection():
+                for order in results['orders_executed']:
+                    try:
+                        side = order.get('side', 'BUY')
+                        symbol = order.get('symbol', '')
+                        qty = order.get('quantity', order.get('qty', 0))
+                        price = order.get('fill_price', order.get('price', 0))
+                        reason = order.get('reason', '')
+                        if side.upper() in ('BUY', 'LONG') and symbol and price:
+                            self.db_writer.record_trade_entry(
+                                symbol=symbol,
+                                side='BUY',
+                                quantity=float(qty),
+                                entry_price=float(price),
+                                strategy=self.strategy.name,
+                                signal_type='buy_signal',
+                                entry_reason=reason,
+                            )
+                        elif side.upper() in ('SELL', 'SHORT') and symbol and price:
+                            self.db_writer.record_trade_entry(
+                                symbol=symbol,
+                                side='SELL',
+                                quantity=float(qty),
+                                entry_price=float(price),
+                                strategy=self.strategy.name,
+                                signal_type='sell_signal',
+                                entry_reason=reason,
+                            )
+                    except Exception as te:
+                        logger.warning(f"Could not record trade to DB: {te}")
+
         except Exception as e:
             logger.error(f"Error in strategy execution: {e}", exc_info=True)
     

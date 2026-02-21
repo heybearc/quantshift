@@ -220,13 +220,19 @@ class DatabaseWriter:
         """
         try:
             cursor = self.conn.cursor()
-            
-            # Delete existing positions for this bot
-            cursor.execute("""
-                DELETE FROM positions WHERE bot_name = %s
-            """, (self.bot_name,))
 
-            # Insert current positions
+            # Remove positions no longer held
+            current_symbols = [pos['symbol'] for pos in positions]
+            if current_symbols:
+                cursor.execute("""
+                    DELETE FROM positions WHERE bot_name = %s AND symbol != ALL(%s)
+                """, (self.bot_name, current_symbols))
+            else:
+                cursor.execute("""
+                    DELETE FROM positions WHERE bot_name = %s
+                """, (self.bot_name,))
+
+            # Upsert current positions
             for pos in positions:
                 cost_basis = pos.get('cost_basis', pos.get('market_value', 0))
                 cursor.execute("""
@@ -238,6 +244,16 @@ class DatabaseWriter:
                         created_at, updated_at
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (bot_name, symbol) DO UPDATE SET
+                        quantity          = EXCLUDED.quantity,
+                        current_price     = EXCLUDED.current_price,
+                        market_value      = EXCLUDED.market_value,
+                        cost_basis        = EXCLUDED.cost_basis,
+                        unrealized_pl     = EXCLUDED.unrealized_pl,
+                        unrealized_pl_pct = EXCLUDED.unrealized_pl_pct,
+                        stop_loss         = EXCLUDED.stop_loss,
+                        take_profit       = EXCLUDED.take_profit,
+                        updated_at        = EXCLUDED.updated_at
                 """, (
                     str(uuid.uuid4()),
                     self.bot_name,
@@ -256,10 +272,10 @@ class DatabaseWriter:
                     datetime.now(),
                     datetime.now()
                 ))
-            
+
             self.conn.commit()
             logger.debug(f"Updated {len(positions)} positions for {self.bot_name}")
-            
+
         except Exception as e:
             logger.error(f"Error updating positions: {e}")
             self.conn.rollback()
