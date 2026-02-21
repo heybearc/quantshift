@@ -5,10 +5,11 @@ import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { TrendingUp, TrendingDown, DollarSign, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart2, Bitcoin } from "lucide-react";
 
 interface Position {
   id: string;
+  botName: string;
   symbol: string;
   quantity: number;
   entryPrice: number;
@@ -150,6 +151,7 @@ export default function PositionsPage() {
                       <table className="w-full">
                         <thead className="bg-slate-900/50">
                           <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Bot</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Symbol</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Strategy</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Quantity</th>
@@ -163,6 +165,12 @@ export default function PositionsPage() {
                         <tbody className="divide-y divide-slate-700">
                           {positions.map((position) => (
                             <tr key={position.id} className="hover:bg-slate-700/30">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {position.botName === 'equity-bot'
+                                  ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"><BarChart2 className="h-3 w-3" />Equity</span>
+                                  : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-900/40 text-orange-300"><Bitcoin className="h-3 w-3" />Crypto</span>
+                                }
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <span className="text-sm font-medium text-white">{position.symbol}</span>
@@ -178,7 +186,7 @@ export default function PositionsPage() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{position.strategy}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{position.quantity.toFixed(8)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{position.quantity < 1 ? position.quantity.toFixed(6) : position.quantity.toFixed(4)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.entryPrice)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.currentPrice)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.marketValue)}</td>

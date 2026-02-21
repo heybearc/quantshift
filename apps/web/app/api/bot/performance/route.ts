@@ -15,11 +15,12 @@ export async function GET(request: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    const botName = searchParams.get('botName');
+    const where: any = { date: { gte: startDate } };
+    if (botName) where.botName = botName;
+
     const metrics = await prisma.performanceMetrics.findMany({
-      where: {
-        botName: 'equity-bot',
-        date: { gte: startDate },
-      },
+      where,
       orderBy: { date: 'asc' },
     });
 

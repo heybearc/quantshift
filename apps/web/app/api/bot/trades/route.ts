@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       trades: trades.map(trade => ({
         id: trade.id,
+        botName: trade.botName,
         symbol: trade.symbol,
         side: trade.side,
         quantity: trade.quantity,
