@@ -1,48 +1,323 @@
-# Implementation Plan - QuantShift
+# QuantShift Production Roadmap
 
-**Last Updated:** 2026-02-20
-**Current Phase:** v1.4.0 in production — Bot reactivation and production trading path
-
----
-
-## 🚨 CRITICAL: Bot Status
-
-**Bot is RUNNING** — equity-bot + crypto-bot both active on CT100, heartbeating every 30s. (2026-02-21)
-
-**Bugs fixed (2026-02-21):**
-- ✅ `positions` table duplicate key error — fixed with UPSERT in `database_writer.py`
-- ✅ Trade recording wired into `run_strategy` — executed orders now written to `trades` table
-
-**Paper trading validation — NOT COMPLETE. Reset required.**
-- Dec 26 – Jan 26 validation period: **0 meaningful equity trades recorded**
-- Feb 13: 500 SPY BUY orders fired simultaneously at market open — runaway loop bug (old bot version, not v2)
-- Only real equity trade: AAPL BUY Jan 30 @ $260.49 (still open, +$4.09)
-- **Go/no-go criteria cannot be evaluated** — insufficient trade history
-- **Action taken (2026-02-21):** Legacy `alpaca-trader-million.service` stopped + disabled (root cause of runaway orders). Paper account reset — AAPL close order pending market open. 30-day validation clock starts Feb 21, 2026. Go/no-go decision: Mar 21, 2026.
-
-**Go/No-Go Criteria for Live Trading:**
-- Minimum 10 trades in 30 days
-- Win rate ≥ 45%
-- Max drawdown < 20%
-- No critical bugs
+**Last Updated:** 2026-02-21
+**Current Status:** Bollinger Bands strategy deployed, building production-ready adaptive trading system
 
 ---
 
-## 🎯 Active Work (This Week)
+## 🎯 MISSION: Production-Ready Adaptive Trading System
 
-**Current Focus:** Reset paper trading validation, fix runaway order bug
+Build a fully adaptive, multi-strategy trading system with regime detection, advanced risk management, and institutional-grade monitoring — all while running continuous paper trading validation.
 
-- [x] Diagnose and fix stale bot status (effort: S) — DONE 2026-02-21
-- [x] Fix positions duplicate key + wire trade recording (effort: S) — DONE 2026-02-21
-- [x] Investigate Feb 13 runaway SPY bug — root cause: legacy `alpaca-trader-million.service` sharing paper account (effort: S) — DONE 2026-02-21
-- [x] Stop + disable legacy bot service (effort: S) — DONE 2026-02-21
-- [x] Reset Alpaca paper account — AAPL close order pending market open (effort: S) — DONE 2026-02-21
-- [ ] Monitor equity-bot v2 for first real MA crossover signal + confirm trade recorded in DB (effort: S)
-- [ ] Go/no-go decision by Mar 21, 2026 (effort: S)
+**Timeline:** 6-8 weeks to production-ready
+**Approach:** Build and test incrementally, deploy features as they're completed
+**Validation:** Continuous paper trading throughout development
 
 ---
 
-## 📋 Backlog (Prioritized)
+## ✅ COMPLETED (Feb 21, 2026)
+
+### Strategy Development
+- ✅ Backtested 3 strategies (RSI 57.5% WR, Bollinger 58.6% WR, Breakout pending)
+- ✅ Bollinger Bands strategy deployed to production (LIVE on qs-primary)
+- ✅ Backtest framework created (Yahoo Finance data, reusable scripts)
+- ✅ Bot framework supports BaseStrategy pattern
+
+### Infrastructure
+- ✅ Fixed positions duplicate key bug
+- ✅ Fixed crypto bot positions sync issue
+- ✅ Wired all dashboard pages for both bots (Trades, Positions, Performance)
+- ✅ Dashboard shows combined portfolio + per-bot breakdown
+- ✅ Blue-green deployment working
+- ✅ Database schema supports multi-bot tracking
+
+### Bot Status
+- ✅ equity-bot: RUNNING with BollingerBounce strategy
+- ✅ crypto-bot: RUNNING (needs strategy replacement - current strategy failed backtest)
+- ✅ Both bots heartbeating to database every 30s
+
+---
+
+## 🚀 PRODUCTION ROADMAP
+
+### **PHASE 1: Multi-Strategy Framework** (Week 1-2)
+**Goal:** Run 3 uncorrelated strategies simultaneously for natural market adaptation
+
+#### 1.1 Strategy Implementation
+- [ ] **RSI Mean Reversion Strategy** (2 days)
+  - Create `rsi_mean_reversion.py` in strategies module
+  - Entry: RSI crosses below 30 (oversold)
+  - Exit: RSI crosses above 70 (overbought) OR price hits target
+  - Backtest validated: 57.5% WR, 16.82% return
+  
+- [ ] **Breakout Momentum Strategy** (2 days)
+  - Create `breakout_momentum.py` in strategies module
+  - Entry: Price breaks 20-day high + volume > 1.5x average
+  - Exit: Trailing stop at 1.5×ATR OR price breaks 10-day low
+  - Backtest on SPY/QQQ/AAPL/MSFT (target: >50% WR)
+
+#### 1.2 Multi-Strategy Orchestration (3 days)
+- [ ] Create `StrategyOrchestrator` class
+  - Manages multiple strategies simultaneously
+  - Capital allocation per strategy (configurable %)
+  - Conflict resolution (if multiple strategies signal same symbol)
+  - Aggregates signals from all active strategies
+  
+- [ ] Strategy allocation system
+  - Default: 40% Bollinger, 30% RSI, 30% Breakout
+  - Configurable via `config/strategy_allocation.yaml`
+  - Per-strategy position limits
+  
+- [ ] Performance tracking per strategy
+  - Track P&L, win rate, Sharpe per strategy
+  - Store in `strategy_performance` table
+  - API endpoint: `/api/bot/strategy-performance`
+
+#### 1.3 Testing & Deployment (2 days)
+- [ ] Unit tests for each strategy
+- [ ] Integration test: all 3 strategies running simultaneously
+- [ ] Deploy to qs-primary
+- [ ] Monitor for 48 hours, verify no conflicts
+
+**Deliverable:** Bot runs 3 strategies, each trading independently with allocated capital
+
+---
+
+### **PHASE 2: Market Regime Detection** (Week 3)
+**Goal:** Detect market conditions and adapt strategy allocation dynamically
+
+#### 2.1 Regime Indicators (2 days)
+- [ ] Create `MarketRegimeDetector` class
+  - **Trend:** 50-day SMA slope (degrees per day)
+  - **Volatility:** 20-day ATR / 100-day ATR ratio
+  - **Breadth:** % of SPY components above 200-day MA
+  - **Fear:** VIX level (via Alpaca or Yahoo Finance)
+  
+- [ ] Historical regime calculation
+  - Calculate regime for past 2 years
+  - Validate regime changes align with known market events
+  - Store in `market_regime` table
+
+#### 2.2 Regime Classification (1 day)
+- [ ] Define 5 regime types:
+  - **Bull Trending:** Uptrend + low vol (ATR ratio < 1.2)
+  - **Bear Trending:** Downtrend + low vol
+  - **High Vol Choppy:** ATR ratio > 1.5, no clear trend
+  - **Low Vol Range:** ATR ratio < 0.8, no trend
+  - **Crisis:** VIX > 30 OR ATR ratio > 2.0
+  
+- [ ] Regime transition logic
+  - Require 3 consecutive days to confirm regime change
+  - Prevent rapid regime switching
+
+#### 2.3 Regime-Based Adaptation (2 days)
+- [ ] Strategy allocation by regime:
+  ```yaml
+  bull_trending:
+    breakout: 50%
+    bollinger: 30%
+    rsi: 20%
+  high_vol_choppy:
+    bollinger: 60%
+    rsi: 30%
+    breakout: 10%
+  crisis:
+    cash: 80%
+    bollinger: 20%  # Wide stops only
+  ```
+  
+- [ ] Position sizing by regime:
+  - Normal: 1% risk per trade
+  - High vol: 0.5% risk per trade
+  - Crisis: 0.25% risk per trade OR halt trading
+  
+- [ ] Dashboard regime indicator
+  - Show current regime on dashboard
+  - Show regime history (last 30 days)
+
+#### 2.4 Testing (1 day)
+- [ ] Backtest regime detection on 2022-2024 data
+- [ ] Verify regime-based allocation improves returns
+- [ ] Deploy and monitor
+
+**Deliverable:** Bot automatically adjusts strategy allocation based on market regime
+
+---
+
+### **PHASE 3: Advanced Risk Management** (Week 4)
+**Goal:** Portfolio-level risk controls that prevent catastrophic losses
+
+#### 3.1 Portfolio Heat Tracking (2 days)
+- [ ] Create `RiskManager` class
+  - Track total portfolio risk exposure
+  - Max 10% total risk (sum of all position risks)
+  - Reduce to 5% in high vol, 2% in crisis
+  
+- [ ] Position risk calculation
+  - Risk per position = (entry - stop) × quantity
+  - Total risk = sum of all open position risks
+  - Block new trades if total risk > limit
+
+#### 3.2 Correlation & Concentration Limits (2 days)
+- [ ] Correlation monitoring
+  - Calculate 30-day correlation between all positions
+  - Block new position if correlation > 0.7 with existing
+  - Use Yahoo Finance for correlation data
+  
+- [ ] Sector exposure limits
+  - Max 30% of portfolio in any sector
+  - Sector mapping: SPY→Equity, QQQ→Tech, etc.
+  - Block trades that exceed sector limit
+
+#### 3.3 Circuit Breakers (1 day)
+- [ ] Daily loss limit
+  - Halt trading if daily loss > 5% of starting equity
+  - Require manual restart via admin UI
+  - Email alert on circuit breaker trip
+  
+- [ ] Drawdown circuit breaker
+  - Halt if drawdown > 15% from peak equity
+  - Reduce position sizes at 10% drawdown
+  - Email alert with recovery plan
+
+#### 3.4 Kelly Criterion Position Sizing (1 day)
+- [ ] Implement fractional Kelly
+  - Kelly % = (Win Rate × Avg Win - (1 - Win Rate) × Avg Loss) / Avg Win
+  - Use 25% Kelly for safety (0.25 × Kelly %)
+  - Recalculate weekly based on last 30 trades
+  
+- [ ] Fallback to fixed fractional if insufficient data
+  - Need minimum 20 trades for Kelly calculation
+  - Default to 1% risk if < 20 trades
+
+**Deliverable:** Bot has institutional-grade risk controls, won't blow up account
+
+---
+
+### **PHASE 4: Adaptive Optimization** (Week 5)
+**Goal:** Self-optimizing parameters and strategy performance monitoring
+
+#### 4.1 Walk-Forward Optimization (3 days)
+- [ ] Create `ParameterOptimizer` class
+  - Monthly re-optimization of strategy parameters
+  - Train on last 6 months, test on next month
+  - Grid search over parameter ranges
+  
+- [ ] Parameter ranges per strategy:
+  ```python
+  bollinger_ranges = {
+      'bb_period': [15, 20, 25],
+      'bb_std': [1.5, 2.0, 2.5],
+      'rsi_threshold': [35, 40, 45]
+  }
+  ```
+  
+- [ ] Optimization metrics
+  - Optimize for Sharpe ratio (not just return)
+  - Penalize high drawdown
+  - Require minimum 10 trades in test period
+
+#### 4.2 Adaptive Parameters by Regime (2 days)
+- [ ] Bollinger Bands regime adaptation:
+  - High vol: bb_std = 2.5 (wider bands)
+  - Normal vol: bb_std = 2.0
+  - Low vol: bb_std = 1.5 (tighter bands)
+  
+- [ ] RSI regime adaptation:
+  - Uptrend: thresholds 35/75 (more aggressive)
+  - Downtrend: thresholds 25/65 (more conservative)
+  - Sideways: thresholds 30/70 (standard)
+
+#### 4.3 Strategy Performance Monitoring (1 day)
+- [ ] Rolling 30-day metrics per strategy
+  - Win rate, profit factor, Sharpe ratio
+  - Compare to backtest expectations
+  - Alert if performance degrades >20%
+  
+- [ ] Auto-disable underperforming strategies
+  - Disable if win rate < 40% for 30 days
+  - Disable if Sharpe < 0.5 for 30 days
+  - Re-enable when backtest shows improvement
+
+**Deliverable:** Bot self-optimizes monthly and disables strategies that stop working
+
+---
+
+### **PHASE 5: Dashboard & Monitoring** (Week 6)
+**Goal:** Real-time visibility into bot performance and health
+
+#### 5.1 Trading Pages Integration (2 days)
+- [x] Trades page — DONE (bot filter tabs, exit reasons)
+- [x] Positions page — DONE (bot badges, smart qty formatting)
+- [x] Performance page — DONE (dark theme, bot filters)
+- [ ] Add strategy breakdown to Performance page
+- [ ] Add regime indicator to Dashboard
+
+#### 5.2 Real-Time Monitoring Dashboard (2 days)
+- [ ] Bot health cards
+  - Last heartbeat, uptime, error count
+  - Current regime, active strategies
+  - Portfolio heat, correlation warnings
+  
+- [ ] Strategy performance cards
+  - P&L per strategy (today, week, month)
+  - Win rate per strategy
+  - Active positions per strategy
+  
+- [ ] Risk metrics cards
+  - Current portfolio heat
+  - Max drawdown from peak
+  - Distance to circuit breakers
+
+#### 5.3 Alerting System (2 days)
+- [ ] Email alerts for:
+  - Circuit breaker triggered
+  - Strategy disabled due to poor performance
+  - Regime change detected
+  - Daily P&L summary
+  - Weekly performance report
+  
+- [ ] Alert configuration UI
+  - Enable/disable alert types
+  - Set alert thresholds
+  - Add email recipients
+
+**Deliverable:** Full visibility into bot operations, proactive alerts
+
+---
+
+### **PHASE 6: Production Validation** (Week 7-8)
+**Goal:** Comprehensive testing before live trading decision
+
+#### 6.1 Integration Testing (3 days)
+- [ ] Test all strategies simultaneously
+- [ ] Test regime transitions
+- [ ] Test circuit breakers (simulate losses)
+- [ ] Test correlation limits
+- [ ] Test parameter optimization
+- [ ] Stress test with volatile market data
+
+#### 6.2 Performance Validation (5 days)
+- [ ] Run full system in paper trading for 1 week
+- [ ] Verify all strategies generating signals
+- [ ] Verify regime detection working correctly
+- [ ] Verify risk limits enforced
+- [ ] Compare paper results to backtest expectations
+
+#### 6.3 Go-Live Checklist (2 days)
+- [ ] All phases 1-5 complete and tested
+- [ ] Paper trading shows positive results
+- [ ] All circuit breakers tested
+- [ ] Monitoring and alerting working
+- [ ] Emergency kill switch tested
+- [ ] Alpaca live API credentials configured
+- [ ] Final review and approval
+
+**Deliverable:** Production-ready system, decision to go live or continue paper trading
+
+---
+
+## 📋 Current Backlog (Deferred)
 
 ### 🔴 Critical — Bot Production Path
 
