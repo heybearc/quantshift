@@ -246,43 +246,112 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 ### **PHASE 5: Dashboard & Monitoring** (Week 6)
 **Goal:** Real-time visibility into bot performance and health
 
-#### 5.1 Trading Pages Integration (2 days)
+#### 5.1 Trading Pages Enhancement (2 days)
 - [x] Trades page — DONE (bot filter tabs, exit reasons)
 - [x] Positions page — DONE (bot badges, smart qty formatting)
 - [x] Performance page — DONE (dark theme, bot filters)
 - [ ] Add strategy breakdown to Performance page
-- [ ] Add regime indicator to Dashboard
-
-#### 5.2 Real-Time Monitoring Dashboard (2 days)
-- [ ] Bot health cards
-  - Last heartbeat, uptime, error count
-  - Current regime, active strategies
-  - Portfolio heat, correlation warnings
-  
-- [ ] Strategy performance cards
-  - P&L per strategy (today, week, month)
+  - P&L per strategy (Bollinger, RSI, Breakout)
   - Win rate per strategy
   - Active positions per strategy
-  
-- [ ] Risk metrics cards
-  - Current portfolio heat
-  - Max drawdown from peak
-  - Distance to circuit breakers
+- [ ] Add regime indicator to Dashboard
+  - Current regime badge (bull/bear/high vol/low vol/crisis)
+  - Regime history chart (last 30 days)
+  - Strategy allocation by regime
 
-#### 5.3 Alerting System (2 days)
-- [ ] Email alerts for:
+#### 5.2 Real-Time Monitoring Dashboard (3 days)
+- [ ] **Bot Health Section**
+  - Last heartbeat timestamp
+  - Uptime percentage
+  - Error count (24h)
+  - Current regime + active strategies
+  - Portfolio heat gauge
+  - Correlation warnings
+  
+- [ ] **Strategy Performance Section**
+  - P&L per strategy (today, week, month, all-time)
+  - Win rate per strategy
+  - Sharpe ratio per strategy
+  - Active positions per strategy
+  - Strategy status (active/disabled/paused)
+  
+- [ ] **Risk Metrics Section**
+  - Current portfolio heat (% of max)
+  - Max drawdown from peak
+  - Distance to circuit breakers (visual gauge)
+  - Daily P&L vs daily loss limit
+  - Open position count vs max positions
+  
+- [ ] **Market Regime Section**
+  - Current regime with confidence score
+  - Trend indicator (50-day SMA slope)
+  - Volatility indicator (ATR ratio)
+  - Market breadth (% stocks above 200-day MA)
+  - VIX level
+
+#### 5.3 Admin Control Center (3 days)
+- [ ] **Settings Page**
+  - Email configuration (Gmail + custom SMTP)
+  - Platform settings (name, version)
+  - Notification preferences
+  - Test email functionality
+  - Save/load from database
+  
+- [ ] **Session Management**
+  - Active sessions list
+  - User activity tracking
+  - Session termination
+  - IP address + user agent display
+  - Last activity timestamps
+  
+- [ ] **Audit Logs Viewer**
+  - System activity log
+  - Filterable by user/action/date
+  - Searchable
+  - Exportable to CSV
+  - Actions: login/logout, settings changes, trades, etc.
+
+#### 5.4 Alerting System (2 days)
+- [ ] **Email Alerts**
   - Circuit breaker triggered
   - Strategy disabled due to poor performance
   - Regime change detected
-  - Daily P&L summary
+  - Daily P&L summary (configurable time)
   - Weekly performance report
+  - Bot crash/restart
+  - API connection failures
   
-- [ ] Alert configuration UI
+- [ ] **Alert Configuration UI**
   - Enable/disable alert types
   - Set alert thresholds
   - Add email recipients
+  - Alert frequency settings
+  - Test alert functionality
 
-**Deliverable:** Full visibility into bot operations, proactive alerts
+#### 5.5 System Operations (2 days)
+- [ ] **Health Monitor Dashboard**
+  - Database connection status + latency
+  - API response times
+  - Memory usage
+  - CPU usage
+  - Disk space
+  - Bot service status
+  
+- [ ] **API Status Dashboard**
+  - Endpoint health monitoring
+  - Response time tracking
+  - Error rate monitoring
+  - Uptime statistics
+  - External API status (Alpaca, Yahoo Finance)
+  
+- [ ] **Bot Controls**
+  - Start/stop bot from UI
+  - Restart bot
+  - Emergency kill switch
+  - Manual trade execution (admin only)
+  - Position force-close (admin only)
+
+**Deliverable:** Full visibility into bot operations, proactive alerts, admin control center
 
 ---
 
