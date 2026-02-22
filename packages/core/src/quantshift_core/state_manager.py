@@ -1,6 +1,7 @@
 """State management with Redis and PostgreSQL for hot-standby failover."""
 
 import json
+import os
 import signal
 import sys
 from datetime import datetime
@@ -148,12 +149,33 @@ class StateManager:
         self.redis_client.setex(key, 60, datetime.utcnow().isoformat())
 
     def is_primary(self) -> bool:
-        """Check if this bot instance should be primary."""
+        """Check if this bot instance should be primary.
+        
+        Uses Redis lock with instance ID to prevent split-brain.
+        Primary refreshes lock every cycle. Standby waits for lock to expire.
+        """
         try:
-            # Check if another instance has recent heartbeat
+            import socket
+            instance_id = f"{socket.gethostname()}:{os.getpid()}"
             key = f"bot:{self.bot_name}:primary_lock"
-            lock = self.redis_client.set(key, "locked", nx=True, ex=30)
-            return lock is not None
+            
+            # Try to acquire lock with our instance ID
+            acquired = self.redis_client.set(key, instance_id, nx=True, ex=30)
+            
+            if acquired:
+                # We acquired the lock - we are primary
+                return True
+            
+            # Lock exists - check if it's ours
+            current_holder = self.redis_client.get(key)
+            if current_holder == instance_id:
+                # We already hold the lock - refresh it
+                self.redis_client.expire(key, 30)
+                return True
+            
+            # Another instance holds the lock - we are standby
+            return False
+            
         except Exception as e:
             logger.error("primary_check_failed", error=str(e))
             return True  # Default to primary if Redis fails
