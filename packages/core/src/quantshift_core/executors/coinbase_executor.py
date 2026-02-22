@@ -275,16 +275,40 @@ class CoinbaseExecutor:
                     if fills:
                         fill_price = float(fills[0].get('price', signal.price))
                 
-                # Note: Coinbase perpetuals use stop-loss and take-profit via separate orders
-                # This would require additional API calls to set up bracket orders
-                # For now, we'll log that SL/TP would be placed
+                # Place stop-loss and take-profit orders for risk management
                 if signal.stop_loss:
-                    logger.info(f"Stop loss target: SELL {signal.position_size} {signal.symbol} @ ${signal.stop_loss:.2f}")
-                    # TODO: Implement stop-loss order via Coinbase API
+                    try:
+                        sl_order = self._place_stop_loss_order(
+                            signal.symbol,
+                            signal.position_size or 1,
+                            signal.stop_loss
+                        )
+                        logger.info(
+                            "stop_loss_placed",
+                            symbol=signal.symbol,
+                            qty=signal.position_size,
+                            stop_price=signal.stop_loss,
+                            order_id=sl_order.get('order_id')
+                        )
+                    except Exception as e:
+                        logger.error("stop_loss_placement_failed", error=str(e))
                 
                 if signal.take_profit:
-                    logger.info(f"Take profit target: SELL {signal.position_size} {signal.symbol} @ ${signal.take_profit:.2f}")
-                    # TODO: Implement take-profit order via Coinbase API
+                    try:
+                        tp_order = self._place_take_profit_order(
+                            signal.symbol,
+                            signal.position_size or 1,
+                            signal.take_profit
+                        )
+                        logger.info(
+                            "take_profit_placed",
+                            symbol=signal.symbol,
+                            qty=signal.position_size,
+                            limit_price=signal.take_profit,
+                            order_id=tp_order.get('order_id')
+                        )
+                    except Exception as e:
+                        logger.error("take_profit_placement_failed", error=str(e))
             
             return {
                 'id': order_id,
@@ -301,6 +325,67 @@ class CoinbaseExecutor:
         except Exception as e:
             logger.error(f"Error executing signal for {signal.symbol}: {e}", exc_info=True)
             return None
+    
+    def _place_stop_loss_order(self, symbol: str, quantity: float, stop_price: float) -> dict:
+        """
+        Place a stop-loss order for a position.
+        
+        Args:
+            symbol: Trading symbol
+            quantity: Position size to protect
+            stop_price: Stop-loss trigger price
+            
+        Returns:
+            Order response from Coinbase API
+        """
+        import time
+        
+        order_config = {
+            "client_order_id": f"sl_{symbol}_{int(time.time())}",
+            "product_id": symbol,
+            "side": "SELL",
+            "order_configuration": {
+                "stop_limit_stop_limit_gtc": {
+                    "base_size": str(quantity),
+                    "limit_price": str(stop_price * 0.995),
+                    "stop_price": str(stop_price),
+                    "stop_direction": "STOP_DIRECTION_STOP_DOWN"
+                }
+            }
+        }
+        
+        response = self.coinbase_client.create_order(**order_config)
+        return response
+    
+    def _place_take_profit_order(self, symbol: str, quantity: float, limit_price: float) -> dict:
+        """
+        Place a take-profit limit order for a position.
+        
+        Args:
+            symbol: Trading symbol
+            quantity: Position size to close
+            limit_price: Take-profit limit price
+            
+        Returns:
+            Order response from Coinbase API
+        """
+        import time
+        
+        order_config = {
+            "client_order_id": f"tp_{symbol}_{int(time.time())}",
+            "product_id": symbol,
+            "side": "SELL",
+            "order_configuration": {
+                "limit_limit_gtc": {
+                    "base_size": str(quantity),
+                    "limit_price": str(limit_price),
+                    "post_only": False
+                }
+            }
+        }
+        
+        response = self.coinbase_client.create_order(**order_config)
+        return response
     
     def is_market_open(self) -> bool:
         """
