@@ -360,6 +360,7 @@ class QuantShiftUnifiedBot:
         
         last_cycle_time = 0
         last_heartbeat_time = 0
+        last_primary_check = 0
         is_primary = False
         
         logger.info(
@@ -373,22 +374,25 @@ class QuantShiftUnifiedBot:
                 current_time = time.time()
                 
                 # Check if this instance should be primary
-                try:
-                    was_primary = is_primary
-                    is_primary = self.state_manager.is_primary()
-                    
-                    if is_primary and not was_primary:
-                        logger.info("became_primary", bot_name=self.bot_name)
-                        # Load state from Redis when becoming primary
-                        state = self.state_manager.load_state()
-                        if state:
-                            logger.info("state_loaded_from_redis", keys=list(state.keys()))
-                    elif not is_primary and was_primary:
-                        logger.info("became_standby", bot_name=self.bot_name)
-                except Exception as e:
-                    logger.error("primary_check_failed", error=str(e))
-                    # Default to primary if check fails to avoid downtime
-                    is_primary = True
+                # Only check every 5 seconds to avoid rapid switching
+                if current_time - last_primary_check >= 5:
+                    try:
+                        was_primary = is_primary
+                        is_primary = self.state_manager.is_primary()
+                        last_primary_check = current_time
+                        
+                        if is_primary and not was_primary:
+                            logger.info("became_primary", bot_name=self.bot_name)
+                            # Load state from Redis when becoming primary
+                            state = self.state_manager.load_state()
+                            if state:
+                                logger.info("state_loaded_from_redis", keys=list(state.keys()))
+                        elif not is_primary and was_primary:
+                            logger.info("became_standby", bot_name=self.bot_name)
+                    except Exception as e:
+                        logger.error("primary_check_failed", error=str(e))
+                        # Default to primary if check fails to avoid downtime
+                        is_primary = True
                 
                 # Send heartbeat (only if primary)
                 if is_primary and current_time - last_heartbeat_time >= heartbeat_interval:
