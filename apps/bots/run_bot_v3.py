@@ -337,7 +337,9 @@ class QuantShiftUnifiedBot:
                 len(positions),
                 self.bot_name
             ))
+            rows_updated = cursor.rowcount
             self.db_conn.commit()
+            logger.debug("db_heartbeat_updated", bot_name=self.bot_name, rows_updated=rows_updated)
             
         except Exception as e:
             logger.error("db_heartbeat_failed", error=str(e), exc_info=True)
