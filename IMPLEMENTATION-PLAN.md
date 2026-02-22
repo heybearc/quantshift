@@ -40,6 +40,76 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ## 🚀 PRODUCTION ROADMAP
 
+### **PHASE 0: Infrastructure & State Management** (Week 0 - Foundation)
+**Goal:** Complete critical infrastructure for production reliability
+
+#### 0.1 Redis Replication for Failover (30 min)
+- [ ] Configure standby Redis as replica of primary
+  - Set `replicaof 10.92.3.27 6379` on standby
+  - Set `masterauth Cloudy_92!` for authentication
+  - Verify replication status with `INFO replication`
+  - Test state sync between primary and standby
+
+#### 0.2 Position Recovery on Startup (2 hours)
+- [ ] Implement position loading from Redis
+  - Load positions from `bot:{bot_name}:position:*` keys
+  - Reconcile with broker API (handle discrepancies)
+  - Resume managing existing positions
+  - Log recovery status (positions loaded, discrepancies found)
+  
+- [ ] Add graceful shutdown position saving
+  - Save all open positions to Redis before shutdown
+  - Close positions safely if configured
+  - Test shutdown handler with SIGTERM
+
+#### 0.3 Stop-Loss/Take-Profit Order Placement (3 hours)
+- [ ] Implement Coinbase stop-loss orders
+  - Use Coinbase Advanced Trade API stop orders
+  - Handle order placement errors
+  - Track SL/TP orders in database
+  
+- [ ] Implement Alpaca stop-loss orders
+  - Use bracket orders for SL/TP
+  - Handle partial fills
+  - Update position tracking
+
+#### 0.4 ML Model Training & Deployment (1 hour)
+- [ ] Train ML regime classifier
+  - Run `train_ml_regime_classifier.py` on 2 years SPY data
+  - Validate 91.7% accuracy target
+  - Save model to `/opt/quantshift/models/regime_classifier.pkl`
+  - Deploy to primary and standby servers
+  
+- [ ] Train RL position sizing agent
+  - Run `train_rl_agent.py` for PPO training
+  - Validate Sharpe ratio improvement
+  - Save model to `/opt/quantshift/models/rl_agent.pkl`
+  - Deploy to servers
+
+#### 0.5 ML Model Lifecycle Management (4 hours)
+- [ ] **Automated Retraining Pipeline**
+  - Cron job for weekly model retraining
+  - Model performance monitoring (accuracy drift detection)
+  - Automatic rollback if new model performs worse
+  - Model versioning (keep last 3 versions)
+  
+- [ ] **Admin UI for ML Operations**
+  - "Train Models" button (triggers training job)
+  - Model performance dashboard (accuracy, last trained, version)
+  - Manual model rollback capability
+  - Training job status/logs viewer
+  - Schedule configuration (weekly/monthly/manual)
+  
+- [ ] **Model Monitoring & Alerts**
+  - Track prediction accuracy vs actual outcomes
+  - Alert if accuracy drops below 75%
+  - Compare ML vs rule-based performance
+  - Automatic fallback to rule-based if ML fails
+
+**Deliverable:** Production-ready infrastructure with failover, position recovery, and ML lifecycle management
+
+---
+
 ### **PHASE 1: Multi-Strategy Framework** (Week 1-2)
 **Goal:** Run 3 uncorrelated strategies simultaneously for natural market adaptation
 
