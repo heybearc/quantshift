@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   UserPlus,
-  UserCheck
+  UserCheck,
+  Brain
 } from "lucide-react";
 import { useState } from "react";
 import { APP_VERSION, APP_NAME } from "@/lib/version";
@@ -36,6 +37,7 @@ export function Navigation() {
     { name: "Trades", href: "/trades", icon: TrendingUp },
     { name: "Positions", href: "/positions", icon: Activity },
     { name: "Performance", href: "/performance", icon: BarChart3 },
+    { name: "Regime Analysis", href: "/regime", icon: Brain },
     { name: "Email Notifications", href: "/settings/notifications", icon: Mail },
     { name: "Help", href: "/help", icon: BookOpen },
   ];
