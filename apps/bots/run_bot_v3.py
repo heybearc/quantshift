@@ -34,7 +34,8 @@ from quantshift_core.strategies import BollingerBounce, RSIMeanReversion
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
-from quantshift_core.database import get_db_connection
+
+import psycopg2
 
 # Configure structured logging
 structlog.configure(
@@ -296,7 +297,9 @@ class QuantShiftUnifiedBot:
         """Update bot status in PostgreSQL database."""
         try:
             if not self.db_conn:
-                self.db_conn = get_db_connection()
+                # Get database URL from environment
+                db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
+                self.db_conn = psycopg2.connect(db_url)
             
             # Get current account info
             account = self.executor.get_account()
