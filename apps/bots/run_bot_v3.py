@@ -299,14 +299,17 @@ class QuantShiftUnifiedBot:
     def _update_db_heartbeat(self):
         """Update bot status in PostgreSQL database."""
         try:
+            logger.debug("db_heartbeat_starting", bot_name=self.bot_name)
             if not self.db_conn:
                 # Get database URL from environment
                 db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
                 self.db_conn = psycopg2.connect(db_url)
+                logger.debug("db_connection_established")
             
             # Get current account info
             account = self.executor.get_account()
             positions = self.executor.get_positions()
+            logger.debug("account_info_retrieved", equity=account.equity)
             
             # Update bot_status table (use UPDATE instead of INSERT to avoid id conflict)
             cursor = self.db_conn.cursor()
