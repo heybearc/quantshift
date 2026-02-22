@@ -305,28 +305,22 @@ class QuantShiftUnifiedBot:
             account = self.executor.get_account()
             positions = self.executor.get_positions()
             
-            # Update bot_status table
+            # Update bot_status table (use UPDATE instead of INSERT to avoid id conflict)
             cursor = self.db_conn.cursor()
             cursor.execute("""
-                INSERT INTO bot_status (
-                    bot_name, status, last_heartbeat, account_equity, account_cash,
-                    buying_power, portfolio_value, unrealized_pl, realized_pl,
-                    positions_count, trades_count, updated_at
-                )
-                VALUES (%s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                ON CONFLICT (bot_name) DO UPDATE SET
-                    status = EXCLUDED.status,
-                    last_heartbeat = EXCLUDED.last_heartbeat,
-                    account_equity = EXCLUDED.account_equity,
-                    account_cash = EXCLUDED.account_cash,
-                    buying_power = EXCLUDED.buying_power,
-                    portfolio_value = EXCLUDED.portfolio_value,
-                    unrealized_pl = EXCLUDED.unrealized_pl,
-                    realized_pl = EXCLUDED.realized_pl,
-                    positions_count = EXCLUDED.positions_count,
-                    updated_at = EXCLUDED.updated_at
+                UPDATE bot_status SET
+                    status = %s,
+                    last_heartbeat = NOW(),
+                    account_equity = %s,
+                    account_cash = %s,
+                    buying_power = %s,
+                    portfolio_value = %s,
+                    unrealized_pl = %s,
+                    realized_pl = %s,
+                    positions_count = %s,
+                    updated_at = NOW()
+                WHERE bot_name = %s
             """, (
-                self.bot_name,
                 'RUNNING',
                 float(account.equity),
                 float(account.cash),
@@ -335,7 +329,7 @@ class QuantShiftUnifiedBot:
                 float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else 0.0,
                 float(account.realized_pl) if hasattr(account, 'realized_pl') else 0.0,
                 len(positions),
-                0  # trades_count - would need separate query
+                self.bot_name
             ))
             self.db_conn.commit()
             
