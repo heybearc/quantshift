@@ -14,6 +14,7 @@ from .strategies.base_strategy import BaseStrategy, Signal, SignalType, Account,
 from .market_regime import MarketRegimeDetector, MarketRegime
 from .risk_manager import RiskManager, CircuitBreakerStatus
 from .ml_regime_classifier import MLRegimeClassifier
+from .sentiment_analyzer import SentimentAnalyzer
 
 logger = structlog.get_logger()
 
@@ -41,7 +42,9 @@ class StrategyOrchestrator:
         use_ml_regime: bool = False,
         ml_regime_classifier: Optional[MLRegimeClassifier] = None,
         use_risk_management: bool = True,
-        risk_manager: Optional[RiskManager] = None
+        risk_manager: Optional[RiskManager] = None,
+        use_sentiment_analysis: bool = False,
+        sentiment_analyzer: Optional[SentimentAnalyzer] = None
     ):
         """
         Initialize the orchestrator.
@@ -56,12 +59,15 @@ class StrategyOrchestrator:
             ml_regime_classifier: MLRegimeClassifier instance (created if None and use_ml_regime=True)
             use_risk_management: Enable portfolio-level risk management
             risk_manager: RiskManager instance (created if None and use_risk_management=True)
+            use_sentiment_analysis: Enable sentiment-based signal filtering
+            sentiment_analyzer: SentimentAnalyzer instance (created if None and use_sentiment_analysis=True)
         """
         self.name = "MultiStrategy"  # For compatibility with AlpacaExecutor
         self.strategies = strategies
         self.use_regime_detection = use_regime_detection
         self.use_ml_regime = use_ml_regime
         self.use_risk_management = use_risk_management
+        self.use_sentiment_analysis = use_sentiment_analysis
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
@@ -98,6 +104,13 @@ class StrategyOrchestrator:
             self.risk_manager = risk_manager or RiskManager()
         else:
             self.risk_manager = None
+        
+        # Initialize sentiment analyzer if needed
+        if use_sentiment_analysis:
+            self.sentiment_analyzer = sentiment_analyzer or SentimentAnalyzer()
+            self.logger.info("Using sentiment analysis for signal filtering")
+        else:
+            self.sentiment_analyzer = None
             
         # Validate allocation sums to 1.0
         total_allocation = sum(self.capital_allocation.values())
@@ -215,6 +228,38 @@ class StrategyOrchestrator:
                             signal.metadata['regime'] = self.current_regime.value
                             signal.metadata['risk_multiplier'] = self.regime_risk_multiplier
                             signal.metadata['original_position_size'] = original_size
+                        
+                        # Apply sentiment analysis
+                        if self.use_sentiment_analysis and self.sentiment_analyzer:
+                            # Check if signal should be filtered
+                            should_filter, filter_reason = self.sentiment_analyzer.should_filter_signal(
+                                signal.symbol,
+                                signal.signal_type.value
+                            )
+                            
+                            if should_filter:
+                                signal.metadata['sentiment_filtered'] = True
+                                signal.metadata['sentiment_filter_reason'] = filter_reason
+                                self.logger.warning(
+                                    "signal_filtered_by_sentiment",
+                                    symbol=signal.symbol,
+                                    signal_type=signal.signal_type.value,
+                                    reason=filter_reason
+                                )
+                                continue  # Skip this signal
+                            
+                            # Get confidence boost
+                            confidence_boost = self.sentiment_analyzer.get_confidence_boost(
+                                signal.symbol,
+                                signal.signal_type.value
+                            )
+                            
+                            # Apply confidence boost to position size
+                            if signal.position_size and confidence_boost != 1.0:
+                                original_size = signal.position_size
+                                signal.position_size = int(signal.position_size * confidence_boost)
+                                signal.metadata['sentiment_boost'] = confidence_boost
+                                signal.metadata['sentiment_adjusted_from'] = original_size
                     
                     all_signals.extend(signals)
                     
