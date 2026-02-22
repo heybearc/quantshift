@@ -84,6 +84,10 @@ class StateManager:
             logger.debug("state_saved", bot_name=self.bot_name, key=key)
         except Exception as e:
             logger.error("state_save_failed", error=str(e))
+    
+    def update_state(self, state: Dict[str, Any]) -> None:
+        """Alias for save_state for backward compatibility."""
+        self.save_state(state)
 
     def load_state(self) -> Optional[Dict[str, Any]]:
         """Load bot state from Redis."""
