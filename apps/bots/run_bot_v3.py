@@ -352,7 +352,7 @@ class QuantShiftUnifiedBot:
                 self.db_conn = None
     
     def run(self):
-        """Main bot loop."""
+        """Main bot loop with hot-standby failover support."""
         self.running = True
         
         cycle_interval = self.config.get('cycle_interval_seconds', 60)
@@ -360,6 +360,7 @@ class QuantShiftUnifiedBot:
         
         last_cycle_time = 0
         last_heartbeat_time = 0
+        is_primary = False
         
         logger.info(
             "bot_started",
@@ -371,13 +372,31 @@ class QuantShiftUnifiedBot:
             try:
                 current_time = time.time()
                 
-                # Send heartbeat
-                if current_time - last_heartbeat_time >= heartbeat_interval:
+                # Check if this instance should be primary
+                try:
+                    was_primary = is_primary
+                    is_primary = self.state_manager.is_primary()
+                    
+                    if is_primary and not was_primary:
+                        logger.info("became_primary", bot_name=self.bot_name)
+                        # Load state from Redis when becoming primary
+                        state = self.state_manager.load_state()
+                        if state:
+                            logger.info("state_loaded_from_redis", keys=list(state.keys()))
+                    elif not is_primary and was_primary:
+                        logger.info("became_standby", bot_name=self.bot_name)
+                except Exception as e:
+                    logger.error("primary_check_failed", error=str(e))
+                    # Default to primary if check fails to avoid downtime
+                    is_primary = True
+                
+                # Send heartbeat (only if primary)
+                if is_primary and current_time - last_heartbeat_time >= heartbeat_interval:
                     self.send_heartbeat()
                     last_heartbeat_time = current_time
                 
-                # Run strategy cycle
-                if current_time - last_cycle_time >= cycle_interval:
+                # Run strategy cycle (only if primary)
+                if is_primary and current_time - last_cycle_time >= cycle_interval:
                     # Check if market is open (for equity) or always run (for crypto)
                     if self.executor.is_market_open():
                         logger.info("strategy_cycle_starting")
