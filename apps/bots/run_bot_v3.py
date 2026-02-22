@@ -34,6 +34,7 @@ from quantshift_core.strategies import BollingerBounce, RSIMeanReversion
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
+from quantshift_core.database import get_db_connection
 
 # Configure structured logging
 structlog.configure(
@@ -69,6 +70,8 @@ class QuantShiftUnifiedBot:
         self.running = False
         self.state_manager = None
         self.executor = None
+        self.db_conn = None
+        self.bot_name = self.config.get('bot_name', 'quantshift-bot')
         
         logger.info(
             "bot_initializing",
@@ -279,11 +282,69 @@ class QuantShiftUnifiedBot:
             logger.error("state_update_failed", error=str(e), exc_info=True)
     
     def send_heartbeat(self):
-        """Send heartbeat to Redis."""
+        """Send heartbeat to Redis and PostgreSQL."""
         try:
+            # Send to Redis
             self.state_manager.heartbeat()
+            
+            # Also write to PostgreSQL so dashboard shows correct status
+            self._update_db_heartbeat()
         except Exception as e:
             logger.error("heartbeat_failed", error=str(e))
+    
+    def _update_db_heartbeat(self):
+        """Update bot status in PostgreSQL database."""
+        try:
+            if not self.db_conn:
+                self.db_conn = get_db_connection()
+            
+            # Get current account info
+            account = self.executor.get_account()
+            positions = self.executor.get_positions()
+            
+            # Update bot_status table
+            cursor = self.db_conn.cursor()
+            cursor.execute("""
+                INSERT INTO bot_status (
+                    bot_name, status, last_heartbeat, account_equity, account_cash,
+                    buying_power, portfolio_value, unrealized_pl, realized_pl,
+                    positions_count, trades_count, updated_at
+                )
+                VALUES (%s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (bot_name) DO UPDATE SET
+                    status = EXCLUDED.status,
+                    last_heartbeat = EXCLUDED.last_heartbeat,
+                    account_equity = EXCLUDED.account_equity,
+                    account_cash = EXCLUDED.account_cash,
+                    buying_power = EXCLUDED.buying_power,
+                    portfolio_value = EXCLUDED.portfolio_value,
+                    unrealized_pl = EXCLUDED.unrealized_pl,
+                    realized_pl = EXCLUDED.realized_pl,
+                    positions_count = EXCLUDED.positions_count,
+                    updated_at = EXCLUDED.updated_at
+            """, (
+                self.bot_name,
+                'RUNNING',
+                float(account.equity),
+                float(account.cash),
+                float(account.buying_power),
+                float(account.portfolio_value),
+                float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else 0.0,
+                float(account.realized_pl) if hasattr(account, 'realized_pl') else 0.0,
+                len(positions),
+                0  # trades_count - would need separate query
+            ))
+            self.db_conn.commit()
+            
+        except Exception as e:
+            logger.error("db_heartbeat_failed", error=str(e), exc_info=True)
+            # Reconnect on next attempt
+            if self.db_conn:
+                try:
+                    self.db_conn.close()
+                except:
+                    pass
+                self.db_conn = None
     
     def run(self):
         """Main bot loop."""
