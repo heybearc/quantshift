@@ -284,14 +284,17 @@ class QuantShiftUnifiedBot:
     
     def send_heartbeat(self):
         """Send heartbeat to Redis and PostgreSQL."""
+        # Send to Redis (don't let failure block DB heartbeat)
         try:
-            # Send to Redis
             self.state_manager.heartbeat()
-            
-            # Also write to PostgreSQL so dashboard shows correct status
+        except Exception as e:
+            logger.error("redis_heartbeat_failed", error=str(e))
+        
+        # Always write to PostgreSQL so dashboard shows correct status
+        try:
             self._update_db_heartbeat()
         except Exception as e:
-            logger.error("heartbeat_failed", error=str(e))
+            logger.error("db_heartbeat_failed", error=str(e))
     
     def _update_db_heartbeat(self):
         """Update bot status in PostgreSQL database."""
