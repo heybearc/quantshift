@@ -1,4 +1,4 @@
-import { RegimeDashboard } from '@/components/regime-dashboard';
+import { RegimeDashboard } from '@/components/regime-dashboard-simple';
 
 export default function RegimePage() {
   return (
