@@ -73,6 +73,7 @@ class QuantShiftUnifiedBot:
         self.executor = None
         self.db_conn = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
+        self.recovered_positions = {}
         
         logger.info(
             "bot_initializing",
@@ -84,6 +85,9 @@ class QuantShiftUnifiedBot:
         self._init_state_manager()
         self._init_strategies()
         self._init_executor()
+        
+        # Recover positions from Redis (for failover/restart)
+        self._recover_positions()
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -246,10 +250,112 @@ class QuantShiftUnifiedBot:
             simulated_capital=simulated_capital
         )
     
+    def _recover_positions(self):
+        """
+        Recover positions from Redis on startup.
+        
+        This enables:
+        1. Bot restart without losing position tracking
+        2. Standby failover with full position context
+        3. Reconciliation with broker API to handle discrepancies
+        """
+        try:
+            # Load positions from Redis
+            redis_positions = self.state_manager.load_positions()
+            
+            if not redis_positions:
+                logger.info("position_recovery_none", message="No positions to recover")
+                return
+            
+            logger.info("position_recovery_started", count=len(redis_positions))
+            
+            # Get current positions from broker
+            try:
+                broker_positions = self.executor.get_positions()
+                broker_symbols = {pos.symbol for pos in broker_positions}
+            except Exception as e:
+                logger.warning("broker_positions_fetch_failed", error=str(e))
+                broker_symbols = set()
+            
+            # Reconcile positions
+            recovered_count = 0
+            discrepancy_count = 0
+            
+            for symbol, redis_data in redis_positions.items():
+                if symbol in broker_symbols:
+                    # Position exists in both Redis and broker - recovered successfully
+                    self.recovered_positions[symbol] = redis_data
+                    recovered_count += 1
+                    logger.info(
+                        "position_recovered",
+                        symbol=symbol,
+                        quantity=redis_data.get('quantity'),
+                        entry_price=redis_data.get('entry_price')
+                    )
+                else:
+                    # Position in Redis but not in broker - likely closed
+                    discrepancy_count += 1
+                    logger.warning(
+                        "position_discrepancy",
+                        symbol=symbol,
+                        status="closed_at_broker",
+                        action="clearing_redis"
+                    )
+                    # Clear stale position from Redis
+                    self.state_manager.clear_position(symbol)
+            
+            logger.info(
+                "position_recovery_complete",
+                recovered=recovered_count,
+                discrepancies=discrepancy_count,
+                total=len(redis_positions)
+            )
+            
+        except Exception as e:
+            logger.error("position_recovery_failed", error=str(e), exc_info=True)
+    
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully."""
         logger.info("shutdown_signal_received", signal=signum)
         self.running = False
+        
+        # Save positions to Redis before shutdown
+        self._save_positions_on_shutdown()
+    
+    def _save_positions_on_shutdown(self):
+        """Save all open positions to Redis before shutdown for recovery."""
+        try:
+            positions = self.executor.get_positions()
+            
+            if not positions:
+                logger.info("shutdown_no_positions_to_save")
+                return
+            
+            logger.info("shutdown_saving_positions", count=len(positions))
+            
+            for pos in positions:
+                position_data = {
+                    'quantity': pos.quantity,
+                    'entry_price': pos.entry_price,
+                    'current_price': pos.current_price,
+                    'unrealized_pl': pos.unrealized_pl,
+                    'saved_at': datetime.utcnow().isoformat()
+                }
+                
+                # Save to Redis
+                self.state_manager.save_position(pos.symbol, position_data)
+                
+                logger.info(
+                    "shutdown_position_saved",
+                    symbol=pos.symbol,
+                    quantity=pos.quantity,
+                    entry_price=pos.entry_price
+                )
+            
+            logger.info("shutdown_positions_saved", count=len(positions))
+            
+        except Exception as e:
+            logger.error("shutdown_position_save_failed", error=str(e), exc_info=True)
     
     def update_state(self):
         """Update bot state in Redis and database."""
@@ -257,6 +363,17 @@ class QuantShiftUnifiedBot:
             # Get account and positions from executor
             account = self.executor.get_account()
             positions = self.executor.get_positions()
+            
+            # Save positions to Redis for recovery
+            for pos in positions:
+                position_data = {
+                    'quantity': pos.quantity,
+                    'entry_price': pos.entry_price,
+                    'current_price': pos.current_price,
+                    'unrealized_pl': pos.unrealized_pl,
+                    'updated_at': datetime.utcnow().isoformat()
+                }
+                self.state_manager.save_position(pos.symbol, position_data)
             
             # Update state manager
             state = {
