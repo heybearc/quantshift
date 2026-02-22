@@ -144,11 +144,8 @@ class StateManager:
 
     def heartbeat(self) -> None:
         """Send heartbeat to indicate bot is alive."""
-        try:
-            key = f"bot:{self.bot_name}:heartbeat"
-            self.redis_client.setex(key, 60, datetime.utcnow().isoformat())
-        except Exception as e:
-            logger.error("heartbeat_failed", error=str(e))
+        key = f"bot:{self.bot_name}:heartbeat"
+        self.redis_client.setex(key, 60, datetime.utcnow().isoformat())
 
     def is_primary(self) -> bool:
         """Check if this bot instance should be primary."""
