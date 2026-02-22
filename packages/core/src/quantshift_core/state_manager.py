@@ -24,11 +24,8 @@ class StateManager:
         self.bot_name = bot_name
         settings = get_settings()
         
-        # Redis connection with password
+        # Redis connection - use URL from settings (password included if needed)
         redis_url = str(settings.redis_url)
-        if "Cloudy_92!" not in redis_url:
-            redis_url = redis_url.replace("localhost", "localhost")
-            redis_url = redis_url.replace("redis://", "redis://:Cloudy_92!@")
         
         self.redis_client = redis.from_url(
             redis_url,
