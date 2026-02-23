@@ -427,7 +427,7 @@ class AlpacaExecutor:
 
                         # Skip BUY signals if at max positions
                         if signal.signal_type == SignalType.BUY and at_max_positions:
-                            logger.info(f"Skipping BUY {symbol} — at max positions ({max_positions})")
+                            logger.info(f"Skipping BUY {signal.symbol} — at max positions ({max_positions})")
                             continue
 
                         # Execute the signal
@@ -437,7 +437,7 @@ class AlpacaExecutor:
                             self._daily_trades += 1
                     
                 except Exception as e:
-                    error_msg = f"Error processing {symbol}: {str(e)}"
+                    error_msg = f"Error generating signals: {str(e)}"
                     logger.error(error_msg, exc_info=True)
                     results['errors'].append(error_msg)
             
