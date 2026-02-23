@@ -6,7 +6,9 @@ and provide sentiment scores for trading symbols. Helps filter bad trades and
 boost confidence when sentiment aligns with strategy signals.
 """
 
+import os
 import logging
+import time
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -25,23 +27,38 @@ class SentimentAnalyzer:
     Can be used to filter signals or adjust position sizes.
     """
     
-    def __init__(
-        self,
-        news_api_key: Optional[str] = None,
-        cache_duration_minutes: int = 15,
-        use_finbert: bool = True
-    ):
+    def __init__(self, config: Optional[Dict] = None):
         """
         Initialize sentiment analyzer.
         
         Args:
-            news_api_key: API key for news service (NewsAPI.org or Alpha Vantage)
-            cache_duration_minutes: How long to cache sentiment results
-            use_finbert: Use FinBERT model (requires transformers library)
+            config: Configuration dict with optional keys:
+                - use_finbert: Whether to use FinBERT (default: True)
+                - cache_duration_minutes: How long to cache sentiment (default: 15)
+                - finnhub_api_key: Finnhub API key (or use FINNHUB_API_KEY env var)
+                - news_provider: 'finnhub' or 'mock' (default: 'finnhub')
         """
-        self.news_api_key = news_api_key
-        self.cache_duration = timedelta(minutes=cache_duration_minutes)
-        self.use_finbert = use_finbert
+        self.config = config or {}
+        self.use_finbert = self.config.get('use_finbert', True)
+        self.cache_duration = timedelta(minutes=self.config.get('cache_duration_minutes', 15))
+        self.sentiment_cache = {}
+        self.news_provider = self.config.get('news_provider', 'finnhub')
+        
+        # Initialize Finnhub client if using Finnhub
+        self.finnhub_client = None
+        if self.news_provider == 'finnhub':
+            try:
+                import finnhub
+                api_key = self.config.get('finnhub_api_key') or os.getenv('FINNHUB_API_KEY')
+                if api_key:
+                    self.finnhub_client = finnhub.Client(api_key=api_key)
+                    logger.info("finnhub_client_initialized")
+                else:
+                    logger.warning("finnhub_api_key_not_found", fallback="mock")
+                    self.news_provider = 'mock'
+            except ImportError:
+                logger.warning("finnhub_library_not_installed", fallback="mock")
+                self.news_provider = 'mock'
         
         # Sentiment cache: {symbol: {timestamp, score, articles}}
         self.sentiment_cache: Dict[str, Dict] = {}
@@ -75,7 +92,7 @@ class SentimentAnalyzer:
         logger.info(
             "sentiment_analyzer_initialized",
             use_finbert=self.use_finbert,
-            cache_duration=cache_duration_minutes
+            cache_duration=self.config.get('cache_duration_minutes', 15)
         )
     
     def get_sentiment(
@@ -160,15 +177,66 @@ class SentimentAnalyzer:
         """
         Fetch recent news for a symbol.
         
-        For now, returns mock data. In production, would fetch from:
-        - NewsAPI.org
-        - Alpha Vantage News API
-        - Finnhub
-        - Twitter/X API
+        Uses Finnhub API in production, falls back to mock data if unavailable.
         """
-        # TODO: Implement real news fetching
-        # For now, return mock news data
+        if self.news_provider == 'finnhub' and self.finnhub_client:
+            return self._fetch_news_finnhub(symbol, max_articles)
+        else:
+            return self._fetch_news_mock(symbol, max_articles)
+    
+    def _fetch_news_finnhub(self, symbol: str, max_articles: int = 10) -> List[Dict]:
+        """
+        Fetch news from Finnhub API.
         
+        Free tier: 60 API calls/minute
+        """
+        try:
+            # Get news from last 7 days
+            to_date = datetime.utcnow()
+            from_date = to_date - timedelta(days=7)
+            
+            # Format dates as YYYY-MM-DD
+            from_str = from_date.strftime('%Y-%m-%d')
+            to_str = to_date.strftime('%Y-%m-%d')
+            
+            # Fetch company news
+            news_items = self.finnhub_client.company_news(symbol, _from=from_str, to=to_str)
+            
+            # Convert to standardized format
+            articles = []
+            for item in news_items[:max_articles]:
+                articles.append({
+                    'title': item.get('headline', ''),
+                    'description': item.get('summary', ''),
+                    'source': item.get('source', 'Unknown'),
+                    'publishedAt': datetime.fromtimestamp(item.get('datetime', 0)).isoformat(),
+                    'url': item.get('url', '')
+                })
+            
+            logger.info(
+                "finnhub_news_fetched",
+                symbol=symbol,
+                count=len(articles)
+            )
+            
+            # Rate limiting: sleep briefly to avoid hitting limits
+            time.sleep(0.1)  # 100ms between requests = max 10 req/sec = 600 req/min (well under 60/min limit)
+            
+            return articles
+            
+        except Exception as e:
+            logger.error(
+                "finnhub_fetch_failed",
+                symbol=symbol,
+                error=str(e),
+                fallback="mock"
+            )
+            return self._fetch_news_mock(symbol, max_articles)
+    
+    def _fetch_news_mock(self, symbol: str, max_articles: int = 10) -> List[Dict]:
+        """
+        Return mock news data for testing.
+        """
         mock_news = [
             {
                 'title': f'{symbol} shows strong performance in Q4 earnings',
