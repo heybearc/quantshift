@@ -396,17 +396,22 @@ class AlpacaExecutor:
                 f"Positions: {len(positions)}"
             )
             
-            # Check each symbol
+            # Fetch market data for all symbols
+            market_data_dict = {}
             for symbol in self.symbols:
                 try:
                     results['symbols_checked'].append(symbol)
-                    
-                    # Fetch market data
-                    market_data = self.get_market_data(symbol, days=90)
-                    
-                    # Generate signals
+                    market_data_dict[symbol] = self.get_market_data(symbol, days=90)
+                except Exception as e:
+                    error_msg = f"Error fetching data for {symbol}: {str(e)}"
+                    logger.error(error_msg, exc_info=True)
+                    results['errors'].append(error_msg)
+            
+            # Generate signals for all symbols
+            if market_data_dict:
+                try:
                     signals = self.strategy.generate_signals(
-                        market_data=market_data,
+                        market_data=market_data_dict,
                         account=account,
                         positions=positions
                     )
