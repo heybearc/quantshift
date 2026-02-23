@@ -333,7 +333,8 @@ class StrategyOrchestrator:
         return Account(
             equity=account.equity * allocation,
             buying_power=account.buying_power * allocation,
-            cash=account.cash * allocation
+            cash=account.cash * allocation,
+            portfolio_value=account.portfolio_value * allocation
         )
     
     def _resolve_conflicts(self, signals: List[Signal]) -> List[Signal]:
