@@ -278,3 +278,17 @@ class BaseStrategy(ABC):
         """Update strategy configuration."""
         self.config.update(config)
         self.logger.info("config_updated", config=config)
+    
+    def _get_symbol_from_data(self, market_data: pd.DataFrame) -> str:
+        """Extract symbol from market data."""
+        # Try to get from DataFrame attribute
+        if hasattr(market_data, 'symbol'):
+            return market_data.symbol
+        
+        # Try to get from index
+        if hasattr(market_data.index, 'get_level_values'):
+            if 'symbol' in market_data.index.names:
+                return market_data.index.get_level_values('symbol')[0]
+        
+        # Fallback: return 'UNKNOWN'
+        return 'UNKNOWN'
