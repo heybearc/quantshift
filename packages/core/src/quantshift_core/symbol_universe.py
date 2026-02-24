@@ -27,7 +27,7 @@ class SymbolUniverse:
     Phase 3: Per-symbol strategy recommendation
     """
     
-    def __init__(self, executor_type: str, config: Optional[Dict] = None):
+    def __init__(self, executor_type: str, config: Optional[Dict] = None, api_client=None):
         """
         Initialize symbol universe manager.
         
@@ -37,9 +37,12 @@ class SymbolUniverse:
                 - max_symbols: Maximum symbols to return (default: 100 for equity, 50 for crypto)
                 - min_volume: Minimum daily volume filter
                 - exclude_symbols: List of symbols to exclude
+            api_client: Optional API client (Alpaca TradingClient or Coinbase RESTClient)
+                       If provided, enables real-time symbol fetching
         """
         self.executor_type = executor_type
         self.config = config or {}
+        self.api_client = api_client
         self.logger = logger.bind(executor_type=executor_type)
         
         # Default limits based on executor type
@@ -59,7 +62,8 @@ class SymbolUniverse:
         self.logger.info(
             "symbol_universe_initialized",
             max_symbols=self.max_symbols,
-            min_volume=self.min_volume
+            min_volume=self.min_volume,
+            has_api_client=api_client is not None
         )
     
     def get_symbols(self, force_refresh: bool = False) -> List[str]:
@@ -118,20 +122,22 @@ class SymbolUniverse:
         3. Return top N by volume
         """
         try:
-            from alpaca.trading.client import TradingClient
             from alpaca.trading.requests import GetAssetsRequest
             from alpaca.trading.enums import AssetClass, AssetStatus
             
-            # Initialize Alpaca client
-            api_key = os.getenv('APCA_API_KEY_ID')
-            api_secret = os.getenv('APCA_API_SECRET_KEY')
-            base_url = os.getenv('APCA_API_BASE_URL', 'https://paper-api.alpaca.markets')
-            
-            if not api_key or not api_secret:
-                self.logger.error("alpaca_credentials_missing")
-                return self._get_fallback_equity_symbols()
-            
-            client = TradingClient(api_key, api_secret, paper=True)
+            # Use passed client if available, otherwise create new one
+            if self.api_client:
+                client = self.api_client
+            else:
+                from alpaca.trading.client import TradingClient
+                api_key = os.getenv('APCA_API_KEY_ID')
+                api_secret = os.getenv('APCA_API_SECRET_KEY')
+                
+                if not api_key or not api_secret:
+                    self.logger.error("alpaca_credentials_missing")
+                    return self._get_fallback_equity_symbols()
+                
+                client = TradingClient(api_key, api_secret, paper=True)
             
             # Get all US equity assets
             search_params = GetAssetsRequest(
@@ -185,17 +191,19 @@ class SymbolUniverse:
         3. Return top N by volume/market cap
         """
         try:
-            from coinbase.rest import RESTClient
-            
-            # Initialize Coinbase client
-            api_key = os.getenv('COINBASE_API_KEY')
-            api_secret = os.getenv('COINBASE_API_SECRET')
-            
-            if not api_key or not api_secret:
-                self.logger.error("coinbase_credentials_missing")
-                return self._get_fallback_crypto_symbols()
-            
-            client = RESTClient(api_key=api_key, api_secret=api_secret)
+            # Use passed client if available, otherwise create new one
+            if self.api_client:
+                client = self.api_client
+            else:
+                from coinbase.rest import RESTClient
+                api_key = os.getenv('COINBASE_API_KEY')
+                api_secret = os.getenv('COINBASE_API_SECRET')
+                
+                if not api_key or not api_secret:
+                    self.logger.error("coinbase_credentials_missing")
+                    return self._get_fallback_crypto_symbols()
+                
+                client = RESTClient(api_key=api_key, api_secret=api_secret)
             
             # Get all products
             products = client.get_products()

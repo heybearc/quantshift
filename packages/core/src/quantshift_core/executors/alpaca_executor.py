@@ -71,9 +71,10 @@ class AlpacaExecutor:
         # Initialize symbol universe
         if use_dynamic_symbols:
             from quantshift_core.symbol_universe import SymbolUniverse
-            self.symbol_universe = SymbolUniverse('alpaca', symbol_universe_config)
-            self.symbols = self.symbol_universe.get_symbols()
-            logger.info(f"Using dynamic symbol universe: {len(self.symbols)} symbols")
+            self.symbol_universe = SymbolUniverse('alpaca', symbol_universe_config, alpaca_client)
+            # Lazy load symbols on first use (after client is ready)
+            self.symbols = None
+            logger.info(f"Dynamic symbol universe enabled (lazy loading)")
         else:
             self.symbol_universe = None
             self.symbols = symbols or ['SPY']
@@ -84,17 +85,24 @@ class AlpacaExecutor:
         self._circuit_breaker_open = False
         self._last_reset_date = datetime.utcnow().date()
         
+        symbol_info = "dynamic (lazy loading)" if use_dynamic_symbols else f"{len(self.symbols)} symbols"
         logger.info(
-            f"AlpacaExecutor initialized with {strategy.name} strategy for {len(self.symbols)} symbols"
+            f"AlpacaExecutor initialized with {strategy.name} strategy for {symbol_info}"
         )
         if simulated_capital:
             logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
     
+    def _ensure_symbols_loaded(self) -> None:
+        """Lazy load symbols on first use if using dynamic symbols."""
+        if self.use_dynamic_symbols and self.symbols is None:
+            self.symbols = self.symbol_universe.get_symbols()
+            logger.info(f"Symbols lazy loaded: {len(self.symbols)} symbols")
+    
     def refresh_symbols(self) -> None:
         """Refresh symbol universe if using dynamic symbols."""
         if self.use_dynamic_symbols and self.symbol_universe:
-            old_count = len(self.symbols)
-            self.symbols = self.symbol_universe.get_symbols()
+            old_count = len(self.symbols) if self.symbols else 0
+            self.symbols = self.symbol_universe.get_symbols(force_refresh=True)
             logger.info(
                 f"Symbols refreshed: {old_count} -> {len(self.symbols)}"
             )
@@ -170,6 +178,9 @@ class AlpacaExecutor:
         Returns:
             DataFrame with OHLCV data
         """
+        # Lazy load symbols on first market data fetch
+        self._ensure_symbols_loaded()
+        
         try:
             # Create data client if not provided
             if not self.data_client:
