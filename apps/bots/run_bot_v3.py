@@ -222,7 +222,7 @@ class QuantShiftUnifiedBot:
             "alpaca_executor_initialized",
             paper=paper,
             use_dynamic_symbols=use_dynamic_symbols,
-            symbol_count=len(self.executor.symbols),
+            symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
             simulated_capital=simulated_capital
         )
     
@@ -260,7 +260,7 @@ class QuantShiftUnifiedBot:
         logger.info(
             "coinbase_executor_initialized",
             use_dynamic_symbols=use_dynamic_symbols,
-            symbol_count=len(self.executor.symbols),
+            symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
             simulated_capital=simulated_capital
         )
     
