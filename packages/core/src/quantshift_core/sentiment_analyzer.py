@@ -67,7 +67,7 @@ class SentimentAnalyzer:
         self.model = None
         self.tokenizer = None
         
-        if use_finbert:
+        if self.use_finbert:
             try:
                 from transformers import AutoTokenizer, AutoModelForSequenceClassification
                 import torch
