@@ -431,6 +431,7 @@ class QuantShiftUnifiedBot:
             # Determine bot status based on primary/standby role
             is_primary = self.state_manager.is_primary()
             bot_status = 'PRIMARY' if is_primary else 'STANDBY'
+            logger.debug("db_heartbeat_status_check", is_primary=is_primary, bot_status=bot_status)
             
             # Update bot_status table (use UPDATE instead of INSERT to avoid id conflict)
             cursor = self.db_conn.cursor()
@@ -448,7 +449,7 @@ class QuantShiftUnifiedBot:
                     updated_at = NOW()
                 WHERE bot_name = %s
             """, (
-                'RUNNING',
+                bot_status,
                 float(account.equity),
                 float(account.cash),
                 float(account.buying_power),
