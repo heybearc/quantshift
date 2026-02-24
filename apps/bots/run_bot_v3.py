@@ -428,6 +428,10 @@ class QuantShiftUnifiedBot:
             positions = self.executor.get_positions()
             logger.debug("account_info_retrieved", equity=account.equity)
             
+            # Determine bot status based on primary/standby role
+            is_primary = self.state_manager.is_primary()
+            bot_status = 'PRIMARY' if is_primary else 'STANDBY'
+            
             # Update bot_status table (use UPDATE instead of INSERT to avoid id conflict)
             cursor = self.db_conn.cursor()
             cursor.execute("""
