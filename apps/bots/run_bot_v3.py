@@ -30,7 +30,9 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 import structlog
 
-from quantshift_core.strategies import BollingerBounce, RSIMeanReversion
+from quantshift_core.strategies.bollinger_bounce import BollingerBounce
+from quantshift_core.strategies.rsi_mean_reversion import RSIMeanReversion
+from quantshift_core.strategies.breakout_momentum import BreakoutMomentum
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
@@ -134,6 +136,8 @@ class QuantShiftUnifiedBot:
                 strategy = BollingerBounce(config=strategy_params)
             elif strategy_type == 'RSIMeanReversion':
                 strategy = RSIMeanReversion(config=strategy_params)
+            elif strategy_type == 'BreakoutMomentum':
+                strategy = BreakoutMomentum(config=strategy_params)
             else:
                 logger.warning("unknown_strategy_type", type=strategy_type)
                 continue

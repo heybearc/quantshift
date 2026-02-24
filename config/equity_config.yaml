@@ -9,7 +9,10 @@ executor:
   type: "alpaca"
   paper: true  # Use paper trading account
   symbols:
-    - SPY
+    - SPY   # S&P 500
+    - QQQ   # Nasdaq 100
+    - IWM   # Russell 2000 Small Cap
+    - DIA   # Dow Jones Industrial Average
   simulated_capital: null  # Use actual account balance
 
 # Strategy configuration
@@ -19,7 +22,7 @@ strategies:
       bb_period: 20
       bb_std: 2.0
       rsi_period: 14
-      rsi_entry_threshold: 40
+      rsi_entry_threshold: 45  # Relaxed from 40 for more signals
       atr_period: 14
       atr_sl_multiplier: 1.5
       risk_per_trade: 0.01
@@ -27,18 +30,28 @@ strategies:
   - type: "RSIMeanReversion"
     params:
       rsi_period: 14
-      rsi_oversold: 30
-      rsi_overbought: 70
+      rsi_oversold: 35  # Relaxed from 30 for more signals
+      rsi_overbought: 65  # Tightened from 70 for earlier exits
       atr_period: 14
       atr_sl_multiplier: 2.0
       atr_tp_multiplier: 3.0
+      risk_per_trade: 0.01
+  
+  - type: "BreakoutMomentum"
+    params:
+      breakout_period: 20
+      volume_multiplier: 1.5
+      atr_period: 14
+      atr_trail_multiplier: 1.5
+      breakdown_period: 10
       risk_per_trade: 0.01
 
 # Strategy orchestrator configuration
 orchestrator:
   capital_allocation:
-    BollingerBounce: 0.60
-    RSIMeanReversion: 0.40
+    BollingerBounce: 0.33
+    RSIMeanReversion: 0.33
+    BreakoutMomentum: 0.34
   use_regime_detection: true
   use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)
   use_risk_management: true
