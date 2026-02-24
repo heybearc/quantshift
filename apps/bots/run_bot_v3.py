@@ -431,7 +431,7 @@ class QuantShiftUnifiedBot:
             # Determine bot status based on primary/standby role
             is_primary = self.state_manager.is_primary()
             bot_status = 'PRIMARY' if is_primary else 'STANDBY'
-            logger.debug("db_heartbeat_status_check", is_primary=is_primary, bot_status=bot_status)
+            logger.debug("db_heartbeat_status_check", is_primary=is_primary, bot_status=bot_status, bot_name=self.bot_name)
             
             # Update bot_status table (use UPDATE instead of INSERT to avoid id conflict)
             cursor = self.db_conn.cursor()
@@ -461,7 +461,7 @@ class QuantShiftUnifiedBot:
             ))
             rows_updated = cursor.rowcount
             self.db_conn.commit()
-            logger.debug("db_heartbeat_updated", bot_name=self.bot_name, rows_updated=rows_updated)
+            logger.debug("db_heartbeat_updated", bot_name=self.bot_name, status_set=bot_status, rows_updated=rows_updated)
             
         except Exception as e:
             logger.error("db_heartbeat_failed", error=str(e), exc_info=True)

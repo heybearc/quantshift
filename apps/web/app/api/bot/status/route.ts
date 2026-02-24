@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     // Get latest bot status
     const botStatus = await prisma.botStatus.findFirst({
-      where: { botName: 'equity-bot' },
+      where: { botName: 'quantshift-equity' },
       orderBy: { updatedAt: 'desc' },
     });
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-const BOT_NAMES = ['equity-bot', 'crypto-bot'];
+const BOT_NAMES = ['quantshift-equity', 'quantshift-crypto'];
 const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 export async function GET(request: NextRequest) {

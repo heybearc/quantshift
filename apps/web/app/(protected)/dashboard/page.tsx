@@ -15,7 +15,7 @@ import { SessionsStatsCard } from "@/components/dashboard/admin/SessionsStatsCar
 import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
 import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard";
 
-type BotTab = 'all' | 'equity-bot' | 'crypto-bot';
+type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto';
 
 interface BotStatus {
   botName: string;
@@ -119,8 +119,8 @@ export default function DashboardPage() {
   );
   if (!user) return null;
 
-  const equityBot = allBotStatus.find(b => b.botName === 'equity-bot');
-  const cryptoBot = allBotStatus.find(b => b.botName === 'crypto-bot');
+  const equityBot = allBotStatus.find(b => b.botName === 'quantshift-equity');
+  const cryptoBot = allBotStatus.find(b => b.botName === 'quantshift-crypto');
   const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0);
   const totalPl = (equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0);
   const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0);
@@ -128,7 +128,8 @@ export default function DashboardPage() {
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
 
   const StatusDot = ({ status }: { status: string }) => {
-    const running = status === 'RUNNING', stale = status === 'STALE';
+    const running = status === 'RUNNING' || status === 'PRIMARY' || status === 'STANDBY';
+    const stale = status === 'STALE';
     return (
       <div className="flex items-center gap-1.5">
         <span className={`w-2 h-2 rounded-full inline-block ${running ? 'bg-green-400 animate-pulse' : stale ? 'bg-yellow-400' : 'bg-red-400'}`} />
@@ -137,7 +138,7 @@ export default function DashboardPage() {
     );
   };
 
-  const borderFor = (s: string) => s === 'RUNNING' ? 'border-green-700/40' : s === 'STALE' ? 'border-yellow-700/40' : 'border-slate-700';
+  const borderFor = (s: string) => (s === 'RUNNING' || s === 'PRIMARY' || s === 'STANDBY') ? 'border-green-700/40' : s === 'STALE' ? 'border-yellow-700/40' : 'border-slate-700';
 
   const BotDetail = ({ bot, isEquity }: { bot: BotStatus | undefined; isEquity: boolean }) => {
     if (!bot) return <div className="text-center text-slate-500 py-16">No data available yet — bot may not have heartbeated.</div>;
@@ -147,7 +148,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-white font-semibold">{isEquity ? 'Equity Bot' : 'Crypto Bot'}</p>
             <p className="text-slate-400 text-xs mt-0.5">
-              {isEquity ? 'Alpaca Paper Trading · MA Crossover · 5/20 Daily SMA' : 'Coinbase Dry-Run · MA + RSI + MACD · 20/50 Hourly SMA'}
+              {isEquity ? 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy' : 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy'}
             </p>
           </div>
           <div className="text-right">
@@ -262,8 +263,8 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-700 w-fit mb-4">
                     {([
                       { id: 'all' as BotTab, label: 'All Bots', icon: null, bot: undefined },
-                      { id: 'equity-bot' as BotTab, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" />, bot: equityBot },
-                      { id: 'crypto-bot' as BotTab, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" />, bot: cryptoBot },
+                      { id: 'quantshift-equity' as BotTab, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" />, bot: equityBot },
+                      { id: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" />, bot: cryptoBot },
                     ]).map(({ id, label, icon, bot }) => (
                       <button
                         key={id}
@@ -287,8 +288,8 @@ export default function DashboardPage() {
                   {activeTab === 'all' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
-                        { bot: equityBot, isEquity: true, tab: 'equity-bot' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · MA Crossover · Daily', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
-                        { bot: cryptoBot, isEquity: false, tab: 'crypto-bot' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · MA/RSI/MACD · Hourly', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
+                        { bot: equityBot, isEquity: true, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
+                        { bot: cryptoBot, isEquity: false, tab: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
                       ]).map(({ bot, isEquity, tab, label, sub, iconBg, icon }) => (
                         <div key={tab} className={`bg-slate-800/50 rounded-xl p-5 border ${borderFor(bot?.status || 'UNKNOWN')}`}>
                           <div className="flex items-center justify-between mb-4">
@@ -328,8 +329,8 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {activeTab === 'equity-bot' && <BotDetail bot={equityBot} isEquity={true} />}
-                  {activeTab === 'crypto-bot' && <BotDetail bot={cryptoBot} isEquity={false} />}
+                  {activeTab === 'quantshift-equity' && <BotDetail bot={equityBot} isEquity={true} />}
+                  {activeTab === 'quantshift-crypto' && <BotDetail bot={cryptoBot} isEquity={false} />}
                 </div>
 
                 {/* ADMIN SYSTEM OVERVIEW — bottom, admin only */}
