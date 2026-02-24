@@ -208,10 +208,25 @@ class StrategyOrchestrator:
                 
                 # Generate signals for each symbol
                 for symbol, data in market_data.items():
+                    self.logger.debug(
+                        "strategy_generating_signals",
+                        strategy=strategy.name,
+                        symbol=symbol,
+                        data_rows=len(data) if hasattr(data, '__len__') else 'unknown',
+                        allocated_capital=allocated_account.equity
+                    )
+                    
                     signals = strategy.generate_signals(
                         data,
                         allocated_account,
                         strategy_positions
+                    )
+                    
+                    self.logger.debug(
+                        "strategy_signals_generated",
+                        strategy=strategy.name,
+                        symbol=symbol,
+                        signals_count=len(signals)
                     )
                     
                     # Tag signals with strategy name and apply regime risk adjustment
