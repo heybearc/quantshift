@@ -201,7 +201,9 @@ class QuantShiftUnifiedBot:
         data_client = StockHistoricalDataClient(api_key, secret_key)
         
         # Get symbols and risk config
-        symbols = config.get('symbols', ['SPY'])
+        use_dynamic_symbols = config.get('use_dynamic_symbols', False)
+        symbol_universe_config = config.get('symbol_universe')
+        symbols = config.get('symbols', ['SPY']) if not use_dynamic_symbols else None
         simulated_capital = config.get('simulated_capital')
         risk_config = self.config.get('risk_management', {})
         
@@ -211,13 +213,16 @@ class QuantShiftUnifiedBot:
             data_client=data_client,
             symbols=symbols,
             simulated_capital=simulated_capital,
-            risk_config=risk_config
+            risk_config=risk_config,
+            use_dynamic_symbols=use_dynamic_symbols,
+            symbol_universe_config=symbol_universe_config
         )
         
         logger.info(
             "alpaca_executor_initialized",
             paper=paper,
-            symbols=symbols,
+            use_dynamic_symbols=use_dynamic_symbols,
+            symbol_count=len(self.executor.symbols),
             simulated_capital=simulated_capital
         )
     

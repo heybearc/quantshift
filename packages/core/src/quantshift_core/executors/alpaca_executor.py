@@ -45,7 +45,9 @@ class AlpacaExecutor:
         data_client: Optional[StockHistoricalDataClient] = None,
         symbols: Optional[List[str]] = None,
         simulated_capital: Optional[float] = None,
-        risk_config: Optional[Dict[str, Any]] = None
+        risk_config: Optional[Dict[str, Any]] = None,
+        use_dynamic_symbols: bool = False,
+        symbol_universe_config: Optional[Dict[str, Any]] = None
     ):
         """
         Initialize Alpaca executor.
@@ -54,15 +56,28 @@ class AlpacaExecutor:
             strategy: Broker-agnostic strategy instance
             alpaca_client: Alpaca trading client
             data_client: Alpaca data client (optional, will create if not provided)
-            symbols: List of symbols to trade
+            symbols: List of symbols to trade (if not using dynamic)
             simulated_capital: Optional simulated capital for position sizing
+            use_dynamic_symbols: If True, fetch symbols dynamically
+            symbol_universe_config: Config for dynamic symbol fetching
         """
         self.strategy = strategy
         self.alpaca_client = alpaca_client
         self.data_client = data_client
-        self.symbols = symbols or ['SPY']
+        self.use_dynamic_symbols = use_dynamic_symbols
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
+        
+        # Initialize symbol universe
+        if use_dynamic_symbols:
+            from quantshift_core.symbol_universe import SymbolUniverse
+            self.symbol_universe = SymbolUniverse('alpaca', symbol_universe_config)
+            self.symbols = self.symbol_universe.get_symbols()
+            logger.info(f"Using dynamic symbol universe: {len(self.symbols)} symbols")
+        else:
+            self.symbol_universe = None
+            self.symbols = symbols or ['SPY']
+        
         # Circuit breaker state (reset daily)
         self._daily_trades = 0
         self._daily_loss = 0.0
@@ -70,10 +85,19 @@ class AlpacaExecutor:
         self._last_reset_date = datetime.utcnow().date()
         
         logger.info(
-            f"AlpacaExecutor initialized with {strategy.name} strategy for symbols: {self.symbols}"
+            f"AlpacaExecutor initialized with {strategy.name} strategy for {len(self.symbols)} symbols"
         )
         if simulated_capital:
             logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
+    
+    def refresh_symbols(self) -> None:
+        """Refresh symbol universe if using dynamic symbols."""
+        if self.use_dynamic_symbols and self.symbol_universe:
+            old_count = len(self.symbols)
+            self.symbols = self.symbol_universe.get_symbols()
+            logger.info(
+                f"Symbols refreshed: {old_count} -> {len(self.symbols)}"
+            )
     
     def get_account(self) -> Account:
         """

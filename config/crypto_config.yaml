@@ -7,12 +7,10 @@ bot_type: "crypto"
 # Executor configuration
 executor:
   type: "coinbase"
-  symbols:
-    - BTC-USD   # Bitcoin
-    - ETH-USD   # Ethereum
-    - SOL-USD   # Solana
-    - AVAX-USD  # Avalanche
-    - MATIC-USD # Polygon
+  use_dynamic_symbols: true  # Fetch top 50 cryptos dynamically
+  symbol_universe:
+    max_symbols: 50  # Top 50 by market cap
+    min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: 10000  # Paper trading with $10,000 simulated capital
 
 # Strategy configuration

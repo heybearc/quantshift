@@ -8,11 +8,10 @@ bot_type: "equity"
 executor:
   type: "alpaca"
   paper: true  # Use paper trading account
-  symbols:
-    - SPY   # S&P 500
-    - QQQ   # Nasdaq 100
-    - IWM   # Russell 2000 Small Cap
-    - DIA   # Dow Jones Industrial Average
+  use_dynamic_symbols: true  # Fetch top 100 symbols dynamically
+  symbol_universe:
+    max_symbols: 100  # Top 100 by market cap/volume
+    min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: null  # Use actual account balance
 
 # Strategy configuration

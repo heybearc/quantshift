@@ -38,7 +38,9 @@ class CoinbaseExecutor:
         coinbase_client: RESTClient,
         symbols: Optional[List[str]] = None,
         simulated_capital: Optional[float] = None,
-        risk_config: Optional[Dict[str, Any]] = None
+        risk_config: Optional[Dict[str, Any]] = None,
+        use_dynamic_symbols: bool = False,
+        symbol_universe_config: Optional[Dict[str, Any]] = None
     ):
         """
         Initialize Coinbase executor.
@@ -46,15 +48,27 @@ class CoinbaseExecutor:
         Args:
             strategy: Broker-agnostic strategy instance
             coinbase_client: Coinbase REST client
-            symbols: List of symbols to trade (e.g., ['BTC-PERP-INTX', 'ETH-PERP-INTX'])
+            symbols: List of symbols to trade (if not using dynamic)
             simulated_capital: Optional simulated capital for position sizing
             risk_config: Risk management configuration
+            use_dynamic_symbols: If True, fetch symbols dynamically
+            symbol_universe_config: Config for dynamic symbol fetching
         """
         self.strategy = strategy
         self.coinbase_client = coinbase_client
-        self.symbols = symbols or ['BTC-PERP-INTX']
+        self.use_dynamic_symbols = use_dynamic_symbols
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
+        
+        # Initialize symbol universe
+        if use_dynamic_symbols:
+            from quantshift_core.symbol_universe import SymbolUniverse
+            self.symbol_universe = SymbolUniverse('coinbase', symbol_universe_config)
+            self.symbols = self.symbol_universe.get_symbols()
+            logger.info(f"Using dynamic symbol universe: {len(self.symbols)} symbols")
+        else:
+            self.symbol_universe = None
+            self.symbols = symbols or ['BTC-USD']
         
         # Circuit breaker state (reset daily)
         self._daily_trades = 0
@@ -63,10 +77,19 @@ class CoinbaseExecutor:
         self._last_reset_date = datetime.utcnow().date()
         
         logger.info(
-            f"CoinbaseExecutor initialized with {strategy.name} strategy for symbols: {self.symbols}"
+            f"CoinbaseExecutor initialized with {strategy.name} strategy for {len(self.symbols)} symbols"
         )
         if simulated_capital:
             logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
+    
+    def refresh_symbols(self) -> None:
+        """Refresh symbol universe if using dynamic symbols."""
+        if self.use_dynamic_symbols and self.symbol_universe:
+            old_count = len(self.symbols)
+            self.symbols = self.symbol_universe.get_symbols()
+            logger.info(
+                f"Symbols refreshed: {old_count} -> {len(self.symbols)}"
+            )
     
     def get_account(self) -> Account:
         """
