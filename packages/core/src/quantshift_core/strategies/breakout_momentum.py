@@ -222,3 +222,35 @@ class BreakoutMomentum(BaseStrategy):
                 )
         
         return signals
+    
+    def calculate_position_size(
+        self,
+        signal: Signal,
+        account: Account,
+        atr: float
+    ) -> int:
+        """
+        Calculate position size based on risk per trade.
+        
+        Args:
+            signal: Trading signal
+            account: Account information
+            atr: Average True Range for stop loss calculation
+            
+        Returns:
+            Position size in shares/contracts
+        """
+        # Calculate risk amount (1% of account by default)
+        risk_amount = account.equity * self.risk_per_trade
+        
+        # Calculate stop loss distance
+        stop_distance = atr * self.atr_trail_multiplier
+        
+        # Position size = risk amount / stop distance
+        if stop_distance > 0:
+            position_size = int(risk_amount / stop_distance)
+        else:
+            position_size = 0
+        
+        # Ensure position size is at least 1
+        return max(1, position_size)
