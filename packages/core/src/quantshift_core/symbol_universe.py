@@ -205,22 +205,31 @@ class SymbolUniverse:
                 
                 client = RESTClient(api_key=api_key, api_secret=api_secret)
             
-            # Get all products with timeout
-            import signal
+            # Get all products with timeout (use threading for compatibility)
+            import threading
             
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Coinbase API call timed out")
+            products = None
+            exception = None
             
-            # Set 10 second timeout for API call
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(10)
+            def fetch_products():
+                nonlocal products, exception
+                try:
+                    products = client.get_products()
+                except Exception as e:
+                    exception = e
             
-            try:
-                products = client.get_products()
-                signal.alarm(0)  # Cancel alarm
-            except TimeoutError:
+            # Run API call in thread with 10 second timeout
+            thread = threading.Thread(target=fetch_products)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=10)
+            
+            if thread.is_alive():
                 self.logger.warning("coinbase_api_timeout", timeout_seconds=10)
                 return self._get_fallback_crypto_symbols()
+            
+            if exception:
+                raise exception
             
             # Filter for USD spot pairs
             usd_pairs = []
