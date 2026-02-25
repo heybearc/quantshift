@@ -1,16 +1,39 @@
 # QuantShift Task State
 
-**Last updated:** 2026-02-25 (8:20am)  
+**Last updated:** 2026-02-25 (6:52pm)  
 **Current branch:** main  
-**Working on:** Phase 1 Bot Configuration & Debugging — Bots running, ready for market open
+**Working on:** Web Dashboard Data Integration — Position sync deployed, awaiting verification
 
 ---
 
 ## Current Task
-**Phase 1: Bot Configuration Analysis & Debugging** - ✅ COMPLETE
+**Web Dashboard Data Integration** - IN PROGRESS
 
 ### What I'm doing right now
-Fixed critical bugs preventing symbol loading and trade generation. Both equity and crypto bots now running with expanded symbol universe (100 equity, 50 crypto). Equity bot ready for market open at 9:30 AM EST. Crypto bot running 5-minute cycles. Ready to monitor Phase 1 trading for 24-48 hours before starting Phase 2 (ML Symbol Ranking).
+Fixed empty Trades/Positions/Performance pages by implementing database sync. Bot positions were stored in Redis but not syncing to PostgreSQL database that web app reads from. Added `_sync_positions_to_db()` method to bot heartbeat (every 30s). Code deployed and bots running. Need to verify 14 positions sync to database on next heartbeat cycle.
+
+### Today's Accomplishments (2026-02-25) — Dashboard Data Fix (Evening)
+- ✅ **Root Cause Identified**
+  - Dashboard showed bot running with 14 positions but pages empty
+  - Bot stored positions in Redis only, not PostgreSQL
+  - Web app reads from PostgreSQL via Prisma
+  - Database tables existed but bot wasn't writing to them
+- ✅ **Database Verification**
+  - Found correct SSH hostname: `qs-dashboard` (not IP addresses)
+  - Confirmed Prisma schema in sync via web container
+  - Verified 15 tables exist (positions, trades, bot_status, etc.)
+  - Found 1 position, 3 trades in database (stale data)
+- ✅ **Position Sync Implementation**
+  - Added `_sync_positions_to_db()` method to bot
+  - Syncs on every heartbeat (30 second interval)
+  - Upserts positions with current prices and P&L
+  - Removes closed positions automatically
+  - Simple SQL approach (no complex DatabaseWriter)
+- ✅ **Deployment**
+  - Committed and pushed (f7bdc92)
+  - Deployed to production bots
+  - Both bots running successfully
+  - Awaiting first heartbeat to verify sync
 
 ### Today's Accomplishments (2026-02-25) — Bot Debugging Session (Late Night)
 - ✅ **Critical Bug Fixes**
@@ -289,6 +312,8 @@ Fixed critical bugs preventing symbol loading and trade generation. Both equity 
 ---
 
 ## Known Issues
+- **Position sync not yet verified** - Code deployed, need to wait ~30s for heartbeat to confirm 14 positions sync to database
+- **Web dashboard pages still empty** - Will populate once positions sync on next heartbeat
 - **Coinbase API unreliable** - `get_products()` hangs, using curated list workaround (tracked in IMPLEMENTATION-PLAN.md)
 - **ML models not yet trained** - Training scripts ready, need to run (Phase 0.4)
 - **Primary bot (CT100) not updated with AI/ML code yet** - Standby has full ML platform
@@ -301,18 +326,23 @@ Fixed critical bugs preventing symbol loading and trade generation. Both equity 
 See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ### Immediate Next Steps (Next Session)
-1. **Monitor Phase 1 Trading** (24-48 hours)
+1. **Verify Position Sync** (First thing tomorrow)
+   - Check database has 14 positions (not just 1)
+   - Verify web dashboard Positions page shows all data
+   - Test Trades and Performance pages
+   - Confirm data updates every 30 seconds
+2. **Monitor Phase 1 Trading** (24-48 hours)
    - Watch equity bot when market opens (9:30 AM EST)
    - Monitor crypto bot 5-min cycles
    - Check logs for signal generation
    - Verify conservative parameters are working
    - Look for: signals generated, trades executed, risk management working
-2. **Evaluate Phase 1 Results** (after monitoring)
+3. **Evaluate Phase 1 Results** (after monitoring)
    - Are signals being generated? (should see some)
    - Are trades being executed? (conservative = fewer trades is OK)
    - Is risk management working? (max 10% portfolio heat)
    - Any configuration adjustments needed?
-3. **Begin Phase 2: ML Symbol Ranking** (if Phase 1 stable)
+4. **Begin Phase 2: ML Symbol Ranking** (if Phase 1 stable)
    - Implement dynamic symbol scoring (volatility, volume, sentiment)
    - Build symbol ranking algorithm
    - Add visualization dashboard for symbol analysis
@@ -338,37 +368,29 @@ See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ## Exact Next Command
 
-**Next Session Priority: Train AI models OR deploy to production**
+**Next Session Priority: Verify position sync to database**
 
 **Status:**
-- ✅ Complete AI/ML platform built (Phases 1-7)
-- ✅ ML regime classifier (91.7% accuracy) - code ready
-- ✅ Sentiment analysis (FinBERT) - integrated
-- ✅ Deep RL agent (PPO) - code ready
-- ✅ ML dashboard deployed to BLUE standby
-- ⚠️ Models not trained yet (scripts ready)
-- ⚠️ Primary bot not updated with AI/ML code
+- ✅ Position sync code deployed (commit f7bdc92)
+- ✅ Bots running successfully
+- ⏳ Waiting for heartbeat to sync 14 positions to database
+- ⏳ Web dashboard pages will populate once sync completes
 
-**Option A - Train models:**
+**First command tomorrow:**
 ```bash
-ssh quantshift-primary  # CT100 @ 10.92.3.27
-cd /opt/quantshift
-python apps/bots/equity/train_ml_regime_classifier.py
-python apps/bots/equity/train_rl_agent.py
+# Verify positions synced to database
+ssh qs-dashboard "export PGPASSWORD='Cloudy_92!' && psql -h 10.92.3.21 -U quantshift -d quantshift -c 'SELECT COUNT(*) as total FROM positions; SELECT bot_name, symbol, quantity, ROUND(unrealized_pl::numeric, 2) as pnl FROM positions ORDER BY bot_name, symbol LIMIT 15;'"
+
+# Expected: 14 positions (currently only 1)
+# Then check web dashboard at trader.cloudigan.net
+# Positions page should show all 14 positions with live data
 ```
 
-**Option B - Deploy to production:**
-```bash
-# Update primary bot with AI/ML code
-ssh quantshift-primary
-cd /opt/quantshift && git pull origin main
-systemctl restart quantshift-equity
+**If positions synced successfully:**
+- ✅ Mark dashboard data integration as COMPLETE
+- Move on to Phase 1 trading monitoring
 
-# Switch web traffic to show ML dashboard
-# Use blue-green deployment workflow
-```
-
-**Option C - Done for now:**
-- Platform is complete and ready
-- Can train/deploy anytime
-- Everything on standby
+**If positions NOT synced:**
+- Check bot logs for sync errors
+- Verify database connection
+- Debug `_sync_positions_to_db()` method
