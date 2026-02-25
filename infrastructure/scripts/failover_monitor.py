@@ -96,7 +96,7 @@ class FailoverMonitor:
             cursor.execute("""
                 SELECT 
                     status,
-                    EXTRACT(EPOCH FROM (NOW() - last_heartbeat)) as seconds_since_heartbeat,
+                    EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_heartbeat)) as seconds_since_heartbeat,
                     last_heartbeat
                 FROM bot_status
                 WHERE bot_name = %s
@@ -110,15 +110,21 @@ class FailoverMonitor:
             
             status, seconds_since_heartbeat, last_heartbeat = row
             
+            # Convert to float and handle None
+            seconds_ago = float(seconds_since_heartbeat) if seconds_since_heartbeat is not None else 999.0
+            
+            # If negative, heartbeat is in the future (clock skew) - treat as healthy
+            if seconds_ago < 0:
+                seconds_ago = 0
+            
             healthy = (
                 status == 'PRIMARY' and 
-                seconds_since_heartbeat is not None and 
-                seconds_since_heartbeat < self.heartbeat_timeout
+                seconds_ago < self.heartbeat_timeout
             )
             
             return {
                 'healthy': healthy,
-                'seconds_since_heartbeat': seconds_since_heartbeat or 999,
+                'seconds_since_heartbeat': seconds_ago,
                 'status': status,
                 'last_heartbeat': last_heartbeat
             }
