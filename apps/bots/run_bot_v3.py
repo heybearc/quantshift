@@ -537,6 +537,11 @@ class QuantShiftUnifiedBot:
             heartbeat_interval=heartbeat_interval
         )
         
+        # Notify systemd that we're ready
+        if SYSTEMD_AVAILABLE:
+            daemon.notify('READY=1')
+            logger.info("systemd_ready_notification_sent")
+        
         while self.running:
             try:
                 current_time = time.time()
