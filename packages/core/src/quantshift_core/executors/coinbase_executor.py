@@ -457,6 +457,12 @@ class CoinbaseExecutor:
             positions = self.get_positions()
             
             # 2. Fetch market data for all symbols
+            logger.debug(f"Fetching market data for {len(self.symbols) if self.symbols else 0} symbols")
+            
+            if not self.symbols:
+                logger.warning("No symbols loaded, skipping cycle")
+                return []
+            
             market_data = {}
             for symbol in self.symbols:
                 try:
