@@ -74,4 +74,4 @@ cycle_interval_seconds: 300  # Run strategy every 5 minutes (crypto is 24/7)
 heartbeat_interval_seconds: 30  # Send heartbeat every 30 seconds
 
 # Prometheus metrics
-metrics_port: 9101  # HTTP port for Prometheus metrics endpoint
+metrics_port: 9201  # HTTP port for Prometheus metrics endpoint
