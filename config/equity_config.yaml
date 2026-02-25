@@ -73,3 +73,6 @@ redis:
 # Bot timing
 cycle_interval_seconds: 60  # Run strategy every 60 seconds
 heartbeat_interval_seconds: 30  # Send heartbeat every 30 seconds
+
+# Prometheus metrics
+metrics_port: 9100  # HTTP port for Prometheus metrics endpoint

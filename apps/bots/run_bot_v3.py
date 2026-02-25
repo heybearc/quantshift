@@ -36,6 +36,7 @@ from quantshift_core.strategies.breakout_momentum import BreakoutMomentum
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
+from quantshift_core.metrics import BotMetrics
 
 import psycopg2
 
@@ -82,6 +83,15 @@ class QuantShiftUnifiedBot:
             bot_type=self.config.get('bot_type', 'unknown'),
             version="3.0"
         )
+        
+        # Initialize Prometheus metrics
+        metrics_port = self.config.get('metrics_port', 9100)
+        self.metrics = BotMetrics(
+            component_name=self.bot_name.replace('-', '_'),
+            port=metrics_port
+        )
+        self.metrics.set_info(version="3.0", environment="production")
+        self.metrics.start_server()
         
         # Initialize components
         self._init_state_manager()
@@ -415,6 +425,9 @@ class QuantShiftUnifiedBot:
     
     def send_heartbeat(self):
         """Send heartbeat to Redis and PostgreSQL."""
+        # Record Prometheus heartbeat
+        self.metrics.record_heartbeat()
+        
         # Send to Redis (don't let failure block DB heartbeat)
         try:
             self.state_manager.heartbeat()
@@ -441,6 +454,13 @@ class QuantShiftUnifiedBot:
             account = self.executor.get_account()
             positions = self.executor.get_positions()
             logger.debug("account_info_retrieved", equity=account.equity)
+            
+            # Update Prometheus metrics
+            self.metrics.set_portfolio_value(float(account.equity), self.bot_name)
+            self.metrics.set_positions_open(len(positions), self.bot_name)
+            # Calculate daily P&L (simplified - would need to track opening equity)
+            daily_pnl = float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else 0.0
+            self.metrics.set_daily_pnl(daily_pnl, self.bot_name)
             
             # Determine bot status based on primary/standby role
             is_primary = self.state_manager.is_primary()
@@ -541,16 +561,33 @@ class QuantShiftUnifiedBot:
                     if self.executor.is_market_open():
                         logger.info("strategy_cycle_starting")
                         
-                        # Run strategy cycle via executor
-                        executed_orders = self.executor.run_strategy_cycle()
+                        # Time the cycle for metrics
+                        cycle_start = time.time()
                         
-                        # Update state after cycle
-                        self.update_state()
-                        
-                        logger.info(
-                            "strategy_cycle_completed",
-                            orders_executed=len(executed_orders)
-                        )
+                        try:
+                            # Run strategy cycle via executor
+                            executed_orders = self.executor.run_strategy_cycle()
+                            
+                            # Update state after cycle
+                            self.update_state()
+                            
+                            # Record cycle duration
+                            cycle_duration = time.time() - cycle_start
+                            self.metrics.record_cycle_duration(cycle_duration)
+                            
+                            # Record symbols loaded
+                            if hasattr(self.executor, 'symbols') and self.executor.symbols:
+                                self.metrics.set_symbols_loaded(len(self.executor.symbols))
+                            
+                            logger.info(
+                                "strategy_cycle_completed",
+                                orders_executed=len(executed_orders),
+                                duration=cycle_duration
+                            )
+                        except Exception as e:
+                            # Record cycle error
+                            self.metrics.record_cycle_error(type(e).__name__)
+                            raise
                     else:
                         logger.debug("market_closed")
                     
@@ -564,6 +601,7 @@ class QuantShiftUnifiedBot:
                 break
             except Exception as e:
                 logger.error("bot_error", error=str(e), exc_info=True)
+                self.metrics.record_cycle_error("general_error")
                 time.sleep(10)  # Wait before retrying
         
         logger.info("bot_stopped")
