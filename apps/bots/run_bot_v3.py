@@ -517,6 +517,9 @@ class QuantShiftUnifiedBot:
             self.db_conn.commit()
             logger.debug("db_heartbeat_updated", bot_name=self.bot_name, status_set=bot_status, rows_updated=rows_updated)
             
+            # Sync positions to database for web dashboard
+            self._sync_positions_to_db(positions)
+            
         except Exception as e:
             logger.error("db_heartbeat_failed", error=str(e), exc_info=True)
             # Reconnect on next attempt
@@ -526,6 +529,62 @@ class QuantShiftUnifiedBot:
                 except:
                     pass
                 self.db_conn = None
+    
+    def _sync_positions_to_db(self, positions):
+        """Sync current positions to database for web dashboard."""
+        try:
+            if not self.db_conn or not positions:
+                return
+            
+            cursor = self.db_conn.cursor()
+            
+            # Delete positions no longer held
+            current_symbols = [pos.symbol for pos in positions]
+            if current_symbols:
+                cursor.execute("""
+                    DELETE FROM positions 
+                    WHERE bot_name = %s AND symbol != ALL(%s)
+                """, (self.bot_name, current_symbols))
+            
+            # Upsert each position
+            for pos in positions:
+                cursor.execute("""
+                    INSERT INTO positions (
+                        bot_name, symbol, quantity, entry_price, current_price,
+                        market_value, cost_basis, unrealized_pl, unrealized_pl_pct,
+                        strategy, entered_at, created_at, updated_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
+                    ON CONFLICT (bot_name, symbol) DO UPDATE SET
+                        quantity = EXCLUDED.quantity,
+                        current_price = EXCLUDED.current_price,
+                        market_value = EXCLUDED.market_value,
+                        unrealized_pl = EXCLUDED.unrealized_pl,
+                        unrealized_pl_pct = EXCLUDED.unrealized_pl_pct,
+                        updated_at = NOW()
+                """, (
+                    self.bot_name,
+                    pos.symbol,
+                    float(pos.quantity),
+                    float(pos.entry_price),
+                    float(pos.current_price),
+                    float(pos.market_value),
+                    float(pos.cost_basis) if hasattr(pos, 'cost_basis') else float(pos.market_value),
+                    float(pos.unrealized_pl),
+                    float(pos.unrealized_pl / pos.cost_basis * 100) if hasattr(pos, 'cost_basis') and pos.cost_basis > 0 else 0.0,
+                    'StrategyOrchestrator'
+                ))
+            
+            self.db_conn.commit()
+            logger.debug("positions_synced_to_db", count=len(positions))
+            
+        except Exception as e:
+            logger.error("position_sync_failed", error=str(e), exc_info=True)
+            if self.db_conn:
+                try:
+                    self.db_conn.rollback()
+                except:
+                    pass
     
     def run(self):
         """Main bot loop with hot-standby failover support."""
