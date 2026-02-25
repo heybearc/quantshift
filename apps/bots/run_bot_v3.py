@@ -25,6 +25,13 @@ import yaml
 from datetime import datetime
 from typing import Dict, Any, Optional
 
+# Systemd watchdog support
+try:
+    from systemd import daemon
+    SYSTEMD_AVAILABLE = True
+except ImportError:
+    SYSTEMD_AVAILABLE = False
+
 # Add packages to path
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
@@ -427,6 +434,11 @@ class QuantShiftUnifiedBot:
         """Send heartbeat to Redis and PostgreSQL."""
         # Record Prometheus heartbeat
         self.metrics.record_heartbeat()
+        
+        # Notify systemd watchdog
+        if SYSTEMD_AVAILABLE:
+            daemon.notify('WATCHDOG=1')
+            self.metrics.record_watchdog_notification()
         
         # Send to Redis (don't let failure block DB heartbeat)
         try:
