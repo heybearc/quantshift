@@ -1,0 +1,30 @@
+[Unit]
+Description=QuantShift Automated Failover Monitor
+After=network.target redis.service postgresql.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/quantshift
+ExecStart=/opt/quantshift/venv/bin/python /opt/quantshift/infrastructure/scripts/failover_monitor.py
+Restart=always
+RestartSec=10s
+
+# Environment variables
+Environment="DATABASE_URL=postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift"
+Environment="REDIS_HOST=localhost"
+Environment="REDIS_PORT=6379"
+Environment="REDIS_PASSWORD=Cloudy_92!"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quantshift-failover
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
