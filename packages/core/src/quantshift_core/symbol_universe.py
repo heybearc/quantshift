@@ -185,88 +185,16 @@ class SymbolUniverse:
         """
         Fetch top crypto symbols from Coinbase.
         
-        Strategy:
-        1. Get all tradable products
-        2. Filter for USD pairs
-        3. Return top N by volume/market cap
+        NOTE: Coinbase get_products() API is unreliable and causes hangs.
+        Using curated fallback list for Phase 1. Will implement proper
+        API-based fetching in Phase 2 with better error handling.
         """
-        try:
-            # Use passed client if available, otherwise create new one
-            if self.api_client:
-                client = self.api_client
-            else:
-                from coinbase.rest import RESTClient
-                api_key = os.getenv('COINBASE_API_KEY')
-                api_secret = os.getenv('COINBASE_API_SECRET')
-                
-                if not api_key or not api_secret:
-                    self.logger.error("coinbase_credentials_missing")
-                    return self._get_fallback_crypto_symbols()
-                
-                client = RESTClient(api_key=api_key, api_secret=api_secret)
-            
-            # Get all products with timeout (use threading for compatibility)
-            import threading
-            
-            products = None
-            exception = None
-            
-            def fetch_products():
-                nonlocal products, exception
-                try:
-                    products = client.get_products()
-                except Exception as e:
-                    exception = e
-            
-            # Run API call in thread with 10 second timeout
-            thread = threading.Thread(target=fetch_products)
-            thread.daemon = True
-            thread.start()
-            thread.join(timeout=10)
-            
-            if thread.is_alive():
-                self.logger.warning("coinbase_api_timeout", timeout_seconds=10)
-                return self._get_fallback_crypto_symbols()
-            
-            if exception:
-                raise exception
-            
-            # Filter for USD spot pairs
-            usd_pairs = []
-            
-            if products and 'products' in products:
-                for product in products['products']:
-                    product_id = product.get('product_id', '')
-                    
-                    # Must be USD pair and not in exclude list
-                    if (product_id.endswith('-USD') and 
-                        product_id not in self.exclude_symbols and
-                        product.get('status') == 'online' and
-                        product.get('trading_disabled') == False):
-                        usd_pairs.append(product_id)
-            
-            # For now, use predefined top 50 by market cap
-            # In Phase 2, we'll add real-time volume/market cap ranking
-            top_cryptos = self._get_top_crypto_symbols()
-            
-            # Filter to only include available pairs
-            result = [s for s in top_cryptos if s in usd_pairs][:self.max_symbols]
-            
-            self.logger.info(
-                "coinbase_symbols_fetched",
-                total_products=len(products.get('products', [])) if products else 0,
-                usd_pairs=len(usd_pairs),
-                selected=len(result)
-            )
-            
-            return result
-            
-        except Exception as e:
-            self.logger.error(
-                "coinbase_fetch_failed",
-                error=str(e)
-            )
-            return self._get_fallback_crypto_symbols()
+        self.logger.info(
+            "using_curated_crypto_list",
+            reason="coinbase_api_unreliable",
+            count=self.max_symbols
+        )
+        return self._get_fallback_crypto_symbols()
     
     def _get_sp100_symbols(self) -> List[str]:
         """
