@@ -81,13 +81,15 @@ class QuantShiftUnifiedBot:
         self.running = False
         self.state_manager = None
         self.executor = None
+        self.strategies = []
         self.db_conn = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
+        self.bot_type = self.config.get('bot_type', 'unknown')
         self.recovered_positions = {}
         
         logger.info(
             "bot_initializing",
-            bot_type=self.config.get('bot_type', 'unknown'),
+            bot_type=self.bot_type,
             version="3.0"
         )
         
