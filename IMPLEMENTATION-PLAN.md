@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-02-21
-**Current Status:** Bollinger Bands strategy deployed, building production-ready adaptive trading system
+**Last Updated:** 2026-02-25
+**Current Status:** Phase 1 complete - bots running with expanded symbols, building production-grade resilient architecture
 
 ---
 
@@ -15,42 +15,144 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ---
 
-## ✅ COMPLETED (Feb 21, 2026)
+## ✅ COMPLETED (Feb 25, 2026)
 
 ### Strategy Development
 - ✅ Backtested 3 strategies (RSI 57.5% WR, Bollinger 58.6% WR, Breakout pending)
-- ✅ Bollinger Bands strategy deployed to production (LIVE on qs-primary)
+- ✅ All 3 strategies deployed (BollingerBounce, RSIMeanReversion, BreakoutMomentum)
+- ✅ Multi-strategy orchestrator running
 - ✅ Backtest framework created (Yahoo Finance data, reusable scripts)
 - ✅ Bot framework supports BaseStrategy pattern
 
 ### Infrastructure
+- ✅ Web app blue-green deployment (CT 137 blue, CT 138 green)
+- ✅ Bot primary-standby failover (CT 100 primary, CT 101 standby)
+- ✅ Redis master-slave replication working
 - ✅ Fixed positions duplicate key bug
 - ✅ Fixed crypto bot positions sync issue
 - ✅ Wired all dashboard pages for both bots (Trades, Positions, Performance)
 - ✅ Dashboard shows combined portfolio + per-bot breakdown
-- ✅ Blue-green deployment working
 - ✅ Database schema supports multi-bot tracking
 
+### Symbol Universe Expansion
+- ✅ Equity bot: 100 symbols (S&P 100 + high volume stocks)
+- ✅ Crypto bot: 50 symbols (top cryptos by market cap)
+- ✅ Lazy loading architecture implemented
+- ✅ Fixed Coinbase API hang (using curated list workaround)
+
 ### Bot Status
-- ✅ equity-bot: RUNNING with BollingerBounce strategy
-- ✅ crypto-bot: RUNNING (needs strategy replacement - current strategy failed backtest)
+- ✅ equity-bot: RUNNING with 3 strategies on 100 symbols
+- ✅ crypto-bot: RUNNING with 3 strategies on 50 symbols
 - ✅ Both bots heartbeating to database every 30s
+- ✅ Both bots showing PRIMARY status in dashboard
 
 ---
 
 ## 🚀 PRODUCTION ROADMAP
 
-### **PHASE 0: Infrastructure & State Management** (Week 0 - Foundation)
-**Goal:** Complete critical infrastructure for production reliability
+### **PHASE 0: Monitoring & Automated Failover** (Week 1 - Foundation)
+**Goal:** Production-grade monitoring and automated failover for real money trading
 
-#### 0.1 Redis Replication for Failover (30 min)
-- [ ] Configure standby Redis as replica of primary
-  - Set `replicaof 10.92.3.27 6379` on standby
-  - Set `masterauth Cloudy_92!` for authentication
-  - Verify replication status with `INFO replication`
-  - Test state sync between primary and standby
+**Architecture Pattern:** Active-Standby (NOT blue-green)
+- Primary bot (CT 100): ACTIVE, trades live
+- Standby bot (CT 101): HOT STANDBY, monitors primary, ready to take over
+- Only ONE bot trades at a time (can't have two bots on same account)
+- Failover on primary failure (heartbeat timeout)
 
-#### 0.2 Position Recovery on Startup (2 hours)
+#### 0.1 Redis Configuration & Capacity Planning (2 hours)
+- [x] ✅ Redis replication already working (master → slave)
+- [ ] Configure maxmemory limits on both containers
+  - Set `maxmemory 512mb` (current usage: 2.34 MB, projected: ~10 MB)
+  - Set `maxmemory-policy allkeys-lru` (evict least recently used)
+  - Enable RDB snapshots: `save 900 1` (backup every 15 min)
+  - Apply to both primary (10.92.3.27) and standby (10.92.3.28)
+  - Verify with `redis-cli -a 'Cloudy_92!' CONFIG GET maxmemory`
+- [ ] Test Redis failover procedure
+  - Promote standby to master: `redis-cli SLAVEOF NO ONE`
+  - Verify primary can become slave
+  - Document failover steps
+
+#### 0.2 Prometheus Metrics Integration (2 days)
+- [ ] Add prometheus_client to bot dependencies
+  - Add to `requirements.txt`: `prometheus-client==0.19.0`
+  - Install on both primary and standby
+- [ ] Export health metrics from bots
+  - Heartbeat timestamp: `quantshift_heartbeat_seconds{bot="equity"}`
+  - Cycle duration: `quantshift_cycle_duration_seconds{bot="equity"}`
+  - Cycle errors: `quantshift_cycle_errors_total{bot="equity",error_type="timeout"}`
+  - Symbols loaded: `quantshift_symbols_loaded{bot="equity"}`
+- [ ] Export business metrics
+  - Portfolio value: `quantshift_portfolio_value_usd{bot="equity"}`
+  - Daily P&L: `quantshift_daily_pnl_usd{bot="equity"}`
+  - Open positions: `quantshift_positions_open{bot="equity"}`
+  - Signals generated: `quantshift_signals_generated_total{bot="equity",strategy="bollinger"}`
+  - Orders executed: `quantshift_orders_executed_total{bot="equity"}`
+- [ ] Create /metrics HTTP endpoint
+  - Run on port 9100 (equity), 9101 (crypto)
+  - Accessible for Prometheus scraping
+- [ ] Configure Prometheus scraping
+  - Add scrape configs for both bots on both containers
+  - Scrape interval: 15s
+  - Test metrics collection
+
+#### 0.3 Grafana Dashboards (1 day)
+- [ ] Create "System Health" dashboard
+  - Bot heartbeat status (PRIMARY vs STANDBY)
+  - Last heartbeat time
+  - Cycle duration trends
+  - Error rates
+  - Symbols loaded count
+- [ ] Create "Trading Performance" dashboard
+  - Portfolio value over time
+  - Daily P&L chart
+  - Open positions count
+  - Win rate by strategy
+  - Signals vs orders (conversion rate)
+- [ ] Create "Component Status" dashboard (for debugging)
+  - Market data fetch times
+  - Sentiment API latency
+  - ML regime detection time
+  - Redis operation latency
+- [ ] Add alert panels
+  - Show active alerts
+  - Alert history
+
+#### 0.4 Automated Failover Monitor (1 day)
+- [ ] Create failover monitor script on standby
+  - Monitor primary bot heartbeat from database
+  - Check every 10 seconds
+  - Trigger failover if heartbeat > 60 seconds old
+- [ ] Implement failover procedure
+  - Log failover event
+  - Promote standby Redis to master: `SLAVEOF NO ONE`
+  - Update bot status in database to PRIMARY
+  - Start standby bot processes
+  - Send alert notification
+- [ ] Create systemd service for failover monitor
+  - `quantshift-failover-monitor.service`
+  - Runs on standby only
+  - Auto-restart if monitor crashes
+- [ ] Test failover end-to-end
+  - Stop primary bot
+  - Verify standby takes over in < 30 seconds
+  - Verify no data loss
+  - Test failback (primary recovers)
+
+#### 0.5 Systemd Watchdog Integration (1 day)
+- [ ] Add systemd watchdog to bot processes
+  - Install `systemd-python` package
+  - Add `WatchdogSec=60s` to service files
+  - Send `WATCHDOG=1` notification every cycle
+  - Systemd auto-restarts if no notification in 60s
+- [ ] Test watchdog behavior
+  - Simulate bot hang (infinite loop)
+  - Verify systemd restarts bot
+  - Verify restart time < 30 seconds
+- [ ] Add watchdog metrics
+  - `quantshift_watchdog_notifications_total`
+  - `quantshift_watchdog_restarts_total`
+
+#### 0.6 Position Recovery on Startup (2 hours)
 - [ ] Implement position loading from Redis
   - Load positions from `bot:{bot_name}:position:*` keys
   - Reconcile with broker API (handle discrepancies)
@@ -62,7 +164,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Close positions safely if configured
   - Test shutdown handler with SIGTERM
 
-#### 0.3 Stop-Loss/Take-Profit Order Placement (3 hours)
+#### 0.7 Stop-Loss/Take-Profit Order Placement (3 hours)
 - [ ] Implement Coinbase stop-loss orders
   - Use Coinbase Advanced Trade API stop orders
   - Handle order placement errors
@@ -73,7 +175,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Handle partial fills
   - Update position tracking
 
-#### 0.4 ML Model Training & Deployment (1 hour)
+#### 0.8 ML Model Training & Deployment (1 hour)
 - [ ] Train ML regime classifier
   - Run `train_ml_regime_classifier.py` on 2 years SPY data
   - Validate 91.7% accuracy target
@@ -86,7 +188,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Save model to `/opt/quantshift/models/rl_agent.pkl`
   - Deploy to servers
 
-#### 0.5 ML Model Lifecycle Management (4 hours)
+#### 0.9 ML Model Lifecycle Management (4 hours)
 - [ ] **Automated Retraining Pipeline**
   - Cron job for weekly model retraining
   - Model performance monitoring (accuracy drift detection)
@@ -106,12 +208,20 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Compare ML vs rule-based performance
   - Automatic fallback to rule-based if ML fails
 
-**Deliverable:** Production-ready infrastructure with failover, position recovery, and ML lifecycle management
+**Deliverable:** Production-ready monitoring, automated failover, and resilient infrastructure
 
 ---
 
-### **PHASE 1: Multi-Strategy Framework** (Week 1-2)
-**Goal:** Run 3 uncorrelated strategies simultaneously for natural market adaptation
+### **PHASE 1: Modular Bot Architecture** (Week 2-3)
+**Goal:** Split monolithic bot into isolated components for resilience and scalability
+
+**Why Modular:**
+- If one component hangs, others keep working
+- Heavy ML processing doesn't block trading
+- Easier to debug and monitor
+- Can scale components independently
+
+**NOT Blue-Green:** Modular components run on SAME container, not separate containers
 
 #### 1.1 Strategy Implementation
 - [ ] **RSI Mean Reversion Strategy** (2 days)
