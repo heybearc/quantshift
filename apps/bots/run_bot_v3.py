@@ -24,7 +24,6 @@ import argparse
 import yaml
 from datetime import datetime
 from typing import Dict, Any, Optional
-from quantshift_core.database_writer import DatabaseWriter
 
 # Systemd watchdog support
 try:
