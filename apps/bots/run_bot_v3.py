@@ -247,15 +247,23 @@ class QuantShiftUnifiedBot:
         """Initialize Coinbase executor for crypto trading."""
         from coinbase.rest import RESTClient
         
-        # Get API credentials from environment
+        # Get API credentials from environment (support both old and new CDP SDK)
         api_key = os.getenv('COINBASE_API_KEY')
         api_secret = os.getenv('COINBASE_API_SECRET')
+        cdp_key_name = os.getenv('CDP_API_KEY_NAME')
+        cdp_private_key = os.getenv('CDP_API_KEY_PRIVATE_KEY')
         
-        if not api_key or not api_secret:
-            raise ValueError("Coinbase API credentials not found in environment")
+        # Use CDP credentials if available, otherwise fall back to legacy
+        if cdp_key_name and cdp_private_key:
+            logger.info("using_cdp_sdk_credentials")
+            coinbase_client = RESTClient(api_key=cdp_key_name, api_secret=cdp_private_key)
+        elif api_key and api_secret:
+            logger.info("using_legacy_coinbase_credentials")
+            coinbase_client = RESTClient(api_key=api_key, api_secret=api_secret)
+        else:
+            raise ValueError("Coinbase API credentials not found in environment (need either COINBASE_API_KEY/SECRET or CDP_API_KEY_NAME/PRIVATE_KEY)")
         
-        # Initialize client
-        coinbase_client = RESTClient(api_key=api_key, api_secret=api_secret)
+        # Initialize client (already done above)
         
         # Get symbols and risk config
         use_dynamic_symbols = config.get('use_dynamic_symbols', False)
