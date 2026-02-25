@@ -413,6 +413,14 @@ class AlpacaExecutor:
             account = self.get_account()
             positions = self.get_positions()
             account.positions_count = len(positions)
+            
+            # Ensure symbols are loaded (lazy loading)
+            self._ensure_symbols_loaded()
+            
+            if not self.symbols:
+                logger.warning("No symbols loaded after lazy load attempt, skipping cycle")
+                results['errors'].append("No symbols loaded")
+                return results
 
             # Circuit breaker check
             halt_reason = self._check_circuit_breakers(account)
@@ -428,7 +436,7 @@ class AlpacaExecutor:
             
             logger.info(
                 f"Strategy cycle started - Account: ${account.equity:.2f}, "
-                f"Positions: {len(positions)}"
+                f"Positions: {len(positions)}, Symbols: {len(self.symbols)}"
             )
             
             # Fetch market data for all symbols
