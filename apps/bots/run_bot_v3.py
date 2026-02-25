@@ -81,35 +81,22 @@ class QuantShiftUnifiedBot:
         self.running = False
         self.state_manager = None
         self.executor = None
-        self.strategies = []
         self.db_conn = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
-        self.bot_type = self.config.get('bot_type', 'unknown')
         self.recovered_positions = {}
         
         logger.info(
             "bot_initializing",
-            bot_type=self.bot_type,
+            bot_type=self.config.get('bot_type', 'unknown'),
             version="3.0"
         )
         
-        # Initialize metrics
-        metrics_port = self.config.get('metrics', {}).get('port', 9100)
-        self.metrics = BotMetrics(f"quantshift_{self.bot_type}", port=metrics_port)
-        logger.info("metrics_initialized", component=f"quantshift_{self.bot_type}", port=metrics_port)
-        
-        # Initialize database writer for web dashboard
-        try:
-            sys.path.insert(0, '/opt/quantshift/apps/bots/equity')
-            from database_writer import DatabaseWriter
-            db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift_bot:Cloudy_92!@10.92.3.21:5432/quantshift')
-            self.db_writer = DatabaseWriter(bot_name=self.bot_name, db_url=db_url)
-            self.db_writer.connect()
-            logger.info("database_writer_initialized", bot_name=self.bot_name)
-        except Exception as e:
-            logger.warning("database_writer_init_failed", error=str(e))
-            self.db_writer = None
-        
+        # Initialize Prometheus metrics
+        metrics_port = self.config.get('metrics_port', 9100)
+        self.metrics = BotMetrics(
+            component_name=self.bot_name.replace('-', '_'),
+            port=metrics_port
+        )
         self.metrics.set_info(version="3.0", environment="production")
         self.metrics.start_server()
         
@@ -529,28 +516,6 @@ class QuantShiftUnifiedBot:
             rows_updated = cursor.rowcount
             self.db_conn.commit()
             logger.debug("db_heartbeat_updated", bot_name=self.bot_name, status_set=bot_status, rows_updated=rows_updated)
-            
-            # Sync positions to database for web dashboard
-            if self.db_writer and positions:
-                try:
-                    # Convert Position objects to dicts for database writer
-                    positions_data = [{
-                        'symbol': pos.symbol,
-                        'quantity': pos.quantity,
-                        'entry_price': pos.entry_price,
-                        'current_price': pos.current_price,
-                        'market_value': pos.market_value,
-                        'cost_basis': pos.cost_basis if hasattr(pos, 'cost_basis') else pos.market_value,
-                        'unrealized_pl': pos.unrealized_pl,
-                        'unrealized_pl_pct': (pos.unrealized_pl / pos.cost_basis * 100) if hasattr(pos, 'cost_basis') and pos.cost_basis > 0 else 0,
-                        'stop_loss': None,
-                        'take_profit': None,
-                        'strategy': 'StrategyOrchestrator'
-                    } for pos in positions]
-                    self.db_writer.update_positions(positions_data)
-                    logger.debug("positions_synced_to_db", count=len(positions))
-                except Exception as sync_error:
-                    logger.error("position_sync_failed", error=str(sync_error))
             
         except Exception as e:
             logger.error("db_heartbeat_failed", error=str(e), exc_info=True)
