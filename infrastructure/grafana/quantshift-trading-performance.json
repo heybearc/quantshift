@@ -1,0 +1,214 @@
+{
+  "dashboard": {
+    "title": "QuantShift Trading Performance",
+    "tags": ["quantshift", "trading", "performance"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "stat",
+        "title": "Portfolio Value",
+        "targets": [
+          {
+            "expr": "quantshift_equity_portfolio_value_usd{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity Portfolio",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_portfolio_value_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto Portfolio",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "blue"}
+              ]
+            },
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "type": "stat",
+        "title": "Daily P&L",
+        "targets": [
+          {
+            "expr": "quantshift_equity_daily_pnl_usd{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity P&L",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_daily_pnl_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto P&L",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 0, "color": "green"}
+              ]
+            },
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+        "type": "timeseries",
+        "title": "Portfolio Value Over Time",
+        "targets": [
+          {
+            "expr": "quantshift_equity_portfolio_value_usd{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_portfolio_value_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto",
+            "refId": "B"
+          },
+          {
+            "expr": "quantshift_equity_portfolio_value_usd{component=\"quantshift_equity\"} + quantshift_crypto_portfolio_value_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Total",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "lineWidth": 2
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Total"},
+              "properties": [
+                {"id": "custom.lineWidth", "value": 3},
+                {"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "type": "timeseries",
+        "title": "Signals Generated",
+        "targets": [
+          {
+            "expr": "rate(quantshift_equity_signals_generated_total{component=\"quantshift_equity\"}[5m])",
+            "legendFormat": "Equity - {{strategy}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(quantshift_crypto_signals_generated_total{component=\"quantshift_crypto\"}[5m])",
+            "legendFormat": "Crypto - {{strategy}}",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 80
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "type": "timeseries",
+        "title": "Orders Executed",
+        "targets": [
+          {
+            "expr": "rate(quantshift_equity_orders_executed_total{component=\"quantshift_equity\"}[5m])",
+            "legendFormat": "Equity - {{side}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(quantshift_crypto_orders_executed_total{component=\"quantshift_crypto\"}[5m])",
+            "legendFormat": "Crypto - {{side}}",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 80
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+        "type": "timeseries",
+        "title": "Daily P&L Trend",
+        "targets": [
+          {
+            "expr": "quantshift_equity_daily_pnl_usd{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_daily_pnl_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto",
+            "refId": "B"
+          },
+          {
+            "expr": "quantshift_equity_daily_pnl_usd{component=\"quantshift_equity\"} + quantshift_crypto_daily_pnl_usd{component=\"quantshift_crypto\"}",
+            "legendFormat": "Total",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20,
+              "lineWidth": 2
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "dashboard": {
+    "title": "QuantShift System Health",
+    "tags": ["quantshift", "trading", "health"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "stat",
+        "title": "Bot Status",
+        "targets": [
+          {
+            "expr": "time() - quantshift_equity_heartbeat_seconds{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity Bot (seconds since heartbeat)",
+            "refId": "A"
+          },
+          {
+            "expr": "time() - quantshift_crypto_heartbeat_seconds{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto Bot (seconds since heartbeat)",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 60, "color": "yellow"},
+                {"value": 120, "color": "red"}
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "type": "stat",
+        "title": "Symbols Loaded",
+        "targets": [
+          {
+            "expr": "quantshift_equity_symbols_loaded{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity Symbols",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_symbols_loaded{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto Symbols",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "green"}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+        "type": "timeseries",
+        "title": "Cycle Duration",
+        "targets": [
+          {
+            "expr": "rate(quantshift_equity_cycle_duration_seconds_sum{component=\"quantshift_equity\"}[5m]) / rate(quantshift_equity_cycle_duration_seconds_count{component=\"quantshift_equity\"}[5m])",
+            "legendFormat": "Equity Bot",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(quantshift_crypto_cycle_duration_seconds_sum{component=\"quantshift_crypto\"}[5m]) / rate(quantshift_crypto_cycle_duration_seconds_count{component=\"quantshift_crypto\"}[5m])",
+            "legendFormat": "Crypto Bot",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "type": "timeseries",
+        "title": "Cycle Errors",
+        "targets": [
+          {
+            "expr": "rate(quantshift_equity_cycle_errors_total{component=\"quantshift_equity\"}[5m])",
+            "legendFormat": "Equity - {{error_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(quantshift_crypto_cycle_errors_total{component=\"quantshift_crypto\"}[5m])",
+            "legendFormat": "Crypto - {{error_type}}",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 100
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "type": "stat",
+        "title": "Open Positions",
+        "targets": [
+          {
+            "expr": "quantshift_equity_positions_open{component=\"quantshift_equity\"}",
+            "legendFormat": "Equity Positions",
+            "refId": "A"
+          },
+          {
+            "expr": "quantshift_crypto_positions_open{component=\"quantshift_crypto\"}",
+            "legendFormat": "Crypto Positions",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "blue"},
+                {"value": 5, "color": "green"},
+                {"value": 15, "color": "yellow"},
+                {"value": 25, "color": "red"}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "auto"
+        }
+      }
+    ]
+  }
+}
