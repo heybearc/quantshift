@@ -264,6 +264,24 @@ class SymbolUniverse:
         return ['SPY', 'QQQ', 'IWM', 'DIA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA']
     
     def _get_fallback_crypto_symbols(self) -> List[str]:
-        """Fallback to minimal symbol set if API fails."""
+        """
+        Fallback to curated top-50 crypto symbols by market cap.
+        Used when Coinbase API is unreliable.
+        """
         self.logger.warning("using_fallback_crypto_symbols")
-        return ['BTC-USD', 'ETH-USD', 'SOL-USD', 'AVAX-USD', 'MATIC-USD']
+        
+        # Top 50 cryptos by market cap (as of 2026)
+        top_50 = [
+            'BTC-USD', 'ETH-USD', 'BNB-USD', 'SOL-USD', 'XRP-USD',
+            'ADA-USD', 'AVAX-USD', 'DOT-USD', 'MATIC-USD', 'LINK-USD',
+            'UNI-USD', 'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD',
+            'VET-USD', 'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD',
+            'SNX-USD', 'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD',
+            'ZRX-USD', 'ENJ-USD', 'MANA-USD', 'SAND-USD', 'AXS-USD',
+            'GALA-USD', 'CHZ-USD', 'BAT-USD', 'ZEC-USD', 'DASH-USD',
+            'ETC-USD', 'XTZ-USD', 'EOS-USD', 'NEAR-USD', 'FTM-USD',
+            'HBAR-USD', 'ICP-USD', 'APE-USD', 'LDO-USD', 'ARB-USD',
+            'OP-USD', 'IMX-USD', 'RNDR-USD', 'INJ-USD', 'STX-USD'
+        ]
+        
+        return top_50[:self.max_symbols]
