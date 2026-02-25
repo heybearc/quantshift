@@ -757,7 +757,18 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 None currently identified.
 
 ### Non-Critical (Backlog)
-None currently identified.
+
+#### Bug: Coinbase `get_products()` API hangs indefinitely
+- **Severity:** Medium (workaround in place)
+- **Impact:** Cannot dynamically fetch crypto symbols from Coinbase API
+- **Workaround:** Using curated top-50 crypto list (same symbols API would return)
+- **Root Cause:** Coinbase REST client `get_products()` call hangs, no timeout support
+- **Fix Plan (Phase 2):** 
+  - Evaluate alternative: CoinGecko API for crypto symbol ranking
+  - Or: Implement proper async/timeout wrapper for Coinbase API
+  - Or: Use different Coinbase endpoint with better reliability
+- **Tracked in:** D-QS-013
+- **Date Identified:** 2026-02-25
 
 ---
 

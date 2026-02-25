@@ -48,6 +48,29 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Implementation:** Shared git credentials, identical user config, full submodule initialization on both containers
 - **Containers:** LXC 100 (primary), LXC 101 (standby) - both at `/opt/quantshift`
 - **Capabilities:** Both can pull from GitHub, commit changes, push updates, access governance files
+
+## D-QS-013: Skip Coinbase API for Phase 1
+- **Decision:** Use curated top-50 crypto list instead of Coinbase `get_products()` API call
+- **Why:** Coinbase REST client `get_products()` hangs indefinitely, causes bot restart loops and STALE dashboard status
+- **When:** 2026-02-25
+- **Context:** After fixing lazy loading bug (D-QS-014), discovered Coinbase API itself is unreliable. Threading/signal timeouts don't work - API call blocks main process.
+- **Impact:** Bot analyzes same 50 cryptos (BTC, ETH, SOL, etc.) from hardcoded list instead of API
+- **Workaround Quality:** Excellent - curated list contains exact symbols API would return anyway
+- **Fix Plan:** Phase 2 will evaluate CoinGecko API or alternative Coinbase endpoints with better reliability
+- **Status:** ⏳ TEMPORARY - Will be replaced in Phase 2 with proper dynamic symbol fetching
+- **Tracked in:** IMPLEMENTATION-PLAN.md Known Bugs section
+
+## D-QS-014: Lazy loading architecture pattern
+- **Decision:** Always call `_ensure_symbols_loaded()` before iterating over `self.symbols` in strategy cycles
+- **Why:** Symbols were `None` during iteration, preventing any symbol loading from occurring
+- **When:** 2026-02-25
+- **Context:** Lazy loading happened inside `get_market_data()`, but cycle iterated over symbols BEFORE calling that method
+- **Implementation:** 
+  - Call `_ensure_symbols_loaded()` at start of `run_strategy_cycle()`
+  - Symbols load once on first cycle, cached for subsequent cycles
+  - Applied to both AlpacaExecutor and CoinbaseExecutor
+- **Impact:** Both equity (100 symbols) and crypto (50 symbols) bots now properly load symbols
+- **Status:** ✅ PERMANENT - This is the correct architectural pattern
 - **Consequence:** If either container fails, the other can immediately take over all development and deployment operations
 
 ## D-QS-007: Industry-standard monorepo structure
