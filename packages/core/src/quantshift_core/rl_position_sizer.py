@@ -73,8 +73,9 @@ class RLPositionSizer:
             from .rl_trading_env import TradingEnvironment, prepare_training_data
             
             # Create dummy environment for model initialization
+            # Use max_position_size=1.0 to match training environment
             dummy_data = prepare_training_data(symbol='SPY', days=100)
-            dummy_env = TradingEnvironment(dummy_data)
+            dummy_env = TradingEnvironment(dummy_data, max_position_size=1.0)
             
             # Initialize PPO
             self.model = PPO(
@@ -87,7 +88,8 @@ class RLPositionSizer:
                 gamma=0.99,
                 gae_lambda=0.95,
                 clip_range=0.2,
-                verbose=0
+                verbose=0,
+                device='cpu'  # Force CPU to avoid GPU warning
             )
             
             logger.info("ppo_model_initialized")
