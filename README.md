@@ -1,6 +1,6 @@
 # QuantShift - Quantum Trading Intelligence Platform
 
-**Production URL:** https://trader.cloudigan.net  
+**Production URL:** https://quantshift.io  
 **Server:** 10.92.3.29:3001  
 **Version:** 1.2.0
 
@@ -132,10 +132,10 @@ cd /opt/quantshift
 
 ## 🌐 Domains
 
-- `trader.cloudigan.net` - Main dashboard
-- `api.trader.cloudigan.net` - Bot APIs
-- `primary.trader.cloudigan.net` - Direct primary access
-- `standby.trader.cloudigan.net` - Direct standby access
+- `quantshift.io` - Main dashboard
+- `api.quantshift.io` - Bot APIs
+- `blue.quantshift.io` - Direct blue container access
+- `green.quantshift.io` - Direct green container access
 
 ## 🎯 Why Monorepo?
 

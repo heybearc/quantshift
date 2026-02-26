@@ -136,7 +136,7 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - Cloned CT 137 to CT 138 (full disk clone)
 - Configured HAProxy backends for blue and green
 - Fixed HAProxy health check (uses `/` instead of `/api/health`)
-- Updated NPM proxy host for trader.cloudigan.net to route through HAProxy
+- Updated NPM proxy host for quantshift.io to route through HAProxy
 - Both environments operational and healthy
 
 **References:**

@@ -1,8 +1,8 @@
 # QuantShift Task State
 
-**Last updated:** 2026-02-25 (6:52pm)  
+**Last updated:** 2026-02-25 (7:04pm)  
 **Current branch:** main  
-**Working on:** Web Dashboard Data Integration — Position sync deployed, awaiting verification
+**Working on:** Web Dashboard Data Integration — Position sync deployed, verification pending for next session
 
 ---
 
@@ -224,7 +224,7 @@ Fixed empty Trades/Positions/Performance pages by implementing database sync. Bo
 - Cloned CT 138 → quantshift-green (10.92.3.30:3001)
 - Configured HAProxy for blue-green routing
 - Fixed HAProxy health checks (use `/` instead of `/api/health`)
-- Updated trader.cloudigan.net to route through HAProxy
+- Updated quantshift.io to route through HAProxy
 - Created 4 comprehensive documentation files
 - Updated DECISIONS.md (D-QS-009) and control plane APP-MAP.md
 - Committed and pushed all changes
@@ -382,7 +382,7 @@ See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 ssh qs-dashboard "export PGPASSWORD='Cloudy_92!' && psql -h 10.92.3.21 -U quantshift -d quantshift -c 'SELECT COUNT(*) as total FROM positions; SELECT bot_name, symbol, quantity, ROUND(unrealized_pl::numeric, 2) as pnl FROM positions ORDER BY bot_name, symbol LIMIT 15;'"
 
 # Expected: 14 positions (currently only 1)
-# Then check web dashboard at trader.cloudigan.net
+# Then check web dashboard at quantshift.io
 # Positions page should show all 14 positions with live data
 ```
 

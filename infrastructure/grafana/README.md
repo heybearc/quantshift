@@ -3,7 +3,7 @@
 ## Quick Import Instructions
 
 ### Access Grafana
-- URL: http://grafana.cloudigan.net
+- URL: http://grafana.quantshift.io
 - Username: `admin`
 - Password: `Cloudy_92!`
 
@@ -105,7 +105,7 @@ Common additions:
 ## Troubleshooting
 
 ### No Data Showing
-1. Check Prometheus targets: http://prometheus.cloudigan.net/targets
+1. Check Prometheus targets: http://prometheus.quantshift.io/targets
    - Look for `quantshift_equity_primary` and `quantshift_crypto_primary`
    - Should show "UP" status
 2. Verify metrics endpoint: `curl http://10.92.3.27:9200/metrics`
