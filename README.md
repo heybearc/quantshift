@@ -2,7 +2,7 @@
 
 **Production URL:** https://quantshift.io  
 **Server:** 10.92.3.29:3001  
-**Version:** 1.2.0
+**Version:** 1.5.1
 
 ## 🏗️ Structure (Standard Next.js 14)
 - Operates 24/7 with zero-downtime failover
