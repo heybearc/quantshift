@@ -135,7 +135,7 @@ test.describe('QuantShift - Release Validation (Custom)', () => {
     });
 
     test('Release notes API endpoint responds', async ({ page }) => {
-      const response = await page.request.get('/api/release-notes');
+      const response = await page.request.get('/api/release-notes/all');
       expect(response.status()).toBe(200);
     });
   });

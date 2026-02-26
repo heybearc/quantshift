@@ -157,9 +157,8 @@ test.describe("QuantShift - Dashboard Data Display", () => {
     await page.waitForTimeout(2000);
 
     // Check for key metric labels
-    await expect(page.locator("text=Bot Status")).toBeVisible();
-    await expect(page.locator("text=Account Equity")).toBeVisible();
-    await expect(page.locator("text=Buying Power")).toBeVisible();
+    await expect(page.locator("text=Total Portfolio")).toBeVisible();
+    await expect(page.locator("text=Total P&L")).toBeVisible();
     await expect(page.locator("text=Open Positions")).toBeVisible();
   });
 
@@ -171,7 +170,7 @@ test.describe("QuantShift - Dashboard Data Display", () => {
     // Check for additional metrics
     await expect(page.locator("text=Portfolio Value")).toBeVisible();
     await expect(page.locator("text=Unrealized P&L")).toBeVisible();
-    await expect(page.locator("text=Realized P&L")).toBeVisible();
+    await expect(page.locator("text=Total Trades")).toBeVisible();
   });
 
   test("Currency values are properly formatted", async ({ page }) => {

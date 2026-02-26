@@ -28,9 +28,9 @@ test.describe('QuantShift Trading Platform - Core Features', () => {
       await page.waitForTimeout(3000);
       
       // Verify key dashboard elements are present
-      await expect(page.locator('h3:has-text("Bot Status")')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('span:has-text("Account Equity")')).toBeVisible();
-      await expect(page.locator('span:has-text("Open Positions")')).toBeVisible();
+      await expect(page.locator('text=Total Portfolio')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Total P&L')).toBeVisible();
+      await expect(page.locator('text=Open Positions')).toBeVisible();
     });
 
     test('Dashboard displays real-time data', async ({ page }) => {
@@ -191,7 +191,7 @@ test.describe('QuantShift Trading Platform - Core Features', () => {
       
       // Verify page loaded successfully regardless of API
       await page.waitForTimeout(3000);
-      await expect(page.locator('h3:has-text("Bot Status")')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Total Portfolio')).toBeVisible({ timeout: 10000 });
     });
   });
 
