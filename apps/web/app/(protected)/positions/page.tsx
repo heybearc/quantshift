@@ -166,7 +166,7 @@ export default function PositionsPage() {
                           {positions.map((position) => (
                             <tr key={position.id} className="hover:bg-slate-700/30">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                {position.botName === 'equity-bot'
+                                {position.botName.includes('equity')
                                   ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"><BarChart2 className="h-3 w-3" />Equity</span>
                                   : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-900/40 text-orange-300"><Bitcoin className="h-3 w-3" />Crypto</span>
                                 }
