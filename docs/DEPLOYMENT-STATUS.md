@@ -74,14 +74,13 @@
   CDP_API_KEY_PRIVATE_KEY=your_private_key
   ```
 
-### **2. Grafana Dashboards** ⏳
-- **Status:** Created but not yet imported
-- **Files Ready:**
-  - `infrastructure/grafana/quantshift-system-health.json`
-  - `infrastructure/grafana/quantshift-trading-performance.json`
-- **Action Required:** Manual import to Grafana
-- **URL:** http://grafana.cloudigan.net
-- **Instructions:** See `infrastructure/grafana/README.md`
+### **2. Grafana Dashboards** ✅
+- **Status:** Imported and operational
+- **Dashboards:**
+  - System Health: http://10.92.3.2:3000/d/2d9fac42-e2e2-44c3-8976-0f6e80d3f45b/quantshift-system-health
+  - Trading Performance: http://10.92.3.2:3000/d/8f5d33d7-9d88-47a1-8421-73f7c1dced71/quantshift-trading-performance
+- **URL:** http://grafana.cloudigan.net (or http://10.92.3.2:3000)
+- **Credentials:** admin / Cloudy_92!
 
 ---
 
