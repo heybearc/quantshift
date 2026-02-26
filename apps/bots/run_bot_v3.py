@@ -518,12 +518,13 @@ class QuantShiftUnifiedBot:
             positions = self.executor.get_positions()
             logger.debug("account_info_retrieved", equity=account.equity)
             
+            # Calculate total unrealized P&L from positions
+            total_unrealized_pl = sum(float(pos.unrealized_pl) for pos in positions)
+            
             # Update Prometheus metrics
             self.metrics.set_portfolio_value(float(account.equity), self.bot_name)
             self.metrics.set_positions_open(len(positions), self.bot_name)
-            # Calculate daily P&L (simplified - would need to track opening equity)
-            daily_pnl = float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else 0.0
-            self.metrics.set_daily_pnl(daily_pnl, self.bot_name)
+            self.metrics.set_daily_pnl(total_unrealized_pl, self.bot_name)
             
             # Determine bot status based on primary/standby role
             is_primary = self.state_manager.is_primary()
@@ -551,7 +552,7 @@ class QuantShiftUnifiedBot:
                 float(account.cash),
                 float(account.buying_power),
                 float(account.portfolio_value),
-                float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else 0.0,
+                total_unrealized_pl,
                 float(account.realized_pl) if hasattr(account, 'realized_pl') else 0.0,
                 len(positions),
                 self.bot_name
