@@ -253,7 +253,7 @@ class RLPositionSizer:
             env = TradingEnvironment(
                 training_data,
                 initial_balance=100000,
-                max_position_size=0.1,  # Max 10% per position
+                max_position_size=1.0,  # Max 100% of capital (will be scaled by strategy)
                 transaction_cost=0.001,
                 reward_window=30
             )
