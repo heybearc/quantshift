@@ -146,7 +146,7 @@ class CoinbaseExecutor:
         """
         try:
             # Get perpetual futures positions
-            positions_response = self.coinbase_client.get_futures_positions()
+            positions_response = self.coinbase_client.get_futures_position()
             
             positions = []
             for pos in positions_response.get('positions', []):
