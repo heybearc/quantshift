@@ -411,25 +411,6 @@ model PlatformSettings {
   @@map("platform_settings")
 }
 
-model ReleaseNote {
-  id              String   @id @default(uuid())
-  version         String   @unique
-  title           String
-  description     String
-  type            String   @default("patch")
-  changes         Json
-  releaseDate     DateTime @map("release_date")
-  isPublished     Boolean  @default(false) @map("is_published")
-  isDismissed     Boolean  @default(false) @map("is_dismissed")
-  createdBy       String?  @map("created_by")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@index([version])
-  @@index([releaseDate])
-  @@map("release_notes")
-}
-
 model UserInvitation {
   id              String   @id @default(uuid())
   email           String
