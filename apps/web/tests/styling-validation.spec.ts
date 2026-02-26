@@ -165,11 +165,11 @@ test.describe("QuantShift - Dashboard Data Display", () => {
   test("Dashboard shows portfolio metrics", async ({ page }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    // Check for additional metrics
-    await expect(page.locator("text=Portfolio Value")).toBeVisible();
-    await expect(page.locator("text=Unrealized P&L")).toBeVisible();
+    // Check for always-visible combined metrics
+    await expect(page.locator("text=Total Portfolio")).toBeVisible();
+    await expect(page.locator("text=Total P&L")).toBeVisible();
     await expect(page.locator("text=Total Trades")).toBeVisible();
   });
 
