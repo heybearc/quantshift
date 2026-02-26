@@ -183,7 +183,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - **Implementation:** executors/alpaca_executor.py lines 288-315
   - **Strategy integration:** All strategies calculate SL/TP (bollinger_bounce, rsi_mean_reversion, ma_crossover, breakout_momentum)
 
-#### 0.8 ML Model Training & Deployment (1 hour) ⚠️ PARTIALLY COMPLETE
+#### 0.8 ML Model Training & Deployment (1 hour) ✅ COMPLETE
 - [x] ✅ Train ML regime classifier
   - Run `train_ml_regime_classifier.py` on 2 years SPY data
   - Validate 91.7% accuracy target
@@ -191,13 +191,13 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Deploy to primary and standby servers
   - **Status:** Trained Feb 22, 2026 (91.7% test accuracy)
   
-- [ ] Train RL position sizing agent - PENDING DEPENDENCIES
-  - Requires: `gymnasium`, `stable-baselines3` (not in requirements.txt)
-  - Run `train_rl_agent.py` for PPO training
-  - Validate Sharpe ratio improvement
-  - Save model to `/opt/quantshift/models/rl_agent.pkl`
-  - Deploy to servers
-  - **Note:** Bot not currently using RL for position sizing
+- [x] ✅ Train RL position sizing agent
+  - Installed dependencies: `gymnasium>=0.29.0`, `stable-baselines3>=2.2.0`
+  - Trained PPO agent for 100,000 timesteps (~2 minutes)
+  - Model saved to `/opt/quantshift/models/rl_position_sizer.zip`
+  - Deployed to primary (CT 100) and standby (CT 101) servers
+  - **Status:** Trained Feb 26, 2026
+  - **Note:** Bot not currently using RL for position sizing (future integration)
 
 #### 0.9 ML Model Lifecycle Management (4 hours) ✅ COMPLETE (Backend)
 - [x] ✅ **Automated Retraining Pipeline**
