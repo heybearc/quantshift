@@ -47,7 +47,7 @@ async function importReleaseNotes() {
   console.log('Starting release notes import...\n');
 
   for (const note of releaseNotes) {
-    const filePath = path.join(__dirname, '..', 'release-notes', note.file);
+    const filePath = path.join(__dirname, '..', '..', 'release-notes', note.file);
     
     if (!fs.existsSync(filePath)) {
       console.log(`⚠️  Skipping ${note.version} - file not found: ${note.file}`);
