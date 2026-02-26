@@ -6,7 +6,7 @@ Features daily online learning and weekly full retraining for adaptation.
 """
 
 import logging
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 from datetime import datetime, timedelta
 from pathlib import Path
 import pickle
