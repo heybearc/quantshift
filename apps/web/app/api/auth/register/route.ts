@@ -8,6 +8,19 @@ import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
+    // Feature flag: Disable public registration
+    const REGISTRATION_ENABLED = process.env.ENABLE_PUBLIC_REGISTRATION === 'true';
+    
+    if (!REGISTRATION_ENABLED) {
+      return NextResponse.json(
+        { 
+          error: 'Public registration is currently disabled',
+          message: 'QuantShift is in private beta. Registration will open soon. Contact your administrator for access.'
+        },
+        { status: 403 }
+      );
+    }
+
     const clientIp = getClientIp(request);
     const body = await request.json();
     const { email, username, fullName, password } = body;

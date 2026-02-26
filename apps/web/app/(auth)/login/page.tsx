@@ -193,7 +193,28 @@ export default function LoginPage() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="space-y-4">
+            <>
+              {/* Coming Soon Banner */}
+              <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-cyan-400 mb-1">
+                      Registration Coming Soon
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      QuantShift is currently in <span className="font-semibold text-white">private beta</span>. 
+                      Public registration will open soon. If you need access now, please contact your administrator.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleRegister} className="space-y-4 opacity-50 pointer-events-none">
               <div>
                 <label htmlFor="reg-fullname" className="block text-sm font-medium text-slate-300 mb-2">
                   Full Name
@@ -262,6 +283,7 @@ export default function LoginPage() {
                 {loading ? "Creating account..." : "Create Account"}
               </button>
             </form>
+            </>
           )}
 
           {/* Footer */}
