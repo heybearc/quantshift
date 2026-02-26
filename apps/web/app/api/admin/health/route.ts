@@ -37,11 +37,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Count database records
-    const [userCount, sessionCount, auditLogCount, releaseNoteCount] = await Promise.all([
+    const [userCount, sessionCount, auditLogCount] = await Promise.all([
       prisma.user.count(),
       prisma.session.count({ where: { isActive: true } }),
       prisma.auditLog.count(),
-      prisma.releaseNote.count(),
     ]);
 
     // Application uptime
@@ -79,7 +78,6 @@ export async function GET(request: NextRequest) {
           users: userCount,
           activeSessions: sessionCount,
           auditLogs: auditLogCount,
-          releaseNotes: releaseNoteCount,
         },
       },
     };
