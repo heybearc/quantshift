@@ -80,45 +80,8 @@ async function main() {
 
   console.log('✅ Created platform settings');
 
-  // Create initial release note
-  const releaseNote = await prisma.releaseNote.upsert({
-    where: { version: '1.0.0' },
-    update: {
-      title: 'QuantShift Platform Launch',
-      description: 'Initial release of the QuantShift quantum trading intelligence platform with comprehensive admin controls and real-time trading analytics.',
-      changes: [
-        { type: 'feature', description: 'Username and email-based authentication system' },
-        { type: 'feature', description: 'Trading bot configuration and monitoring' },
-        { type: 'feature', description: 'Real-time trade and position tracking' },
-        { type: 'feature', description: 'Performance analytics dashboard' },
-        { type: 'feature', description: 'Email notification system with SMTP configuration' },
-        { type: 'feature', description: 'Admin control center with user management' },
-        { type: 'feature', description: 'Release notes and version tracking system' },
-        { type: 'feature', description: 'Platform settings management' },
-      ],
-      releaseDate: new Date(),
-      isPublished: true,
-    },
-    create: {
-      version: '1.0.0',
-      title: 'QuantShift Platform Launch',
-      description: 'Initial release of the QuantShift quantum trading intelligence platform with comprehensive admin controls and real-time trading analytics.',
-      changes: [
-        { type: 'feature', description: 'Username and email-based authentication system' },
-        { type: 'feature', description: 'Trading bot configuration and monitoring' },
-        { type: 'feature', description: 'Real-time trade and position tracking' },
-        { type: 'feature', description: 'Performance analytics dashboard' },
-        { type: 'feature', description: 'Email notification system with SMTP configuration' },
-        { type: 'feature', description: 'Admin control center with user management' },
-        { type: 'feature', description: 'Release notes and version tracking system' },
-        { type: 'feature', description: 'Platform settings management' },
-      ],
-      releaseDate: new Date(),
-      isPublished: true,
-    },
-  });
-
-  console.log('✅ Created release note:', releaseNote.version);
+  // Note: Release notes are now managed via markdown files in /release-notes/
+  // No database seeding needed for release notes
 
   console.log('\n🎉 Database seeding completed!');
   console.log('\n📝 Default Admin Credentials:');
