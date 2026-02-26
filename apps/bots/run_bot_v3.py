@@ -548,13 +548,16 @@ class QuantShiftUnifiedBot:
             
             # Upsert each position
             for pos in positions:
+                # Generate deterministic ID from bot_name and symbol
+                position_id = f"{self.bot_name}_{pos.symbol}"
+                
                 cursor.execute("""
                     INSERT INTO positions (
-                        bot_name, symbol, quantity, entry_price, current_price,
+                        id, bot_name, symbol, quantity, entry_price, current_price,
                         market_value, cost_basis, unrealized_pl, unrealized_pl_pct,
                         strategy, entered_at, created_at, updated_at
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
                     ON CONFLICT (bot_name, symbol) DO UPDATE SET
                         quantity = EXCLUDED.quantity,
                         current_price = EXCLUDED.current_price,
@@ -563,6 +566,7 @@ class QuantShiftUnifiedBot:
                         unrealized_pl_pct = EXCLUDED.unrealized_pl_pct,
                         updated_at = NOW()
                 """, (
+                    position_id,
                     self.bot_name,
                     pos.symbol,
                     float(pos.quantity),
