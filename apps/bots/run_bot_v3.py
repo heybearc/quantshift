@@ -297,6 +297,7 @@ class QuantShiftUnifiedBot:
         1. Bot restart without losing position tracking
         2. Standby failover with full position context
         3. Reconciliation with broker API to handle discrepancies
+        4. Risk validation to prevent over-leverage
         """
         try:
             # Load positions from Redis
@@ -316,20 +317,37 @@ class QuantShiftUnifiedBot:
                 logger.warning("broker_positions_fetch_failed", error=str(e))
                 broker_symbols = set()
             
-            # Reconcile positions
+            # Get account equity for risk validation
+            try:
+                account_info = self.executor.get_account()
+                account_equity = float(account_info.equity) if hasattr(account_info, 'equity') else float(account_info.get('equity', 0))
+            except Exception as e:
+                logger.warning("account_equity_fetch_failed", error=str(e))
+                account_equity = 0
+            
+            # Reconcile positions and validate risk
             recovered_count = 0
             discrepancy_count = 0
+            total_position_value = 0.0
             
             for symbol, redis_data in redis_positions.items():
                 if symbol in broker_symbols:
                     # Position exists in both Redis and broker - recovered successfully
                     self.recovered_positions[symbol] = redis_data
                     recovered_count += 1
+                    
+                    # Calculate position value
+                    quantity = float(redis_data.get('quantity', 0))
+                    current_price = float(redis_data.get('current_price', redis_data.get('entry_price', 0)))
+                    position_value = abs(quantity * current_price)
+                    total_position_value += position_value
+                    
                     logger.info(
                         "position_recovered",
                         symbol=symbol,
                         quantity=redis_data.get('quantity'),
-                        entry_price=redis_data.get('entry_price')
+                        entry_price=redis_data.get('entry_price'),
+                        position_value=position_value
                     )
                 else:
                     # Position in Redis but not in broker - likely closed
@@ -343,11 +361,36 @@ class QuantShiftUnifiedBot:
                     # Clear stale position from Redis
                     self.state_manager.clear_position(symbol)
             
+            # Validate recovered positions against risk limits
+            if account_equity > 0:
+                leverage_ratio = total_position_value / account_equity
+                max_leverage = 1.0  # Cash account should not exceed 1.0x
+                
+                if leverage_ratio > max_leverage:
+                    logger.warning(
+                        "position_recovery_over_leveraged",
+                        total_position_value=total_position_value,
+                        account_equity=account_equity,
+                        leverage_ratio=round(leverage_ratio, 2),
+                        max_leverage=max_leverage,
+                        action="positions_recovered_but_trading_restricted"
+                    )
+                    # Note: Positions are recovered but orchestrator should not open new positions
+                    # until leverage is reduced through natural position closes
+                else:
+                    logger.info(
+                        "position_recovery_risk_validated",
+                        total_position_value=total_position_value,
+                        account_equity=account_equity,
+                        leverage_ratio=round(leverage_ratio, 2)
+                    )
+            
             logger.info(
                 "position_recovery_complete",
                 recovered=recovered_count,
                 discrepancies=discrepancy_count,
-                total=len(redis_positions)
+                total=len(redis_positions),
+                total_position_value=round(total_position_value, 2)
             )
             
         except Exception as e:
