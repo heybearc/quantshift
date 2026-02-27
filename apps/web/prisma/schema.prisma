@@ -386,6 +386,35 @@ model PerformanceMetrics {
   @@map("performance_metrics")
 }
 
+model StrategyPerformance {
+  id              String   @id @default(uuid())
+  botName         String   @map("bot_name")
+  strategyName    String   @map("strategy_name")
+  totalTrades     Int      @default(0) @map("total_trades")
+  winningTrades   Int      @default(0) @map("winning_trades")
+  losingTrades    Int      @default(0) @map("losing_trades")
+  winRate         Float    @default(0) @map("win_rate")
+  totalPnl        Float    @default(0) @map("total_pnl")
+  totalPnlPct     Float    @default(0) @map("total_pnl_pct")
+  avgWin          Float?   @map("avg_win")
+  avgLoss         Float?   @map("avg_loss")
+  largestWin      Float?   @map("largest_win")
+  largestLoss     Float?   @map("largest_loss")
+  sharpeRatio     Float?   @map("sharpe_ratio")
+  profitFactor    Float?   @map("profit_factor")
+  maxDrawdown     Float?   @map("max_drawdown")
+  currentDrawdown Float    @default(0) @map("current_drawdown")
+  peakEquity      Float    @default(0) @map("peak_equity")
+  lastTradeAt     DateTime? @map("last_trade_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([botName, strategyName])
+  @@index([botName])
+  @@index([strategyName])
+  @@map("strategy_performance")
+}
+
 model EmailNotification {
   id              String   @id @default(uuid())
   email           String
