@@ -363,6 +363,193 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ---
 
+### **PHASE 1.5: Critical Safety Features** (Week 3) - BEFORE LIVE TRADING
+**Goal:** Make system safe for real money - capital protection first
+
+**Timeline:** 5-7 days  
+**Effort:** ~24 hours total  
+**Portfolio:** $2600 initial ($1300 equity, $1300 crypto)  
+**Risk Tolerance:** LOW - Cannot afford to lose capital due to app failures
+
+#### 1.5.1 Emergency Kill Switch (2 hours) - HIGHEST PRIORITY
+- [ ] **Redis-based emergency stop flag**
+  - Check flag every cycle: `bot:{bot_name}:emergency_stop`
+  - If true → close all positions at market, stop trading
+  - Trigger remotely: `redis-cli SET bot:quantshift-equity:emergency_stop true`
+  - Add to main bot loop in `run_bot_v3.py`
+  
+- [ ] **Emergency position closure**
+  - Close all positions immediately at market price
+  - Log all emergency closures with reason
+  - Send alert (future: email/Slack)
+  - Prometheus metric: `quantshift_emergency_stops_total`
+
+#### 1.5.2 Bracket Orders (4 hours) - HIGHEST PRIORITY
+- [ ] **Atomic entry + stop-loss + take-profit**
+  - Replace current 3-step process (entry, wait, SL, TP)
+  - Use `OrderClass.BRACKET` for single atomic operation
+  - Stop-loss: 3% below entry (broker-enforced)
+  - Take-profit: 5% above entry (1.67:1 reward-risk)
+  - **Critical:** Position protected even if bot crashes after order submission
+  
+- [ ] **Update AlpacaExecutor**
+  - Modify `execute_signal()` to use bracket orders
+  - Calculate SL/TP from signal or defaults
+  - Log max loss % and max gain % per trade
+  - Verify orders exist on Alpaca after submission
+  
+- [ ] **Update CoinbaseExecutor**
+  - Implement bracket order equivalent for Coinbase
+  - Use existing `_place_stop_loss_order()` and `_place_take_profit_order()`
+  - Ensure atomic submission where possible
+
+#### 1.5.3 Hard Position Limits (2 hours) - HIGHEST PRIORITY
+- [ ] **Create PositionLimits class** (code-enforced, not config)
+  - `MAX_POSITION_PCT = 0.10` (10% max per position)
+  - `MAX_POSITIONS = 5` (max 5 positions total)
+  - `MAX_DAILY_LOSS_PCT = 0.03` (3% daily loss limit)
+  - `MAX_TOTAL_RISK_PCT = 0.15` (15% total portfolio risk)
+  - `MIN_POSITION_VALUE = 100` (minimum $100 per position)
+  
+- [ ] **Validation in executors**
+  - Add `validate_position()` to AlpacaExecutor and CoinbaseExecutor
+  - Reject trades that violate limits
+  - Log all rejections with reason
+  - Prometheus metric: `quantshift_position_rejections_total{reason}`
+
+#### 1.5.4 Position Recovery on Startup (3 hours) - HIGH PRIORITY
+- [ ] **Sync positions from broker to database**
+  - Get actual positions from broker (Alpaca/Coinbase)
+  - Compare to database positions
+  - Find orphaned positions (in broker, not DB) → add to DB
+  - Find ghost positions (in DB, not broker) → remove from DB
+  - Log all discrepancies with counts
+  
+- [ ] **Add to bot startup sequence**
+  - Run `recover_positions_on_startup()` before main loop
+  - Verify database matches broker reality
+  - Alert if significant discrepancies found
+
+#### 1.5.5 Graceful Strategy Failure Handling (3 hours) - HIGH PRIORITY
+- [ ] **Failure isolation per strategy**
+  - Wrap each strategy execution in try/except
+  - Track consecutive failures per strategy
+  - Disable strategy after 3 consecutive failures
+  - Other strategies continue running
+  - Return empty signals on failure (don't crash)
+  
+- [ ] **Strategy health tracking**
+  - `strategy_failures` counter per strategy
+  - `disabled_strategies` set
+  - Log strategy recovery when failures reset
+  - Prometheus metric: `quantshift_strategy_failures_total{strategy}`
+
+#### 1.5.6 Fix Crypto Bot Not Trading (4 hours) - HIGH PRIORITY
+- [ ] **Diagnose why crypto bot has zero positions**
+  - Check if signals being generated
+  - Check if risk manager filtering all signals
+  - Check Coinbase API connectivity
+  - Check position size calculations
+  - Review logs for errors
+  
+- [ ] **Fix identified issues**
+  - Adjust risk parameters if too conservative
+  - Fix API authentication if failing
+  - Fix symbol format if mismatched
+  - Add detailed logging to CoinbaseExecutor
+
+#### 1.5.7 Atomic Performance Tracking (2 hours) - MEDIUM PRIORITY
+- [ ] **Use database transactions**
+  - Wrap position sync in BEGIN/COMMIT transaction
+  - Use `FOR UPDATE` to lock rows (prevent race conditions)
+  - Rollback on any error
+  - Prevent double-counting P&L if bot crashes mid-update
+
+#### 1.5.8 Comprehensive Safety Testing (8 hours) - REQUIRED
+- [ ] **Test bot crash scenarios**
+  - Crash during entry → verify bracket order protects position
+  - Crash during exit → verify P&L recorded correctly
+  - Crash during sync → verify no data corruption
+  
+- [ ] **Test failure scenarios**
+  - Redis failure → verify graceful degradation
+  - Database failure → verify bot continues trading
+  - Strategy failure → verify other strategies continue
+  - Emergency stop → verify all positions close
+  
+- [ ] **Test limit enforcement**
+  - Try 6th position → verify rejection
+  - Try 15% position → verify rejection
+  - Simulate 3% daily loss → verify trading stops
+  
+- [ ] **Document test results**
+  - Create test report with all scenarios
+  - Mark pass/fail for each test
+  - Fix any failures before proceeding
+
+#### 1.5.9 Paper Trading Validation (2-4 weeks) - REQUIRED BEFORE LIVE
+- [ ] **Deploy safety features to production**
+  - All Phase 1.5 features implemented
+  - Running on CT 100 (primary) and CT 101 (standby)
+  - Equity bot: $100K paper money
+  - Crypto bot: $10K paper money
+  
+- [ ] **Monitor daily for 2-4 weeks**
+  - Zero stuck positions (MUST PASS)
+  - Zero limit violations (MUST PASS)
+  - All bracket orders execute correctly (MUST PASS)
+  - Bot recovers from all crashes (MUST PASS)
+  - Performance tracking accurate ±1% (MUST PASS)
+  - Crypto bot trading (at least 5 positions) (MUST PASS)
+  
+- [ ] **Success criteria**
+  - If ANY criteria fail → fix and restart 4-week validation
+  - Only proceed to live trading after 4 consecutive weeks of success
+
+#### 1.5.10 Gradual Live Deployment (6-8 weeks) - AFTER PAPER VALIDATION
+- [ ] **Week 1-2: $200 live** ($100 equity, $100 crypto)
+  - Test with money you can afford to lose completely
+  - Monitor 2x per day
+  - Verify bracket orders active on all positions
+  - Success: No stuck positions, no limit violations
+  
+- [ ] **Week 3-4: $500 live** ($250 equity, $250 crypto)
+  - Prerequisites: Week 1-2 successful
+  - Monitor 1x per day
+  - Compare to paper trading performance
+  
+- [ ] **Week 5-6: $1000 live** ($500 equity, $500 crypto)
+  - Prerequisites: Week 3-4 successful
+  - Weekly performance review
+  
+- [ ] **Week 7-8: $2000 live** ($1000 equity, $1000 crypto)
+  - Prerequisites: Week 5-6 successful
+  - Ready for full deployment
+  
+- [ ] **Week 9+: Full $2600 live** ($1300 equity, $1300 crypto)
+  - Prerequisites: All previous phases successful
+  - High confidence in system
+  - Add new capital slowly ($100-500 at a time)
+  - Wait 1-2 weeks after deposit before deploying
+
+**Deliverable:** Bulletproof system safe for real money, proven through paper trading and gradual deployment
+
+**Risk Budget (Conservative & Balanced):**
+- Max position size: 10% ($260)
+- Max positions: 5
+- Max daily loss: 3% ($78)
+- Max total risk: 15% ($390)
+- Stop-loss per trade: 3% (broker-enforced)
+- Take-profit per trade: 5% (1.67:1 reward-risk)
+
+**Expected Outcomes:**
+- Worst case (all 5 positions hit stop): -15% ($390 loss)
+- Bad day (3% daily loss limit): -3% ($78 loss)
+- Single bad trade: -3% of position (~$8-26 loss)
+- With 57% win rate: Expected monthly return 2-5%
+
+---
+
 ### **PHASE 2: Market Regime Detection** (Week 3) ✅ COMPLETE (Feb 21, 2026)
 **Goal:** Detect market conditions and adapt strategy allocation dynamically
 
