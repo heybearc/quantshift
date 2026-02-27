@@ -145,8 +145,13 @@ class StateManager:
 
     def heartbeat(self) -> None:
         """Send heartbeat to indicate bot is alive."""
-        key = f"bot:{self.bot_name}:heartbeat"
-        self.redis_client.setex(key, 60, datetime.utcnow().isoformat())
+        try:
+            key = f"bot:{self.bot_name}:heartbeat"
+            self.redis_client.setex(key, 60, datetime.utcnow().isoformat())
+        except Exception as e:
+            # Silently fail if Redis is read-only (standby server)
+            if "read only replica" not in str(e).lower():
+                logger.error("redis_heartbeat_failed", error=str(e))
 
     def is_primary(self) -> bool:
         """Check if this bot instance should be primary.
@@ -177,5 +182,11 @@ class StateManager:
             return False
             
         except Exception as e:
-            logger.error("primary_check_failed", error=str(e))
-            return True  # Default to primary if Redis fails
+            error_msg = str(e)
+            # If Redis is read-only replica, we are standby
+            if "read only replica" in error_msg.lower() or "readonly" in error_msg.lower():
+                logger.debug("redis_readonly_standby", bot_name=self.bot_name)
+                return False
+            
+            logger.error("primary_check_failed", error=error_msg)
+            return True  # Default to primary if Redis fails for other reasons
