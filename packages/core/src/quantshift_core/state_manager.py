@@ -116,7 +116,9 @@ class StateManager:
             )
             logger.debug("position_saved", symbol=symbol)
         except Exception as e:
-            logger.error("position_save_failed", symbol=symbol, error=str(e))
+            # Silently fail if Redis is read-only (standby server)
+            if "read only replica" not in str(e).lower():
+                logger.error("position_save_failed", symbol=symbol, error=str(e))
 
     def load_positions(self) -> Dict[str, Dict[str, Any]]:
         """Load all positions from Redis."""
