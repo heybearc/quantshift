@@ -44,6 +44,7 @@ from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
 from quantshift_core.metrics import BotMetrics
+from quantshift_core.strategy_performance_tracker import StrategyPerformanceTracker
 
 import psycopg2
 
@@ -82,6 +83,7 @@ class QuantShiftUnifiedBot:
         self.state_manager = None
         self.executor = None
         self.db_conn = None
+        self.performance_tracker = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
         self.recovered_positions = {}
         
@@ -512,6 +514,11 @@ class QuantShiftUnifiedBot:
                 db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
                 self.db_conn = psycopg2.connect(db_url)
                 logger.debug("db_connection_established")
+                
+                # Initialize performance tracker with database connection
+                if not self.performance_tracker:
+                    self.performance_tracker = StrategyPerformanceTracker(self.db_conn)
+                    logger.info("performance_tracker_initialized")
             
             # Get current account info
             account = self.executor.get_account()
@@ -587,18 +594,61 @@ class QuantShiftUnifiedBot:
     def _sync_positions_to_db(self, positions: List[Any]) -> None:
         """Sync current positions to database for web dashboard."""
         try:
-            if not self.db_conn or not positions:
+            if not self.db_conn:
                 return
             
             cursor = self.db_conn.cursor()
             
+            # Get currently held symbols
+            current_symbols = [pos.symbol for pos in positions] if positions else []
+            
+            # Find positions that were closed (in DB but not in current positions)
+            if self.performance_tracker:
+                cursor.execute("""
+                    SELECT symbol, unrealized_pl, entry_price, current_price, strategy
+                    FROM positions 
+                    WHERE bot_name = %s AND (symbol != ALL(%s) OR %s = 0)
+                """, (self.bot_name, current_symbols if current_symbols else [''], len(current_symbols)))
+                
+                closed_positions = cursor.fetchall()
+                
+                # Update strategy performance for each closed position
+                for symbol, unrealized_pl, entry_price, current_price, strategy_name in closed_positions:
+                    if unrealized_pl is not None and entry_price and current_price:
+                        # Calculate P&L percentage
+                        pnl_pct = ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
+                        is_win = unrealized_pl > 0
+                        
+                        # Update strategy performance
+                        self.performance_tracker.update_strategy_performance(
+                            bot_name=self.bot_name,
+                            strategy_name=strategy_name or 'StrategyOrchestrator',
+                            trade_pnl=float(unrealized_pl),
+                            trade_pnl_pct=pnl_pct,
+                            is_win=is_win
+                        )
+                        
+                        logger.info(
+                            "strategy_performance_updated",
+                            symbol=symbol,
+                            strategy=strategy_name,
+                            pnl=unrealized_pl,
+                            pnl_pct=pnl_pct,
+                            is_win=is_win
+                        )
+            
             # Delete positions no longer held
-            current_symbols = [pos.symbol for pos in positions]
             if current_symbols:
                 cursor.execute("""
                     DELETE FROM positions 
                     WHERE bot_name = %s AND symbol != ALL(%s)
                 """, (self.bot_name, current_symbols))
+            else:
+                # No positions held, delete all
+                cursor.execute("""
+                    DELETE FROM positions 
+                    WHERE bot_name = %s
+                """, (self.bot_name,))
             
             # Upsert each position
             for pos in positions:
