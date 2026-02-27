@@ -584,7 +584,7 @@ class QuantShiftUnifiedBot:
                     pass
                 self.db_conn = None
     
-    def _sync_positions_to_db(self, positions):
+    def _sync_positions_to_db(self, positions: List[Any]) -> None:
         """Sync current positions to database for web dashboard."""
         try:
             if not self.db_conn or not positions:
@@ -604,6 +604,18 @@ class QuantShiftUnifiedBot:
             for pos in positions:
                 # Generate deterministic ID from bot_name and symbol
                 position_id = f"{self.bot_name}_{pos.symbol}"
+                
+                # Get strategy name from Redis (stored when signal was executed)
+                strategy_name = 'StrategyOrchestrator'  # Default
+                try:
+                    redis_key = f"bot:{self.bot_name}:position:{pos.symbol}"
+                    position_data = self.state_manager.redis_client.get(redis_key)
+                    if position_data:
+                        import json
+                        pos_dict = json.loads(position_data)
+                        strategy_name = pos_dict.get('strategy', 'StrategyOrchestrator')
+                except Exception as e:
+                    logger.debug("strategy_attribution_lookup_failed", symbol=pos.symbol, error=str(e))
                 
                 cursor.execute("""
                     INSERT INTO positions (
@@ -630,7 +642,7 @@ class QuantShiftUnifiedBot:
                     float(pos.cost_basis) if hasattr(pos, 'cost_basis') else float(pos.market_value),
                     float(pos.unrealized_pl),
                     float(pos.unrealized_pl / pos.cost_basis * 100) if hasattr(pos, 'cost_basis') and pos.cost_basis > 0 else 0.0,
-                    'StrategyOrchestrator'
+                    strategy_name
                 ))
             
             self.db_conn.commit()

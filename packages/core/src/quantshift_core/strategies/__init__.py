@@ -9,6 +9,7 @@ from .base_strategy import BaseStrategy, Signal, SignalType, Account, Position
 from .ma_crossover import MACrossoverStrategy
 from .bollinger_bounce import BollingerBounce
 from .rsi_mean_reversion import RSIMeanReversion
+from .breakout_momentum import BreakoutMomentum
 
 __all__ = [
     'BaseStrategy',
@@ -19,4 +20,5 @@ __all__ = [
     'MACrossoverStrategy',
     'BollingerBounce',
     'RSIMeanReversion',
+    'BreakoutMomentum',
 ]
