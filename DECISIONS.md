@@ -49,16 +49,14 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Containers:** LXC 100 (primary), LXC 101 (standby) - both at `/opt/quantshift`
 - **Capabilities:** Both can pull from GitHub, commit changes, push updates, access governance files
 
-## D-QS-013: Skip Coinbase API for Phase 1
-- **Decision:** Use curated top-50 crypto list instead of Coinbase `get_products()` API call
-- **Why:** Coinbase REST client `get_products()` hangs indefinitely, causes bot restart loops and STALE dashboard status
+## D-QS-013: Coinbase API workaround for crypto bot
+- **Decision:** Use curated top-50 crypto list instead of dynamic `get_products()` API call
+- **Why:** Coinbase REST client `get_products()` hangs indefinitely with no timeout support
 - **When:** 2026-02-25
-- **Context:** After fixing lazy loading bug (D-QS-014), discovered Coinbase API itself is unreliable. Threading/signal timeouts don't work - API call blocks main process.
-- **Impact:** Bot analyzes same 50 cryptos (BTC, ETH, SOL, etc.) from hardcoded list instead of API
-- **Workaround Quality:** Excellent - curated list contains exact symbols API would return anyway
-- **Fix Plan:** Phase 2 will evaluate CoinGecko API or alternative Coinbase endpoints with better reliability
-- **Status:** ⏳ TEMPORARY - Will be replaced in Phase 2 with proper dynamic symbol fetching
-- **Tracked in:** IMPLEMENTATION-PLAN.md Known Bugs section
+- **Impact:** Crypto bot can start and trade, but symbol universe is static (not dynamic)
+- **Workaround:** Manually curated list of top 50 cryptos by market cap (same symbols API would return)
+- **Future Fix:** Evaluate CoinGecko API or async/timeout wrapper for Coinbase API
+- **Tracked in:** Known Bugs section of IMPLEMENTATION-PLAN.md
 
 ## D-QS-014: Lazy loading architecture pattern
 - **Decision:** Always call `_ensure_symbols_loaded()` before iterating over `self.symbols` in strategy cycles
@@ -71,7 +69,27 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
   - Applied to both AlpacaExecutor and CoinbaseExecutor
 - **Impact:** Both equity (100 symbols) and crypto (50 symbols) bots now properly load symbols
 - **Status:** ✅ PERMANENT - This is the correct architectural pattern
-- **Consequence:** If either container fails, the other can immediately take over all development and deployment operations
+
+## D-QS-015: Phase 1.5 Critical Safety Features - Capital protection first
+- **Decision:** Implement Phase 1.5 safety features BEFORE live trading with real money
+- **Why:** $2600 portfolio cannot afford losses due to app failures; capital protection is priority over features
+- **When:** 2026-02-27
+- **Context:** Architecture review revealed modular monolith is RIGHT for scale, but has 7 critical safety gaps
+- **Implementation:** 
+  - Emergency kill switch (Redis-based remote stop)
+  - Bracket orders (atomic entry+SL+TP, broker-enforced protection)
+  - Hard position limits (code-enforced: 10% max position, 5 max positions, 3% daily loss)
+  - Position recovery on startup (sync broker reality to database)
+  - Graceful strategy failure handling (isolate failures, disable bad strategies)
+  - Atomic performance tracking (prevent race conditions)
+  - Comprehensive safety testing (all failure scenarios)
+- **Timeline:** 24 hours implementation + 2-4 weeks paper trading validation + 6-8 weeks gradual deployment
+- **Deployment Plan:** Start with $200 live, scale to $2600 over 6-8 weeks (double every 2 weeks if successful)
+- **Risk Budget:** 10% max position, 5 max positions, 3% daily loss limit, 15% max total risk
+- **Success Criteria:** Zero stuck positions, zero limit violations, all bracket orders working, 4 consecutive weeks successful paper trading
+- **Reference:** IMPLEMENTATION-PLAN.md Phase 1.5, TASK-STATE.md
+- **Key Insight:** Bracket orders solve biggest concern - positions protected by broker even if bot crashes
+- **Architecture Assessment:** Modular monolith appropriate for $2600-$50K scale, NOT microservices
 
 ## D-QS-007: Industry-standard monorepo structure
 - **Decision:** Restructure to industry-standard monorepo with all apps in `apps/` directory
