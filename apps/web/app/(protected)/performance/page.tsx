@@ -44,10 +44,24 @@ interface PerformanceData {
   daily: DailyMetric[];
 }
 
+interface StrategyPerformance {
+  strategyName: string;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  totalPnl: number;
+  totalPnlPct: number;
+  sharpeRatio?: number;
+  profitFactor?: number;
+  maxDrawdown?: number;
+}
+
 export default function PerformancePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
+  const [strategyPerformance, setStrategyPerformance] = useState<StrategyPerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30');
   const [botFilter, setBotFilter] = useState<BotFilter>('all');
@@ -57,7 +71,10 @@ export default function PerformancePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) fetchPerformance();
+    if (user) {
+      fetchPerformance();
+      fetchStrategyPerformance();
+    }
   }, [user, timeRange, botFilter]);
 
   const fetchPerformance = async () => {
@@ -71,6 +88,20 @@ export default function PerformancePage() {
       console.error('Error fetching performance:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStrategyPerformance = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (botFilter !== 'all') params.set('botName', botFilter);
+      const response = await fetch(`/api/bot/strategy-performance?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setStrategyPerformance(data.strategies || []);
+      }
+    } catch (error) {
+      console.error('Error fetching strategy performance:', error);
     }
   };
 
@@ -207,6 +238,50 @@ export default function PerformancePage() {
                     <p className="text-xs text-slate-500">{botFilter === 'all' ? 'Equity + Crypto combined' : botFilter === 'equity-bot' ? 'Alpaca paper trading' : 'Coinbase dry-run'}</p>
                   </div>
                 </div>
+
+                {/* Strategy Performance Breakdown */}
+                {strategyPerformance.length > 0 && (
+                  <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+                    <div className="p-5 border-b border-slate-700">
+                      <h3 className="text-sm font-semibold text-white">Strategy Performance Breakdown</h3>
+                      <p className="text-xs text-slate-400 mt-1">Performance metrics by trading strategy</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-slate-900/50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Strategy</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Trades</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Win Rate</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total P&L</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Profit Factor</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Sharpe</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Max DD</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-700/50">
+                          {strategyPerformance.map((strategy) => (
+                            <tr key={strategy.strategyName} className="hover:bg-slate-700/30 transition-colors">
+                              <td className="px-4 py-3 text-sm font-medium text-white">{strategy.strategyName}</td>
+                              <td className="px-4 py-3 text-sm text-right text-slate-300">
+                                {strategy.totalTrades}
+                                <span className="block text-xs text-slate-500">{strategy.winningTrades}W / {strategy.losingTrades}L</span>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-white">{strategy.winRate.toFixed(1)}%</td>
+                              <td className="px-4 py-3 text-sm text-right">
+                                <span className={`font-medium ${strategy.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(strategy.totalPnl)}</span>
+                                <span className={`block text-xs ${strategy.totalPnlPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>{fmtPct(strategy.totalPnlPct)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-slate-300">{strategy.profitFactor?.toFixed(2) || '—'}</td>
+                              <td className="px-4 py-3 text-sm text-right text-slate-300">{strategy.sharpeRatio?.toFixed(2) || '—'}</td>
+                              <td className="px-4 py-3 text-sm text-right text-red-400">{strategy.maxDrawdown ? fmtPct(strategy.maxDrawdown) : '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 {/* Daily table */}
                 {performance!.daily.length > 0 && (
