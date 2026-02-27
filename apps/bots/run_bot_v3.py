@@ -23,7 +23,7 @@ import signal
 import argparse
 import yaml
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 # Systemd watchdog support
 try:
