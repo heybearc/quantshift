@@ -521,6 +521,16 @@ class QuantShiftUnifiedBot:
             # Calculate total unrealized P&L from positions
             total_unrealized_pl = sum(float(pos.unrealized_pl) for pos in positions)
             
+            # Log P&L calculation for debugging
+            logger.info(
+                "pnl_calculation",
+                bot_name=self.bot_name,
+                positions_count=len(positions),
+                total_unrealized_pl=total_unrealized_pl,
+                account_equity=float(account.equity),
+                account_unrealized_pl=float(account.unrealized_pl) if hasattr(account, 'unrealized_pl') else None
+            )
+            
             # Update Prometheus metrics
             self.metrics.set_portfolio_value(float(account.equity), self.bot_name)
             self.metrics.set_positions_open(len(positions), self.bot_name)
