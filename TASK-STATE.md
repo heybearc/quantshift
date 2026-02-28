@@ -1,6 +1,6 @@
 # QuantShift Task State
 
-**Last updated:** 2026-02-27 (7:55am)  
+**Last updated:** 2026-02-28 (4:14pm)  
 **Current branch:** main  
 **Working on:** Phase 1.5 Critical Safety Features - Ready to implement
 
@@ -10,13 +10,21 @@
 **Phase 1.5: Critical Safety Features** - READY TO START
 
 ### What I'm doing right now
-Phase 1 (Modular Bot Architecture) complete. Conducted comprehensive architecture review and safety analysis. Identified critical gaps and created Phase 1.5 safety roadmap. Next: Implement emergency kill switch and bracket orders (highest priority safety features).
+Fixed critical standby bot crash-loop issue (10,000+ restarts). Both standby bots now stable. Ready to begin Phase 1.5 safety feature implementation.
 
 ### Exact Next Step
 Start Phase 1.5.1: Implement emergency kill switch (2 hours)
 - Add Redis-based emergency stop flag check to main bot loop
 - Implement emergency position closure method
 - Test with paper trading positions
+
+### Today's Accomplishments (2026-02-28)
+- ✅ **Fixed Standby Bot Crash-Loop**
+  - Root cause: Missing `prometheus_client` package in standby container venv
+  - Impact: Both bots crash-looping every 10 seconds (10,114+ restarts)
+  - Fix: Installed `prometheus_client` on CT 101 standby container
+  - Result: Both equity and crypto bots now stable on standby
+  - Alert noise eliminated
 
 ### Today's Accomplishments (2026-02-27) — Phase 1 Complete
 - ✅ **Modular Bot Architecture**
