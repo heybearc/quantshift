@@ -883,6 +883,12 @@ class QuantShiftUnifiedBot:
                 
                 # Run strategy cycle (only if primary)
                 if is_primary and current_time - last_cycle_time >= cycle_interval:
+                    # Check emergency stop again before starting cycle (immediate response)
+                    if self._check_emergency_stop():
+                        logger.critical("emergency_stop_flag_detected_before_cycle")
+                        self._execute_emergency_stop("Emergency stop flag set in Redis")
+                        break
+                    
                     # Check if market is open (for equity) or always run (for crypto)
                     if self.executor.is_market_open():
                         logger.info("strategy_cycle_starting")
@@ -919,8 +925,8 @@ class QuantShiftUnifiedBot:
                     
                     last_cycle_time = current_time
                 
-                # Sleep briefly to avoid busy-waiting
-                time.sleep(1)
+                # Sleep briefly to avoid busy-waiting (0.1s for fast emergency stop response)
+                time.sleep(0.1)
                 
             except KeyboardInterrupt:
                 logger.info("keyboard_interrupt")
