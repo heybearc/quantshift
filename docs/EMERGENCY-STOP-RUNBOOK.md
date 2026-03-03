@@ -31,7 +31,24 @@ The emergency stop system allows you to remotely halt trading and close all posi
 
 ## Emergency Stop Commands
 
-### Trigger Emergency Stop
+### Method 1: Admin Dashboard UI (Recommended)
+
+**Steps:**
+1. Log in to QuantShift dashboard as admin
+2. Navigate to Dashboard page
+3. Scroll to "Emergency Stop Controls" section (admin-only)
+4. Click "Emergency Stop Equity Bot" or "Emergency Stop Crypto Bot"
+5. Confirm in the dialog that appears
+6. Bot will stop within 5 seconds
+
+**Advantages:**
+- ✅ Accessible from anywhere (mobile, desktop, tablet)
+- ✅ No SSH or Redis CLI required
+- ✅ Clear confirmation dialog prevents accidents
+- ✅ Visual feedback on success/failure
+- ✅ Audit trail via API logs
+
+### Method 2: Redis CLI (Backup/Advanced)
 
 **For Equity Bot:**
 ```bash
@@ -52,6 +69,12 @@ redis-cli -h 10.92.3.27 -a 'Cloudy_92!' SET bot:quantshift-crypto:emergency_stop
 ssh qs-bot-primary
 redis-cli -a 'Cloudy_92!' SET bot:quantshift-crypto:emergency_stop true
 ```
+
+**Use CLI method when:**
+- Dashboard is unavailable
+- Network issues prevent web access
+- You need to script emergency stops
+- You're already SSH'd into the bot container
 
 ### Check Emergency Stop Status
 
