@@ -39,7 +39,7 @@ The emergency stop system allows you to remotely halt trading and close all posi
 3. Scroll to "Emergency Stop Controls" section (admin-only)
 4. Click "Emergency Stop Equity Bot" or "Emergency Stop Crypto Bot"
 5. Confirm in the dialog that appears
-6. Bot will stop within 5 seconds
+6. Bot will stop within 100ms (0.1 seconds)
 
 **Advantages:**
 - ✅ Accessible from anywhere (mobile, desktop, tablet)
@@ -103,10 +103,10 @@ sudo systemctl restart quantshift-crypto
 
 ## What Happens During Emergency Stop
 
-### Immediate Actions (< 5 seconds)
+### Immediate Actions (< 100ms)
 
-1. **Flag Detection:** Bot detects emergency stop flag in main loop
-2. **Position Closure:** Bot closes all open positions at market price
+1. **Flag Detection:** Bot detects emergency stop flag in main loop (checked every 100ms)
+2. **Position Closure:** Bot closes all open positions at market price immediately
 3. **Database Update:** Bot status set to `EMERGENCY_STOPPED`
 4. **Metrics Recording:** Prometheus counter incremented
 5. **Bot Shutdown:** Trading loop stops
