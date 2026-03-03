@@ -371,18 +371,22 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 **Portfolio:** $2600 initial ($1300 equity, $1300 crypto)  
 **Risk Tolerance:** LOW - Cannot afford to lose capital due to app failures
 
-#### 1.5.1 Emergency Kill Switch (2 hours) - HIGHEST PRIORITY
-- [ ] **Redis-based emergency stop flag**
+#### 1.5.1 Emergency Kill Switch (2 hours) - HIGHEST PRIORITY ✅ COMPLETE
+- [x] ✅ **Redis-based emergency stop flag**
   - Check flag every cycle: `bot:{bot_name}:emergency_stop`
   - If true → close all positions at market, stop trading
   - Trigger remotely: `redis-cli SET bot:quantshift-equity:emergency_stop true`
-  - Add to main bot loop in `run_bot_v3.py`
+  - Added to main bot loop in `run_bot_v3.py` (line 852-856)
+  - **Implementation:** `_check_emergency_stop()` method checks flag every second
   
-- [ ] **Emergency position closure**
+- [x] ✅ **Emergency position closure**
   - Close all positions immediately at market price
   - Log all emergency closures with reason
-  - Send alert (future: email/Slack)
-  - Prometheus metric: `quantshift_emergency_stops_total`
+  - Database status updated to EMERGENCY_STOPPED
+  - Prometheus metric: `quantshift_emergency_stops_total` implemented
+  - **Implementation:** `_execute_emergency_stop()` method (line 463-558)
+  - **Documentation:** `docs/EMERGENCY-STOP-RUNBOOK.md` created
+  - **Status:** Ready for testing on standby container
 
 #### 1.5.2 Bracket Orders (4 hours) - HIGHEST PRIORITY
 - [ ] **Atomic entry + stop-loss + take-profit**

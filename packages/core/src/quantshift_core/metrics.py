@@ -128,6 +128,13 @@ class BotMetrics:
             ['component']
         )
         
+        # Emergency stop metrics
+        self.emergency_stops = Counter(
+            f'{component_name}_emergency_stops_total',
+            'Total number of emergency stops triggered',
+            ['component']
+        )
+        
         logger.info(
             "metrics_initialized",
             component=component_name,
@@ -240,6 +247,10 @@ class BotMetrics:
     def record_watchdog_restart(self):
         """Record a watchdog restart."""
         self.watchdog_restarts.labels(component=self.component_name).inc()
+    
+    def record_emergency_stop(self):
+        """Record an emergency stop event."""
+        self.emergency_stops.labels(component=self.component_name).inc()
 
 
 class MetricsContext:

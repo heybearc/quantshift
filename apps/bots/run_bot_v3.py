@@ -441,6 +441,122 @@ class QuantShiftUnifiedBot:
         except Exception as e:
             logger.error("shutdown_position_save_failed", error=str(e), exc_info=True)
     
+    def _check_emergency_stop(self) -> bool:
+        """Check if emergency stop flag is set in Redis.
+        
+        Returns:
+            True if emergency stop is active, False otherwise
+        """
+        try:
+            emergency_key = f"bot:{self.bot_name}:emergency_stop"
+            emergency_flag = self.state_manager.redis_client.get(emergency_key)
+            
+            if emergency_flag and emergency_flag.decode('utf-8').lower() in ['true', '1', 'yes']:
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error("emergency_stop_check_failed", error=str(e))
+            # Default to False on error - don't trigger emergency stop due to Redis issues
+            return False
+    
+    def _execute_emergency_stop(self, reason: str = "Emergency stop flag triggered"):
+        """Execute emergency stop: close all positions and halt trading.
+        
+        Args:
+            reason: Reason for emergency stop (for logging)
+        """
+        logger.critical(
+            "emergency_stop_triggered",
+            reason=reason,
+            bot_name=self.bot_name
+        )
+        
+        # Record emergency stop in Prometheus
+        self.metrics.record_emergency_stop()
+        
+        try:
+            # Get all open positions
+            positions = self.executor.get_positions()
+            
+            if not positions:
+                logger.info("emergency_stop_no_positions_to_close")
+            else:
+                logger.info(
+                    "emergency_stop_closing_positions",
+                    count=len(positions),
+                    symbols=[pos.symbol for pos in positions]
+                )
+                
+                # Close each position at market price
+                for pos in positions:
+                    try:
+                        logger.info(
+                            "emergency_stop_closing_position",
+                            symbol=pos.symbol,
+                            quantity=pos.quantity,
+                            unrealized_pl=pos.unrealized_pl
+                        )
+                        
+                        # Close position at market price
+                        self.executor.close_position(
+                            symbol=pos.symbol,
+                            quantity=abs(float(pos.quantity)),
+                            reason=f"EMERGENCY_STOP: {reason}"
+                        )
+                        
+                        logger.info(
+                            "emergency_stop_position_closed",
+                            symbol=pos.symbol
+                        )
+                        
+                    except Exception as e:
+                        logger.error(
+                            "emergency_stop_position_close_failed",
+                            symbol=pos.symbol,
+                            error=str(e),
+                            exc_info=True
+                        )
+                        # Continue trying to close other positions
+                        continue
+                
+                logger.critical(
+                    "emergency_stop_positions_closed",
+                    attempted=len(positions)
+                )
+            
+            # Update database status
+            if self.db_conn:
+                try:
+                    cursor = self.db_conn.cursor()
+                    cursor.execute("""
+                        UPDATE bot_status
+                        SET status = 'EMERGENCY_STOPPED',
+                            updated_at = NOW()
+                        WHERE bot_name = %s
+                    """, (self.bot_name,))
+                    self.db_conn.commit()
+                except Exception as e:
+                    logger.error("emergency_stop_db_update_failed", error=str(e))
+            
+            # Stop the bot
+            self.running = False
+            
+            logger.critical(
+                "emergency_stop_complete",
+                bot_name=self.bot_name,
+                reason=reason
+            )
+            
+        except Exception as e:
+            logger.critical(
+                "emergency_stop_execution_failed",
+                error=str(e),
+                exc_info=True
+            )
+            # Still stop the bot even if position closure failed
+            self.running = False
+    
     def update_state(self):
         """Update bot state in Redis and database."""
         try:
@@ -732,6 +848,12 @@ class QuantShiftUnifiedBot:
         while self.running:
             try:
                 current_time = time.time()
+                
+                # Check for emergency stop flag (highest priority)
+                if self._check_emergency_stop():
+                    logger.critical("emergency_stop_flag_detected")
+                    self._execute_emergency_stop("Emergency stop flag set in Redis")
+                    break
                 
                 # Check if this instance should be primary
                 # Only check every 5 seconds to avoid rapid switching
