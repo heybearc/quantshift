@@ -496,6 +496,46 @@ class AlpacaExecutor:
         
         return results
     
+    def close_position(self, symbol: str, quantity: float, reason: str = "Position closure") -> Optional[Dict[str, Any]]:
+        """
+        Close a position by submitting a market sell order.
+        
+        Args:
+            symbol: Symbol to close
+            quantity: Quantity to close (absolute value)
+            reason: Reason for closure (for logging)
+            
+        Returns:
+            Order details if successful, None otherwise
+        """
+        try:
+            # Submit market sell order to close position
+            order_request = MarketOrderRequest(
+                symbol=symbol,
+                qty=abs(quantity),
+                side=OrderSide.SELL,
+                time_in_force=TimeInForce.DAY
+            )
+            order = self.alpaca_client.submit_order(order_request)
+            
+            logger.info(
+                f"Position closed: SELL {quantity} {symbol} @ market - {reason}"
+            )
+            
+            return {
+                'id': str(order.id),
+                'symbol': order.symbol,
+                'qty': float(order.qty),
+                'side': order.side.value,
+                'type': order.type.value,
+                'status': order.status.value,
+                'reason': reason
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to close position {symbol}: {e}", exc_info=True)
+            return None
+    
     def get_strategy_state(self) -> Dict[str, Any]:
         """
         Get current strategy state for monitoring.
