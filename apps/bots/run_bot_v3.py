@@ -515,6 +515,25 @@ class QuantShiftUnifiedBot:
                 except Exception as e:
                     logger.error("emergency_stop_backup_failed", error=str(e))
                 
+                # Cancel all pending orders first
+                try:
+                    from alpaca.trading.requests import CancelOrdersRequest
+                    cancel_request = CancelOrdersRequest()
+                    self.executor.alpaca_client.cancel_orders(cancel_request)
+                    logger.info("emergency_stop_all_orders_cancelled")
+                except Exception as e:
+                    logger.error("emergency_stop_cancel_orders_failed", error=str(e))
+                
+                # Check if market is open
+                is_market_open = self.executor.is_market_open()
+                if not is_market_open:
+                    logger.critical(
+                        "emergency_stop_market_closed",
+                        message="Market is closed - positions cannot be closed until market opens",
+                        positions_count=len(positions),
+                        symbols=[pos.symbol for pos in positions]
+                    )
+                
                 # Close each position at market price
                 closed_symbols = []
                 failed_symbols = []
@@ -525,7 +544,8 @@ class QuantShiftUnifiedBot:
                             "emergency_stop_closing_position",
                             symbol=pos.symbol,
                             quantity=pos.quantity,
-                            unrealized_pl=pos.unrealized_pl
+                            unrealized_pl=pos.unrealized_pl,
+                            market_open=is_market_open
                         )
                         
                         # Close position at market price
@@ -547,7 +567,7 @@ class QuantShiftUnifiedBot:
                             logger.error(
                                 "emergency_stop_position_close_failed",
                                 symbol=pos.symbol,
-                                error="close_position returned None"
+                                error="close_position returned None - likely market closed"
                             )
                         
                     except Exception as e:
