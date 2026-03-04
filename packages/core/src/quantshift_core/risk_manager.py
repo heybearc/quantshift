@@ -9,7 +9,7 @@ Implements institutional-grade risk management:
 - Position size validation
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime, date
 from enum import Enum
 import pandas as pd
@@ -17,6 +17,7 @@ import numpy as np
 import structlog
 
 from .strategies.base_strategy import Signal, Position, Account
+from .kelly_position_sizer import KellyPositionSizer
 
 logger = structlog.get_logger()
 
@@ -48,7 +49,11 @@ class RiskManager:
         daily_loss_limit: float = 0.05,  # 5% daily loss limit
         max_drawdown_limit: float = 0.15,  # 15% max drawdown
         warning_threshold: float = 0.8,  # Warn at 80% of limits
-        email_service: Optional[Any] = None  # Email notification service
+        email_service: Optional[Any] = None,  # Email notification service
+        use_kelly_sizing: bool = False,  # Enable Kelly Criterion position sizing
+        kelly_fraction: float = 0.25,  # Fractional Kelly (25% for safety)
+        kelly_min_trades: int = 20,  # Minimum trades for Kelly calculation
+        db_manager: Optional[Any] = None  # Database manager for trade history
     ):
         """
         Initialize risk manager.
@@ -61,6 +66,10 @@ class RiskManager:
             max_drawdown_limit: Maximum drawdown from peak equity
             warning_threshold: Warn when approaching limits (0-1)
             email_service: Optional email service for circuit breaker alerts
+            use_kelly_sizing: Enable Kelly Criterion position sizing
+            kelly_fraction: Fractional Kelly to use (0.25 = 25% Kelly)
+            kelly_min_trades: Minimum trades required for Kelly calculation
+            db_manager: Database manager for fetching trade history
         """
         self.max_portfolio_heat = max_portfolio_heat
         self.max_position_correlation = max_position_correlation
@@ -69,6 +78,17 @@ class RiskManager:
         self.max_drawdown_limit = max_drawdown_limit
         self.warning_threshold = warning_threshold
         self.email_service = email_service
+        self.use_kelly_sizing = use_kelly_sizing
+        self.db_manager = db_manager
+        
+        # Initialize Kelly Position Sizer if enabled
+        self.kelly_sizer = None
+        if use_kelly_sizing:
+            self.kelly_sizer = KellyPositionSizer(
+                kelly_fraction=kelly_fraction,
+                min_trades_required=kelly_min_trades,
+                logger_instance=logger.bind(component="KellyPositionSizer")
+            )
         
         # State tracking
         self.daily_start_equity = None
@@ -86,7 +106,9 @@ class RiskManager:
             max_correlation=max_position_correlation,
             daily_loss_limit=daily_loss_limit,
             max_drawdown=max_drawdown_limit,
-            email_alerts=email_service is not None
+            email_alerts=email_service is not None,
+            kelly_sizing=use_kelly_sizing,
+            kelly_fraction=kelly_fraction if use_kelly_sizing else None
         )
     
     def calculate_portfolio_heat(
@@ -473,6 +495,124 @@ class RiskManager:
             'circuit_breaker_reason': self.circuit_breaker_reason,
             'num_positions': len(positions)
         }
+    
+    def calculate_kelly_position_size(
+        self,
+        signal: Signal,
+        account: Account,
+        bot_name: str,
+        strategy_name: Optional[str] = None
+    ) -> Tuple[int, str]:
+        """
+        Calculate position size using Kelly Criterion if enabled.
+        
+        Args:
+            signal: Trading signal with entry and stop loss
+            account: Account object with equity
+            bot_name: Bot name for fetching trade history
+            strategy_name: Optional strategy name for per-strategy Kelly
+            
+        Returns:
+            Tuple of (shares, method_used)
+            - shares: Number of shares to buy
+            - method_used: "kelly" or "fixed_fractional"
+        """
+        if not self.use_kelly_sizing or not self.kelly_sizer or not self.db_manager:
+            # Fallback to fixed fractional
+            risk_per_share = abs(signal.entry_price - signal.stop_loss)
+            if risk_per_share <= 0:
+                return 0, "invalid"
+            
+            risk_amount = account.equity * 0.01  # 1% default risk
+            shares = int(risk_amount / risk_per_share)
+            return shares, "fixed_fractional"
+        
+        # Fetch trade history from database
+        try:
+            trades = self.db_manager.get_closed_trades(
+                bot_name=bot_name,
+                strategy_name=strategy_name,
+                limit=100  # Last 100 trades
+            )
+            
+            # Convert to format expected by Kelly sizer
+            trade_list = [
+                {
+                    'pnl': trade.realized_pnl,
+                    'exit_time': trade.exit_time.isoformat() if trade.exit_time else ''
+                }
+                for trade in trades
+            ]
+            
+            # Calculate Kelly position size
+            shares, risk_amount, method = self.kelly_sizer.get_position_size(
+                account_value=account.equity,
+                entry_price=signal.entry_price,
+                stop_loss_price=signal.stop_loss,
+                trades=trade_list,
+                strategy_name=strategy_name
+            )
+            
+            return shares, method
+            
+        except Exception as e:
+            self.logger.error(
+                "kelly_calculation_failed",
+                error=str(e),
+                fallback="fixed_fractional"
+            )
+            # Fallback to fixed fractional
+            risk_per_share = abs(signal.entry_price - signal.stop_loss)
+            if risk_per_share <= 0:
+                return 0, "invalid"
+            
+            risk_amount = account.equity * 0.01
+            shares = int(risk_amount / risk_per_share)
+            return shares, "fixed_fractional"
+    
+    def get_kelly_stats(self, bot_name: str, strategy_name: Optional[str] = None) -> Dict:
+        """
+        Get Kelly Criterion statistics for monitoring.
+        
+        Args:
+            bot_name: Bot name for fetching trade history
+            strategy_name: Optional strategy name
+            
+        Returns:
+            Dictionary with Kelly statistics
+        """
+        if not self.use_kelly_sizing or not self.kelly_sizer or not self.db_manager:
+            return {
+                "kelly_enabled": False,
+                "method": "fixed_fractional"
+            }
+        
+        try:
+            trades = self.db_manager.get_closed_trades(
+                bot_name=bot_name,
+                strategy_name=strategy_name,
+                limit=100
+            )
+            
+            trade_list = [
+                {
+                    'pnl': trade.realized_pnl,
+                    'exit_time': trade.exit_time.isoformat() if trade.exit_time else ''
+                }
+                for trade in trades
+            ]
+            
+            stats = self.kelly_sizer.get_kelly_stats_summary(trade_list)
+            stats['kelly_enabled'] = True
+            return stats
+            
+        except Exception as e:
+            self.logger.error("kelly_stats_failed", error=str(e))
+            return {
+                "kelly_enabled": True,
+                "error": str(e),
+                "method": "fixed_fractional"
+            }
     
     def reset_circuit_breaker(self):
         """Manually reset circuit breaker (admin only)."""

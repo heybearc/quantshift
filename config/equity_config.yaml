@@ -63,6 +63,11 @@ risk_management:
   max_sector_exposure: 0.30
   daily_loss_limit: 0.05  # 5% daily loss limit
   max_drawdown_limit: 0.15  # 15% max drawdown
+  
+  # Kelly Criterion position sizing
+  use_kelly_sizing: false  # Enable Kelly Criterion (requires 20+ trades)
+  kelly_fraction: 0.25  # Use 25% Kelly for safety
+  kelly_min_trades: 20  # Minimum trades required for Kelly calculation
 
 # Redis configuration
 redis:
