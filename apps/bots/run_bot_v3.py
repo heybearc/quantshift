@@ -477,7 +477,7 @@ class QuantShiftUnifiedBot:
         self.metrics.record_emergency_stop()
         
         try:
-            # Get all open positions
+            # Get all open positions from broker
             positions = self.executor.get_positions()
             
             if not positions:
@@ -489,7 +489,36 @@ class QuantShiftUnifiedBot:
                     symbols=[pos.symbol for pos in positions]
                 )
                 
+                # Backup positions to Redis before closing (for audit trail)
+                backup_key = f"bot:{self.bot_name}:emergency_stop_backup:{datetime.utcnow().isoformat()}"
+                backup_data = {
+                    'reason': reason,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'positions': [
+                        {
+                            'symbol': pos.symbol,
+                            'quantity': float(pos.quantity),
+                            'entry_price': float(pos.entry_price) if hasattr(pos, 'entry_price') else None,
+                            'current_price': float(pos.current_price),
+                            'unrealized_pl': float(pos.unrealized_pl)
+                        }
+                        for pos in positions
+                    ]
+                }
+                try:
+                    self.state_manager.redis_client.setex(
+                        backup_key,
+                        86400 * 7,  # Keep backup for 7 days
+                        json.dumps(backup_data)
+                    )
+                    logger.info("emergency_stop_positions_backed_up", backup_key=backup_key)
+                except Exception as e:
+                    logger.error("emergency_stop_backup_failed", error=str(e))
+                
                 # Close each position at market price
+                closed_symbols = []
+                failed_symbols = []
+                
                 for pos in positions:
                     try:
                         logger.info(
@@ -500,18 +529,29 @@ class QuantShiftUnifiedBot:
                         )
                         
                         # Close position at market price
-                        self.executor.close_position(
+                        result = self.executor.close_position(
                             symbol=pos.symbol,
                             quantity=abs(float(pos.quantity)),
                             reason=f"EMERGENCY_STOP: {reason}"
                         )
                         
-                        logger.info(
-                            "emergency_stop_position_closed",
-                            symbol=pos.symbol
-                        )
+                        if result:
+                            closed_symbols.append(pos.symbol)
+                            logger.info(
+                                "emergency_stop_position_closed",
+                                symbol=pos.symbol,
+                                order_id=result.get('id')
+                            )
+                        else:
+                            failed_symbols.append(pos.symbol)
+                            logger.error(
+                                "emergency_stop_position_close_failed",
+                                symbol=pos.symbol,
+                                error="close_position returned None"
+                            )
                         
                     except Exception as e:
+                        failed_symbols.append(pos.symbol)
                         logger.error(
                             "emergency_stop_position_close_failed",
                             symbol=pos.symbol,
@@ -521,9 +561,39 @@ class QuantShiftUnifiedBot:
                         # Continue trying to close other positions
                         continue
                 
+                # Wait briefly for orders to execute
+                time.sleep(2)
+                
+                # Verify positions are closed at broker
+                try:
+                    remaining_positions = self.executor.get_positions()
+                    if remaining_positions:
+                        logger.critical(
+                            "emergency_stop_positions_still_open",
+                            count=len(remaining_positions),
+                            symbols=[pos.symbol for pos in remaining_positions]
+                        )
+                    else:
+                        logger.info("emergency_stop_all_positions_verified_closed")
+                except Exception as e:
+                    logger.error("emergency_stop_verification_failed", error=str(e))
+                
+                # Clear Redis position cache
+                try:
+                    pattern = f"bot:{self.bot_name}:position:*"
+                    for key in self.state_manager.redis_client.scan_iter(match=pattern):
+                        self.state_manager.redis_client.delete(key)
+                    logger.info("emergency_stop_position_cache_cleared")
+                except Exception as e:
+                    logger.error("emergency_stop_cache_clear_failed", error=str(e))
+                
                 logger.critical(
                     "emergency_stop_positions_closed",
-                    attempted=len(positions)
+                    attempted=len(positions),
+                    closed=len(closed_symbols),
+                    failed=len(failed_symbols),
+                    closed_symbols=closed_symbols,
+                    failed_symbols=failed_symbols
                 )
             
             # Update database status
