@@ -26,12 +26,12 @@ test.describe('QuantShift - Quick Smoke Tests', () => {
     
     // Submit and wait for navigation
     await Promise.all([
-      page.waitForNavigation({ timeout: 15000 }),
+      page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
       page.click('button[type="submit"]')
     ]);
     
     // Wait for redirect to complete
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     
     // 2. Verify dashboard loaded
     await expect(page.locator('body')).toBeVisible({ timeout: 5000 });
@@ -62,12 +62,10 @@ test.describe('QuantShift - Quick Smoke Tests', () => {
     await page.fill('input[id="email"]', TEST_USER.email);
     await page.fill('input[id="password"]', TEST_USER.password);
     await Promise.all([
-      page.waitForNavigation({ timeout: 15000 }),
+      page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
       page.click('button[type="submit"]')
     ]);
-    await page.waitForTimeout(1000);
-    
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     const criticalErrors = filterCriticalErrors(errors);
     

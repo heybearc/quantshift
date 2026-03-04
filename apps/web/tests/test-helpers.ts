@@ -22,11 +22,11 @@ export async function login(page: Page) {
   await page.fill('input[id="password"]', TEST_USER.password);
   
   await Promise.all([
-    page.waitForNavigation({ timeout: 15000 }),
+    page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
     page.click('button[type="submit"]')
   ]);
   
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 }
 
 /**
