@@ -657,18 +657,26 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
   - Admin UI manual restart capability
   - Recovery plan documentation
 
-#### 3.4 Kelly Criterion Position Sizing ⏳ FUTURE
-- [ ] **Implement fractional Kelly**
+#### 3.4 Kelly Criterion Position Sizing ✅ COMPLETE
+- [x] ✅ **Implement fractional Kelly**
   - Kelly % = (Win Rate × Avg Win - (1 - Win Rate) × Avg Loss) / Avg Win
   - Use 25% Kelly for safety (0.25 × Kelly %)
-  - Recalculate weekly based on last 30 trades
-  - **Note:** Currently using fixed 1% risk per trade
+  - Recalculate based on last 30 trades
+  - File: `packages/core/src/quantshift_core/kelly_position_sizer.py`
+  - **Status:** Implemented, disabled by default (requires 20+ trades)
   
-- [ ] **Fallback to fixed fractional if insufficient data**
-  - Need minimum 20 trades for Kelly calculation
-  - Default to 1% risk if < 20 trades
+- [x] ✅ **Fallback to fixed fractional if insufficient data**
+  - Minimum 20 trades required for Kelly calculation
+  - Automatic fallback to 1% risk if < 20 trades
+  - Graceful error handling and logging
+  
+- [x] ✅ **RiskManager integration**
+  - `calculate_kelly_position_size()` method
+  - `get_kelly_stats()` for monitoring
+  - Database integration for trade history
+  - Configuration: `use_kelly_sizing: false` (enable after 20+ trades)
 
-**Deliverable:** ✅ Bot has institutional-grade risk controls with circuit breakers, correlation limits, and sector exposure management
+**Deliverable:** ✅ Bot has institutional-grade risk controls with circuit breakers, correlation limits, sector exposure management, and optional Kelly Criterion position sizing
 
 ---
 
