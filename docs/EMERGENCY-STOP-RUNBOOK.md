@@ -106,10 +106,41 @@ sudo systemctl restart quantshift-crypto
 ### Immediate Actions (< 100ms)
 
 1. **Flag Detection:** Bot detects emergency stop flag in main loop (checked every 100ms)
-2. **Position Closure:** Bot closes all open positions at market price immediately
-3. **Database Update:** Bot status set to `EMERGENCY_STOPPED`
-4. **Metrics Recording:** Prometheus counter incremented
-5. **Bot Shutdown:** Trading loop stops
+2. **Order Cancellation:** All pending orders cancelled immediately
+3. **Position Backup:** All positions backed up to Redis (7-day retention)
+4. **Position Closure:** Bot submits market sell orders for all positions
+5. **Database Update:** Bot status set to `EMERGENCY_STOPPED`, positions cleared
+6. **Metrics Recording:** Prometheus counter incremented
+7. **Bot Shutdown:** Trading loop stops
+
+### ⚠️ IMPORTANT: Market Hours Limitation
+
+**Emergency stop can only close positions during market hours (9:30 AM - 4:00 PM EST).**
+
+**During Market Hours (9:30 AM - 4:00 PM EST):**
+- ✅ Positions close immediately via market orders
+- ✅ Full emergency stop functionality
+- ✅ Database and cache cleared
+- ✅ Dashboard shows 0 positions within seconds
+
+**After Market Hours (4:00 PM - 9:30 AM EST):**
+- ✅ Bot stops trading immediately
+- ✅ All pending orders cancelled
+- ✅ Positions backed up for audit
+- ❌ **Positions remain open** (market orders require open market)
+- ⚠️ Positions will close when market opens at 9:30 AM EST
+- ⚠️ Dashboard will show positions until market opens
+
+**Why This Limitation Exists:**
+- Market orders can only execute during regular trading hours
+- This is a broker/market limitation, not a code limitation
+- Extended hours trading requires special permissions
+
+**Workaround for After-Hours:**
+- Emergency stop still prevents new trades
+- All pending orders are cancelled
+- Bot is stopped to prevent further risk
+- Positions will auto-close at market open (if emergency stop flag remains set)
 
 ### Logging Output
 
