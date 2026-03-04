@@ -451,12 +451,13 @@ class QuantShiftUnifiedBot:
             emergency_key = f"bot:{self.bot_name}:emergency_stop"
             emergency_flag = self.state_manager.redis_client.get(emergency_key)
             
-            if emergency_flag and emergency_flag.decode('utf-8').lower() in ['true', '1', 'yes']:
+            # Redis client has decode_responses=True, so emergency_flag is already a string
+            if emergency_flag and str(emergency_flag).lower() in ['true', '1', 'yes']:
                 return True
             return False
             
         except Exception as e:
-            logger.error("emergency_stop_check_failed", error=str(e))
+            logger.error("emergency_stop_check_failed", error=str(e), exc_info=True)
             # Default to False on error - don't trigger emergency stop due to Redis issues
             return False
     
