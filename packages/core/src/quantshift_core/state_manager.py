@@ -5,11 +5,13 @@ import os
 import signal
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
+from contextlib import contextmanager
 
 import redis
 import structlog
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from quantshift_core.config import get_settings
 from quantshift_core.database import get_db
@@ -192,3 +194,261 @@ class StateManager:
             
             logger.error("primary_check_failed", error=error_msg)
             return True  # Default to primary if Redis fails for other reasons
+    
+    @contextmanager
+    def atomic_transaction(self):
+        """
+        Context manager for atomic database transactions.
+        
+        Usage:
+            with state_manager.atomic_transaction() as session:
+                # Perform database operations
+                # Automatically commits on success, rolls back on error
+        """
+        with self.db.session() as session:
+            try:
+                yield session
+                # Commit happens automatically in db.session() context manager
+                logger.debug("transaction_committed", bot_name=self.bot_name)
+            except Exception as e:
+                # Rollback happens automatically in db.session() context manager
+                logger.error("transaction_rolled_back", bot_name=self.bot_name, error=str(e))
+                raise
+    
+    def update_position_atomic(
+        self,
+        bot_name: str,
+        symbol: str,
+        quantity: float,
+        entry_price: float,
+        current_price: float,
+        unrealized_pl: float,
+        strategy_name: str
+    ) -> None:
+        """
+        Update position in database with atomic transaction and row locking.
+        
+        Uses FOR UPDATE to lock the row and prevent race conditions.
+        If bot crashes mid-update, transaction is rolled back automatically.
+        
+        Args:
+            bot_name: Name of the bot
+            symbol: Trading symbol
+            quantity: Position quantity
+            entry_price: Entry price
+            current_price: Current market price
+            unrealized_pl: Unrealized profit/loss
+            strategy_name: Strategy that created this position
+        """
+        with self.atomic_transaction() as session:
+            # Lock the row for update to prevent concurrent modifications
+            result = session.execute(
+                text("""
+                    SELECT id FROM positions 
+                    WHERE bot_name = :bot_name AND symbol = :symbol
+                    FOR UPDATE
+                """),
+                {"bot_name": bot_name, "symbol": symbol}
+            ).fetchone()
+            
+            if result:
+                # Update existing position
+                session.execute(
+                    text("""
+                        UPDATE positions
+                        SET quantity = :quantity,
+                            entry_price = :entry_price,
+                            current_price = :current_price,
+                            unrealized_pl = :unrealized_pl,
+                            strategy_name = :strategy_name,
+                            updated_at = NOW()
+                        WHERE bot_name = :bot_name AND symbol = :symbol
+                    """),
+                    {
+                        "bot_name": bot_name,
+                        "symbol": symbol,
+                        "quantity": quantity,
+                        "entry_price": entry_price,
+                        "current_price": current_price,
+                        "unrealized_pl": unrealized_pl,
+                        "strategy_name": strategy_name
+                    }
+                )
+                logger.debug("position_updated_atomic", symbol=symbol)
+            else:
+                # Insert new position
+                session.execute(
+                    text("""
+                        INSERT INTO positions 
+                        (bot_name, symbol, quantity, entry_price, current_price, 
+                         unrealized_pl, strategy_name, created_at, updated_at)
+                        VALUES 
+                        (:bot_name, :symbol, :quantity, :entry_price, :current_price,
+                         :unrealized_pl, :strategy_name, NOW(), NOW())
+                    """),
+                    {
+                        "bot_name": bot_name,
+                        "symbol": symbol,
+                        "quantity": quantity,
+                        "entry_price": entry_price,
+                        "current_price": current_price,
+                        "unrealized_pl": unrealized_pl,
+                        "strategy_name": strategy_name
+                    }
+                )
+                logger.debug("position_inserted_atomic", symbol=symbol)
+    
+    def delete_position_atomic(self, bot_name: str, symbol: str) -> None:
+        """
+        Delete position from database with atomic transaction.
+        
+        Args:
+            bot_name: Name of the bot
+            symbol: Trading symbol to delete
+        """
+        with self.atomic_transaction() as session:
+            session.execute(
+                text("""
+                    DELETE FROM positions
+                    WHERE bot_name = :bot_name AND symbol = :symbol
+                """),
+                {"bot_name": bot_name, "symbol": symbol}
+            )
+            logger.debug("position_deleted_atomic", symbol=symbol)
+    
+    def get_positions_atomic(self, bot_name: str) -> List[Dict[str, Any]]:
+        """
+        Get all positions for a bot with atomic read.
+        
+        Args:
+            bot_name: Name of the bot
+            
+        Returns:
+            List of position dictionaries
+        """
+        with self.atomic_transaction() as session:
+            result = session.execute(
+                text("""
+                    SELECT symbol, quantity, entry_price, current_price, 
+                           unrealized_pl, strategy_name, created_at, updated_at
+                    FROM positions
+                    WHERE bot_name = :bot_name
+                """),
+                {"bot_name": bot_name}
+            )
+            
+            positions = []
+            for row in result:
+                positions.append({
+                    "symbol": row.symbol,
+                    "quantity": float(row.quantity),
+                    "entry_price": float(row.entry_price),
+                    "current_price": float(row.current_price),
+                    "unrealized_pl": float(row.unrealized_pl),
+                    "strategy_name": row.strategy_name,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "updated_at": row.updated_at.isoformat() if row.updated_at else None
+                })
+            
+            logger.debug("positions_fetched_atomic", count=len(positions))
+            return positions
+    
+    def sync_positions_atomic(
+        self,
+        bot_name: str,
+        positions: List[Dict[str, Any]]
+    ) -> Dict[str, int]:
+        """
+        Sync multiple positions atomically in a single transaction.
+        
+        All positions are updated/inserted in one transaction.
+        If any operation fails, all changes are rolled back.
+        
+        Args:
+            bot_name: Name of the bot
+            positions: List of position dictionaries
+            
+        Returns:
+            Dict with counts of inserted, updated, deleted positions
+        """
+        stats = {"inserted": 0, "updated": 0, "deleted": 0}
+        
+        with self.atomic_transaction() as session:
+            # Get existing positions
+            existing = session.execute(
+                text("SELECT symbol FROM positions WHERE bot_name = :bot_name FOR UPDATE"),
+                {"bot_name": bot_name}
+            ).fetchall()
+            existing_symbols = {row.symbol for row in existing}
+            
+            # Update/insert new positions
+            new_symbols = set()
+            for pos in positions:
+                symbol = pos["symbol"]
+                new_symbols.add(symbol)
+                
+                if symbol in existing_symbols:
+                    # Update
+                    session.execute(
+                        text("""
+                            UPDATE positions
+                            SET quantity = :quantity,
+                                entry_price = :entry_price,
+                                current_price = :current_price,
+                                unrealized_pl = :unrealized_pl,
+                                strategy_name = :strategy_name,
+                                updated_at = NOW()
+                            WHERE bot_name = :bot_name AND symbol = :symbol
+                        """),
+                        {
+                            "bot_name": bot_name,
+                            "symbol": symbol,
+                            "quantity": pos["quantity"],
+                            "entry_price": pos["entry_price"],
+                            "current_price": pos["current_price"],
+                            "unrealized_pl": pos["unrealized_pl"],
+                            "strategy_name": pos.get("strategy_name", "UNKNOWN")
+                        }
+                    )
+                    stats["updated"] += 1
+                else:
+                    # Insert
+                    session.execute(
+                        text("""
+                            INSERT INTO positions 
+                            (bot_name, symbol, quantity, entry_price, current_price, 
+                             unrealized_pl, strategy_name, created_at, updated_at)
+                            VALUES 
+                            (:bot_name, :symbol, :quantity, :entry_price, :current_price,
+                             :unrealized_pl, :strategy_name, NOW(), NOW())
+                        """),
+                        {
+                            "bot_name": bot_name,
+                            "symbol": symbol,
+                            "quantity": pos["quantity"],
+                            "entry_price": pos["entry_price"],
+                            "current_price": pos["current_price"],
+                            "unrealized_pl": pos["unrealized_pl"],
+                            "strategy_name": pos.get("strategy_name", "UNKNOWN")
+                        }
+                    )
+                    stats["inserted"] += 1
+            
+            # Delete positions that no longer exist
+            deleted_symbols = existing_symbols - new_symbols
+            for symbol in deleted_symbols:
+                session.execute(
+                    text("DELETE FROM positions WHERE bot_name = :bot_name AND symbol = :symbol"),
+                    {"bot_name": bot_name, "symbol": symbol}
+                )
+                stats["deleted"] += 1
+            
+            logger.info(
+                "positions_synced_atomic",
+                bot_name=bot_name,
+                inserted=stats["inserted"],
+                updated=stats["updated"],
+                deleted=stats["deleted"]
+            )
+            
+        return stats
