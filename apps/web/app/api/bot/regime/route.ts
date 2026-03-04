@@ -9,30 +9,59 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const botName = searchParams.get('bot') || 'equity-bot';
+    const botName = searchParams.get('bot') || 'quantshift-equity';
 
-    // TODO: Read from Redis bot state when available
-    // For now, return mock data showing ML regime classifier is active
-    
-    // Simulated current regime data
-    const current = {
-      regime: 'BULL_TRENDING',
-      method: 'ml',
-      confidence: 0.917, // ML model accuracy
-      riskMultiplier: 1.0,
-      allocation: {
-        BollingerBounce: 0.30,
-        RSIMeanReversion: 0.20,
-        Breakout: 0.50,
-      },
-      timestamp: new Date().toISOString(),
+    // Read regime data from Redis
+    const Redis = require('ioredis');
+    const redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+    });
+
+    let current = null;
+    try {
+      const regimeData = await redis.get(`bot:${botName}:regime`);
+      if (regimeData) {
+        current = JSON.parse(regimeData);
+      }
+    } catch (redisError) {
+      console.error('Redis error:', redisError);
+    } finally {
+      redis.disconnect();
+    }
+
+    // Fallback to mock data if Redis unavailable
+    if (!current) {
+      current = {
+        regime: 'LOW_VOL_RANGE',
+        method: 'ml',
+        confidence: 0.5,
+        risk_multiplier: 1.0,
+        allocation: {
+          BollingerBounce: 0.60,
+          RSIMeanReversion: 0.40,
+          Breakout: 0.0,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Convert snake_case to camelCase for frontend
+    const currentFormatted = {
+      regime: current.regime,
+      method: current.method,
+      confidence: current.confidence,
+      riskMultiplier: current.risk_multiplier || current.riskMultiplier || 1.0,
+      allocation: current.allocation,
+      timestamp: current.timestamp,
     };
 
-    // Simulated 7-day history
+    // For now, use mock history (will implement database storage later)
     const history = generateMockHistory(7);
 
     return NextResponse.json({
-      current,
+      current: currentFormatted,
       history,
       stats: {
         totalChanges: calculateRegimeChanges(history),

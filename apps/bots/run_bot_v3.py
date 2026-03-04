@@ -178,7 +178,9 @@ class QuantShiftUnifiedBot:
             use_regime_detection=use_regime_detection,
             use_ml_regime=use_ml_regime,
             use_risk_management=use_risk_management,
-            use_sentiment_analysis=use_sentiment_analysis
+            use_sentiment_analysis=use_sentiment_analysis,
+            redis_client=self.state_manager.redis_client,
+            bot_name=self.bot_name
         )
         
         logger.info(

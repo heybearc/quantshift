@@ -45,7 +45,9 @@ class StrategyOrchestrator:
         risk_manager: Optional[RiskManager] = None,
         use_sentiment_analysis: bool = False,
         sentiment_analyzer: Optional[SentimentAnalyzer] = None,
-        metrics: Optional[Any] = None
+        metrics: Optional[Any] = None,
+        redis_client: Optional[Any] = None,
+        bot_name: Optional[str] = None
     ):
         """
         Initialize the orchestrator.
@@ -70,6 +72,8 @@ class StrategyOrchestrator:
         self.use_risk_management = use_risk_management
         self.use_sentiment_analysis = use_sentiment_analysis
         self.metrics = metrics
+        self.redis_client = redis_client
+        self.bot_name = bot_name
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
@@ -197,6 +201,27 @@ class StrategyOrchestrator:
                     risk_multiplier=self.regime_risk_multiplier,
                     indicators=indicators
                 )
+                
+                # Store regime data in Redis for dashboard access
+                if hasattr(self, 'redis_client') and self.redis_client:
+                    import json
+                    from datetime import datetime
+                    regime_data = {
+                        'regime': regime.value if hasattr(regime, 'value') else regime,
+                        'method': 'ml' if self.use_ml_regime else 'rule_based',
+                        'allocation': self.capital_allocation,
+                        'risk_multiplier': self.regime_risk_multiplier,
+                        'confidence': indicators.get('ml_confidence', 1.0),
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                    try:
+                        self.redis_client.setex(
+                            f'bot:{self.bot_name}:regime',
+                            3600,  # Expire after 1 hour
+                            json.dumps(regime_data)
+                        )
+                    except Exception as e:
+                        self.logger.warning("failed_to_store_regime_in_redis", error=str(e))
         
         # Generate signals from each strategy
         for strategy in self.strategies:
