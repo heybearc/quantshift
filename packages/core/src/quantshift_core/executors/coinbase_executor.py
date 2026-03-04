@@ -103,11 +103,12 @@ class CoinbaseExecutor:
         Uses simulated capital if configured.
         """
         try:
-            # For Coinbase perpetuals, we need to get futures account balance
-            accounts = self.coinbase_client.get_accounts()
-            
-            # Use simulated capital if configured
+            # Use simulated capital if configured (for paper trading)
             if self.simulated_capital:
+                logger.debug(
+                    "using_simulated_capital",
+                    capital=self.simulated_capital
+                )
                 return Account(
                     equity=self.simulated_capital,
                     cash=self.simulated_capital,
@@ -116,67 +117,117 @@ class CoinbaseExecutor:
                     positions_count=0
                 )
             
-            # Find USDC or USD balance for perpetuals
-            total_balance = 0.0
-            for account in accounts.get('accounts', []):
-                if account.get('currency') in ['USDC', 'USD']:
-                    available = float(account.get('available_balance', {}).get('value', 0))
-                    total_balance += available
+            # Get all accounts from Coinbase
+            accounts_response = self.coinbase_client.get_accounts()
             
-            # For perpetuals, buying power is typically leveraged
-            leverage = 10  # Coinbase perpetuals typically offer 10x leverage
-            buying_power = total_balance * leverage
+            # Find USD/USDC balance for spot trading
+            total_balance = 0.0
+            if hasattr(accounts_response, 'accounts'):
+                for account in accounts_response.accounts:
+                    if hasattr(account, 'currency') and account.currency in ['USD', 'USDC']:
+                        if hasattr(account, 'available_balance'):
+                            available = float(account.available_balance.value)
+                            total_balance += available
+                            logger.debug(
+                                "account_balance_found",
+                                currency=account.currency,
+                                balance=available
+                            )
+            
+            logger.info(
+                "account_fetched",
+                total_balance=total_balance,
+                buying_power=total_balance
+            )
             
             return Account(
                 equity=total_balance,
                 cash=total_balance,
-                buying_power=buying_power,
+                buying_power=total_balance,
                 portfolio_value=total_balance,
-                positions_count=0  # Will be updated when we fetch positions
+                positions_count=0
             )
         except Exception as e:
             logger.error(f"Error fetching account: {e}", exc_info=True)
+            # Return simulated capital as fallback
+            if self.simulated_capital:
+                logger.warning("Falling back to simulated capital due to API error")
+                return Account(
+                    equity=self.simulated_capital,
+                    cash=self.simulated_capital,
+                    buying_power=self.simulated_capital,
+                    portfolio_value=self.simulated_capital,
+                    positions_count=0
+                )
             raise
     
     def get_positions(self) -> List[Position]:
         """
         Fetch positions from Coinbase and convert to broker-agnostic format.
+        For spot trading, positions are crypto holdings with non-zero balance.
         """
         try:
-            # Get perpetual futures positions
-            positions_response = self.coinbase_client.get_futures_position()
+            # Get all accounts (spot holdings)
+            accounts_response = self.coinbase_client.get_accounts()
             
             positions = []
-            for pos in positions_response.get('positions', []):
-                product_id = pos.get('product_id')
-                
-                # Skip if not one of our trading symbols
-                if product_id not in self.symbols:
-                    continue
-                
-                quantity = float(pos.get('number_of_contracts', 0))
-                if quantity == 0:
-                    continue
-                
-                entry_price = float(pos.get('entry_vwap', 0))
-                current_price = float(pos.get('mark_price', entry_price))
-                unrealized_pl = float(pos.get('unrealized_pnl', 0))
-                
-                # Determine side
-                side = pos.get('side', 'UNKNOWN').lower()
-                
-                positions.append(Position(
-                    symbol=product_id,
-                    quantity=quantity,
-                    entry_price=entry_price,
-                    current_price=current_price,
-                    market_value=quantity * current_price,
-                    unrealized_pl=unrealized_pl,
-                    unrealized_plpc=(unrealized_pl / (entry_price * quantity)) if (entry_price * quantity) > 0 else 0,
-                    side=side
-                ))
+            if hasattr(accounts_response, 'accounts'):
+                for account in accounts_response.accounts:
+                    if not hasattr(account, 'currency') or not hasattr(account, 'available_balance'):
+                        continue
+                    
+                    currency = account.currency
+                    
+                    # Skip USD/USDC (these are cash, not positions)
+                    if currency in ['USD', 'USDC']:
+                        continue
+                    
+                    quantity = float(account.available_balance.value)
+                    if quantity == 0:
+                        continue
+                    
+                    # Construct symbol (e.g., BTC-USD)
+                    symbol = f"{currency}-USD"
+                    
+                    # Skip if not in our trading symbols
+                    if self.symbols and symbol not in self.symbols:
+                        continue
+                    
+                    # Get current price
+                    try:
+                        product = self.coinbase_client.get_product(symbol)
+                        current_price = float(product.price) if hasattr(product, 'price') else 0.0
+                    except:
+                        current_price = 0.0
+                    
+                    # We don't have entry price for existing holdings, use current price
+                    entry_price = current_price
+                    market_value = quantity * current_price
+                    
+                    positions.append(Position(
+                        symbol=symbol,
+                        quantity=quantity,
+                        entry_price=entry_price,
+                        current_price=current_price,
+                        market_value=market_value,
+                        unrealized_pl=0.0,  # Unknown for existing holdings
+                        unrealized_plpc=0.0,
+                        side='long'
+                    ))
+                    
+                    logger.debug(
+                        "position_found",
+                        symbol=symbol,
+                        quantity=quantity,
+                        value=market_value
+                    )
             
+            logger.info(
+                "positions_fetched",
+                count=len(positions)
+            )
             return positions
+            
         except Exception as e:
             logger.error(f"Error fetching positions: {e}", exc_info=True)
             return []
@@ -270,6 +321,14 @@ class CoinbaseExecutor:
             Order details if successful, None otherwise
         """
         try:
+            logger.info(
+                "execute_signal_called",
+                symbol=signal.symbol,
+                signal_type=signal.signal_type.value,
+                position_size=signal.position_size,
+                price=signal.price
+            )
+            
             if signal.signal_type == SignalType.HOLD:
                 return None
             
