@@ -135,6 +135,19 @@ class BotMetrics:
             ['component']
         )
         
+        # Strategy failure metrics
+        self.strategy_failures = Counter(
+            f'{component_name}_strategy_failures_total',
+            'Total number of strategy failures',
+            ['component', 'strategy']
+        )
+        
+        self.strategies_disabled = Gauge(
+            f'{component_name}_strategies_disabled',
+            'Number of strategies currently disabled',
+            ['component']
+        )
+        
         logger.info(
             "metrics_initialized",
             component=component_name,
@@ -251,6 +264,17 @@ class BotMetrics:
     def record_emergency_stop(self):
         """Record an emergency stop event."""
         self.emergency_stops.labels(component=self.component_name).inc()
+    
+    def record_strategy_failure(self, strategy_name: str):
+        """Record a strategy failure."""
+        self.strategy_failures.labels(
+            component=self.component_name,
+            strategy=strategy_name
+        ).inc()
+    
+    def set_strategies_disabled(self, count: int):
+        """Set number of strategies currently disabled."""
+        self.strategies_disabled.labels(component=self.component_name).set(count)
 
 
 class MetricsContext:

@@ -44,7 +44,8 @@ class StrategyOrchestrator:
         use_risk_management: bool = True,
         risk_manager: Optional[RiskManager] = None,
         use_sentiment_analysis: bool = False,
-        sentiment_analyzer: Optional[SentimentAnalyzer] = None
+        sentiment_analyzer: Optional[SentimentAnalyzer] = None,
+        metrics: Optional[Any] = None
     ):
         """
         Initialize the orchestrator.
@@ -68,6 +69,7 @@ class StrategyOrchestrator:
         self.use_ml_regime = use_ml_regime
         self.use_risk_management = use_risk_management
         self.use_sentiment_analysis = use_sentiment_analysis
+        self.metrics = metrics
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
@@ -119,6 +121,11 @@ class StrategyOrchestrator:
         
         self.current_regime = MarketRegime.UNKNOWN
         self.regime_risk_multiplier = 1.0
+        
+        # Strategy failure tracking
+        self.strategy_failures = {strategy.name: 0 for strategy in strategies}
+        self.disabled_strategies = set()
+        self.max_consecutive_failures = 3
         
         self.logger.info(
             "orchestrator_initialized",
@@ -193,6 +200,15 @@ class StrategyOrchestrator:
         
         # Generate signals from each strategy
         for strategy in self.strategies:
+            # Skip disabled strategies
+            if strategy.name in self.disabled_strategies:
+                self.logger.debug(
+                    "strategy_disabled_skipping",
+                    strategy=strategy.name,
+                    consecutive_failures=self.strategy_failures[strategy.name]
+                )
+                continue
+            
             try:
                 # Create virtual account with allocated capital
                 allocated_account = self._create_allocated_account(
@@ -277,13 +293,48 @@ class StrategyOrchestrator:
                                 signal.metadata['sentiment_adjusted_from'] = original_size
                     
                     all_signals.extend(signals)
+                
+                # Strategy executed successfully - reset failure counter
+                if self.strategy_failures[strategy.name] > 0:
+                    self.logger.info(
+                        "strategy_recovered",
+                        strategy=strategy.name,
+                        previous_failures=self.strategy_failures[strategy.name]
+                    )
+                    self.strategy_failures[strategy.name] = 0
                     
             except Exception as e:
+                # Increment failure counter
+                self.strategy_failures[strategy.name] += 1
+                
+                # Record failure in Prometheus metrics
+                if self.metrics:
+                    self.metrics.record_strategy_failure(strategy.name)
+                
                 self.logger.error(
                     "strategy_error",
                     strategy=strategy.name,
-                    error=str(e)
+                    error=str(e),
+                    consecutive_failures=self.strategy_failures[strategy.name],
+                    max_failures=self.max_consecutive_failures
                 )
+                
+                # Disable strategy if max failures reached
+                if self.strategy_failures[strategy.name] >= self.max_consecutive_failures:
+                    self.disabled_strategies.add(strategy.name)
+                    
+                    # Update disabled strategies metric
+                    if self.metrics:
+                        self.metrics.set_strategies_disabled(len(self.disabled_strategies))
+                    
+                    self.logger.critical(
+                        "strategy_disabled",
+                        strategy=strategy.name,
+                        consecutive_failures=self.strategy_failures[strategy.name],
+                        reason="Max consecutive failures reached"
+                    )
+                
+                # Continue with other strategies (don't crash the bot)
         
         # Resolve conflicts
         resolved_signals = self._resolve_conflicts(all_signals)
