@@ -588,18 +588,23 @@ class QuantShiftUnifiedBot:
                     logger.error("emergency_stop_cache_clear_failed", error=str(e))
                 
                 # Clear database positions
-                if self.db_conn:
-                    try:
-                        cursor = self.db_conn.cursor()
-                        cursor.execute("""
-                            DELETE FROM positions
-                            WHERE bot_name = %s
-                        """, (self.bot_name,))
-                        deleted_count = cursor.rowcount
-                        self.db_conn.commit()
-                        logger.info("emergency_stop_db_positions_cleared", count=deleted_count)
-                    except Exception as e:
-                        logger.error("emergency_stop_db_clear_failed", error=str(e))
+                try:
+                    # Ensure database connection exists
+                    if not self.db_conn:
+                        db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
+                        self.db_conn = psycopg2.connect(db_url)
+                        logger.info("emergency_stop_db_connection_established")
+                    
+                    cursor = self.db_conn.cursor()
+                    cursor.execute("""
+                        DELETE FROM positions
+                        WHERE bot_name = %s
+                    """, (self.bot_name,))
+                    deleted_count = cursor.rowcount
+                    self.db_conn.commit()
+                    logger.info("emergency_stop_db_positions_cleared", count=deleted_count)
+                except Exception as e:
+                    logger.error("emergency_stop_db_clear_failed", error=str(e), exc_info=True)
                 
                 logger.critical(
                     "emergency_stop_positions_closed",
