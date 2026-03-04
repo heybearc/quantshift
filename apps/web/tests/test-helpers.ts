@@ -21,11 +21,11 @@ export async function login(page: Page) {
   await page.fill('input[id="email"]', TEST_USER.email);
   await page.fill('input[id="password"]', TEST_USER.password);
   
-  await Promise.all([
-    page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
-    page.click('button[type="submit"]')
-  ]);
+  // Click submit and wait for URL to change (client-side navigation)
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
   
+  // Wait for page to stabilize
   await page.waitForTimeout(2000);
 }
 

@@ -24,13 +24,11 @@ test.describe('QuantShift - Quick Smoke Tests', () => {
     await page.fill('input[id="email"]', TEST_USER.email);
     await page.fill('input[id="password"]', TEST_USER.password);
     
-    // Submit and wait for navigation
-    await Promise.all([
-      page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    // Submit and wait for URL change (client-side navigation)
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
     
-    // Wait for redirect to complete
+    // Wait for page to stabilize
     await page.waitForTimeout(2000);
     
     // 2. Verify dashboard loaded
@@ -43,11 +41,9 @@ test.describe('QuantShift - Quick Smoke Tests', () => {
     await page.waitForSelector('input[id="email"]', { state: 'visible' });
     await page.fill('input[id="email"]', TEST_USER.email);
     await page.fill('input[id="password"]', TEST_USER.password);
-    await Promise.all([
-      page.waitForNavigation({ timeout: 15000 }),
-      page.click('button[type="submit"]')
-    ]);
-    await page.waitForTimeout(1000);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
+    await page.waitForTimeout(2000);
     
     // Page should be functional
     await expect(page.locator('body')).toBeVisible();
@@ -61,10 +57,8 @@ test.describe('QuantShift - Quick Smoke Tests', () => {
     await page.waitForSelector('input[id="email"]', { state: 'visible' });
     await page.fill('input[id="email"]', TEST_USER.email);
     await page.fill('input[id="password"]', TEST_USER.password);
-    await Promise.all([
-      page.waitForNavigation({ timeout: 15000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
     await page.waitForTimeout(3000);
     
     const criticalErrors = filterCriticalErrors(errors);
