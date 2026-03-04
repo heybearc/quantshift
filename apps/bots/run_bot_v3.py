@@ -587,6 +587,20 @@ class QuantShiftUnifiedBot:
                 except Exception as e:
                     logger.error("emergency_stop_cache_clear_failed", error=str(e))
                 
+                # Clear database positions
+                if self.db_conn:
+                    try:
+                        cursor = self.db_conn.cursor()
+                        cursor.execute("""
+                            DELETE FROM positions
+                            WHERE bot_name = %s
+                        """, (self.bot_name,))
+                        deleted_count = cursor.rowcount
+                        self.db_conn.commit()
+                        logger.info("emergency_stop_db_positions_cleared", count=deleted_count)
+                    except Exception as e:
+                        logger.error("emergency_stop_db_clear_failed", error=str(e))
+                
                 logger.critical(
                     "emergency_stop_positions_closed",
                     attempted=len(positions),
@@ -603,6 +617,7 @@ class QuantShiftUnifiedBot:
                     cursor.execute("""
                         UPDATE bot_status
                         SET status = 'EMERGENCY_STOPPED',
+                            positions_count = 0,
                             updated_at = NOW()
                         WHERE bot_name = %s
                     """, (self.bot_name,))
