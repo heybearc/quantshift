@@ -47,7 +47,8 @@ class RiskManager:
         max_sector_exposure: float = 0.30,  # 30% max per sector
         daily_loss_limit: float = 0.05,  # 5% daily loss limit
         max_drawdown_limit: float = 0.15,  # 15% max drawdown
-        warning_threshold: float = 0.8  # Warn at 80% of limits
+        warning_threshold: float = 0.8,  # Warn at 80% of limits
+        email_service: Optional[Any] = None  # Email notification service
     ):
         """
         Initialize risk manager.
@@ -59,6 +60,7 @@ class RiskManager:
             daily_loss_limit: Maximum daily loss as fraction of starting equity
             max_drawdown_limit: Maximum drawdown from peak equity
             warning_threshold: Warn when approaching limits (0-1)
+            email_service: Optional email service for circuit breaker alerts
         """
         self.max_portfolio_heat = max_portfolio_heat
         self.max_position_correlation = max_position_correlation
@@ -66,6 +68,7 @@ class RiskManager:
         self.daily_loss_limit = daily_loss_limit
         self.max_drawdown_limit = max_drawdown_limit
         self.warning_threshold = warning_threshold
+        self.email_service = email_service
         
         # State tracking
         self.daily_start_equity = None
@@ -73,6 +76,7 @@ class RiskManager:
         self.current_date = None
         self.circuit_breaker_status = CircuitBreakerStatus.NORMAL
         self.circuit_breaker_reason = None
+        self.circuit_breaker_notified = False  # Track if email sent
         
         self.logger = logger.bind(component="RiskManager")
         
@@ -81,7 +85,8 @@ class RiskManager:
             max_portfolio_heat=max_portfolio_heat,
             max_correlation=max_position_correlation,
             daily_loss_limit=daily_loss_limit,
-            max_drawdown=max_drawdown_limit
+            max_drawdown=max_drawdown_limit,
+            email_alerts=email_service is not None
         )
     
     def calculate_portfolio_heat(
@@ -215,7 +220,8 @@ class RiskManager:
     def check_circuit_breakers(
         self,
         current_equity: float,
-        current_date: date
+        current_date: date,
+        positions: Optional[List[Position]] = None
     ) -> CircuitBreakerStatus:
         """
         Check if circuit breakers should be triggered.
@@ -223,6 +229,7 @@ class RiskManager:
         Args:
             current_equity: Current account equity
             current_date: Current date
+            positions: Current open positions (for email alert)
             
         Returns:
             Circuit breaker status
@@ -231,6 +238,7 @@ class RiskManager:
         if self.current_date != current_date:
             self.current_date = current_date
             self.daily_start_equity = current_equity
+            self.circuit_breaker_notified = False  # Reset notification flag
         
         # Update peak equity
         if self.peak_equity is None or current_equity > self.peak_equity:
@@ -239,6 +247,8 @@ class RiskManager:
         # Check daily loss limit
         if self.daily_start_equity:
             daily_loss = (self.daily_start_equity - current_equity) / self.daily_start_equity
+            daily_pl = current_equity - self.daily_start_equity
+            
             if daily_loss >= self.daily_loss_limit:
                 self.circuit_breaker_status = CircuitBreakerStatus.TRIGGERED
                 self.circuit_breaker_reason = f"Daily loss {daily_loss:.1%} exceeds limit {self.daily_loss_limit:.1%}"
@@ -247,6 +257,19 @@ class RiskManager:
                     reason=self.circuit_breaker_reason,
                     daily_loss=daily_loss
                 )
+                
+                # Send email alert (only once per trigger)
+                if self.email_service and not self.circuit_breaker_notified:
+                    self._send_circuit_breaker_email(
+                        breaker_type="DAILY_LOSS_LIMIT",
+                        current_value=daily_loss,
+                        limit_value=self.daily_loss_limit,
+                        account_equity=current_equity,
+                        daily_pl=daily_pl,
+                        positions=positions
+                    )
+                    self.circuit_breaker_notified = True
+                
                 return self.circuit_breaker_status
             elif daily_loss >= self.daily_loss_limit * self.warning_threshold:
                 self.circuit_breaker_status = CircuitBreakerStatus.WARNING
@@ -255,6 +278,8 @@ class RiskManager:
         # Check max drawdown
         if self.peak_equity:
             drawdown = (self.peak_equity - current_equity) / self.peak_equity
+            daily_pl = current_equity - self.daily_start_equity if self.daily_start_equity else 0
+            
             if drawdown >= self.max_drawdown_limit:
                 self.circuit_breaker_status = CircuitBreakerStatus.TRIGGERED
                 self.circuit_breaker_reason = f"Drawdown {drawdown:.1%} exceeds limit {self.max_drawdown_limit:.1%}"
@@ -263,6 +288,20 @@ class RiskManager:
                     reason=self.circuit_breaker_reason,
                     drawdown=drawdown
                 )
+                
+                # Send email alert (only once per trigger)
+                if self.email_service and not self.circuit_breaker_notified:
+                    self._send_circuit_breaker_email(
+                        breaker_type="MAX_DRAWDOWN",
+                        current_value=drawdown,
+                        limit_value=self.max_drawdown_limit,
+                        account_equity=current_equity,
+                        daily_pl=daily_pl,
+                        drawdown=drawdown,
+                        positions=positions
+                    )
+                    self.circuit_breaker_notified = True
+                
                 return self.circuit_breaker_status
             elif drawdown >= self.max_drawdown_limit * self.warning_threshold:
                 self.circuit_breaker_status = CircuitBreakerStatus.WARNING
@@ -275,6 +314,43 @@ class RiskManager:
             )
         
         return self.circuit_breaker_status
+    
+    def _send_circuit_breaker_email(
+        self,
+        breaker_type: str,
+        current_value: float,
+        limit_value: float,
+        account_equity: float,
+        daily_pl: Optional[float] = None,
+        drawdown: Optional[float] = None,
+        positions: Optional[List[Position]] = None
+    ):
+        """Send circuit breaker email alert."""
+        try:
+            # Convert positions to dict format for email
+            positions_data = []
+            if positions:
+                for pos in positions:
+                    positions_data.append({
+                        'symbol': pos.symbol,
+                        'quantity': pos.quantity,
+                        'entry_price': pos.entry_price,
+                        'current_price': getattr(pos, 'current_price', pos.entry_price),
+                        'unrealized_pl': getattr(pos, 'unrealized_pl', 0)
+                    })
+            
+            self.email_service.send_circuit_breaker_alert(
+                breaker_type=breaker_type,
+                reason=self.circuit_breaker_reason,
+                current_value=current_value,
+                limit_value=limit_value,
+                account_equity=account_equity,
+                daily_pl=daily_pl,
+                drawdown=drawdown,
+                open_positions=positions_data if positions_data else None
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to send circuit breaker email: {e}")
     
     def validate_signal(
         self,
@@ -402,4 +478,5 @@ class RiskManager:
         """Manually reset circuit breaker (admin only)."""
         self.circuit_breaker_status = CircuitBreakerStatus.NORMAL
         self.circuit_breaker_reason = None
+        self.circuit_breaker_notified = False
         self.logger.warning("circuit_breaker_manually_reset")

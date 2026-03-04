@@ -511,6 +511,171 @@ class EmailService:
             html_body=html_body
         )
     
+    def send_circuit_breaker_alert(
+        self,
+        breaker_type: str,
+        reason: str,
+        current_value: float,
+        limit_value: float,
+        account_equity: float,
+        daily_pl: Optional[float] = None,
+        drawdown: Optional[float] = None,
+        open_positions: Optional[List[Dict[str, Any]]] = None
+    ) -> bool:
+        """
+        Send circuit breaker triggered alert.
+        
+        Args:
+            breaker_type: Type of circuit breaker (DAILY_LOSS, MAX_DRAWDOWN, PORTFOLIO_HEAT)
+            reason: Detailed reason for trigger
+            current_value: Current value that triggered the breaker
+            limit_value: Limit that was exceeded
+            account_equity: Current account equity
+            daily_pl: Daily profit/loss
+            drawdown: Current drawdown from peak
+            open_positions: List of open positions
+        
+        Returns:
+            True if email sent successfully
+        """
+        if not self.notifications.get('circuit_breaker_alerts', {}).get('enabled', True):
+            return False
+        
+        subject = f"🚨 CIRCUIT BREAKER TRIGGERED: {breaker_type}"
+        
+        # Build positions HTML if provided
+        positions_html = ""
+        if open_positions:
+            positions_html = """
+            <div style="margin-top: 20px;">
+                <h3>Open Positions</h3>
+                <table style='width: 100%; border-collapse: collapse; background: white;'>
+                    <tr style='background: #f0f0f0;'>
+                        <th style='padding: 10px; text-align: left;'>Symbol</th>
+                        <th style='padding: 10px; text-align: right;'>Qty</th>
+                        <th style='padding: 10px; text-align: right;'>Entry</th>
+                        <th style='padding: 10px; text-align: right;'>Current</th>
+                        <th style='padding: 10px; text-align: right;'>P&L</th>
+                    </tr>
+            """
+            for pos in open_positions:
+                pnl_color = '#27ae60' if pos.get('unrealized_pl', 0) >= 0 else '#e74c3c'
+                positions_html += f"""
+                <tr style='border-bottom: 1px solid #ddd;'>
+                    <td style='padding: 8px;'>{pos['symbol']}</td>
+                    <td style='padding: 8px; text-align: right;'>{pos['quantity']}</td>
+                    <td style='padding: 8px; text-align: right;'>${pos['entry_price']:.2f}</td>
+                    <td style='padding: 8px; text-align: right;'>${pos.get('current_price', pos['entry_price']):.2f}</td>
+                    <td style='padding: 8px; text-align: right; color: {pnl_color};'>${pos.get('unrealized_pl', 0):.2f}</td>
+                </tr>
+                """
+            positions_html += "</table></div>"
+        
+        html_body = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 700px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #c0392b; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+                .content {{ background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }}
+                .alert-box {{ background: #fff5f5; padding: 20px; margin: 15px 0; border-left: 5px solid #e74c3c; border-radius: 5px; }}
+                .metric {{ display: inline-block; width: 48%; padding: 15px; margin: 1%; background: white; border-radius: 5px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                .metric-label {{ font-size: 14px; color: #7f8c8d; }}
+                .metric-value {{ font-size: 24px; font-weight: bold; margin-top: 5px; }}
+                .danger {{ color: #e74c3c; }}
+                .warning {{ color: #f39c12; }}
+                .action-box {{ background: #fff3cd; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 5px solid #f39c12; }}
+                table {{ margin: 15px 0; }}
+                th {{ padding: 10px; text-align: left; }}
+                .footer {{ text-align: center; padding: 15px; color: #777; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🚨 CIRCUIT BREAKER TRIGGERED</h1>
+                    <p style="font-size: 18px; margin: 10px 0;">Trading has been halted</p>
+                </div>
+                <div class="content">
+                    <div class="alert-box">
+                        <h2 style="margin-top: 0; color: #e74c3c;">{breaker_type}</h2>
+                        <p style="font-size: 16px;"><strong>Reason:</strong> {reason}</p>
+                        <p><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</p>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h3>Risk Metrics</h3>
+                        <div>
+                            <div class="metric">
+                                <div class="metric-label">Current Value</div>
+                                <div class="metric-value danger">{current_value:.2%}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Limit</div>
+                                <div class="metric-value">{limit_value:.2%}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Account Equity</div>
+                                <div class="metric-value">${account_equity:.2f}</div>
+                            </div>
+                            {f'''
+                            <div class="metric">
+                                <div class="metric-label">Daily P&L</div>
+                                <div class="metric-value" style="color: {'#27ae60' if daily_pl >= 0 else '#e74c3c'};">${daily_pl:.2f}</div>
+                            </div>
+                            ''' if daily_pl is not None else ''}
+                            {f'''
+                            <div class="metric">
+                                <div class="metric-label">Drawdown</div>
+                                <div class="metric-value danger">{drawdown:.2%}</div>
+                            </div>
+                            ''' if drawdown is not None else ''}
+                        </div>
+                    </div>
+                    
+                    {positions_html}
+                    
+                    <div class="action-box">
+                        <h3 style="margin-top: 0;">⚠️ IMMEDIATE ACTION REQUIRED</h3>
+                        <ol style="margin: 10px 0; padding-left: 20px;">
+                            <li><strong>Review open positions</strong> - Check if any positions need immediate closure</li>
+                            <li><strong>Check bot logs</strong> - Investigate what triggered the circuit breaker</li>
+                            <li><strong>Assess market conditions</strong> - Determine if conditions have stabilized</li>
+                            <li><strong>Manual intervention</strong> - Trading is halted until you manually reset the circuit breaker</li>
+                            <li><strong>Reset via dashboard</strong> - Go to Risk Management → Reset Circuit Breaker (only after reviewing)</li>
+                        </ol>
+                        <p style="margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 5px;">
+                            <strong>Note:</strong> The bot will NOT resume trading automatically. You must manually reset the circuit breaker 
+                            after reviewing the situation and confirming it's safe to continue.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 5px;">
+                        <h3>What Happens Next?</h3>
+                        <ul>
+                            <li>✅ All new trade signals are blocked</li>
+                            <li>✅ Existing positions remain open (stop losses still active)</li>
+                            <li>✅ Bot continues monitoring but won't enter new trades</li>
+                            <li>⚠️ Manual reset required to resume trading</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>QuantShift Trading Bot - Circuit Breaker Alert</p>
+                    <p>This is a critical automated message. Immediate attention required.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self._send_email(
+            to_addresses=self.error_recipients,  # Use error recipients for critical alerts
+            subject=subject,
+            html_body=html_body
+        )
+    
     def send_error_alert(
         self,
         error_type: str,
