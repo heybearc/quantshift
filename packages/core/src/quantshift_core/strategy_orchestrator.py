@@ -47,7 +47,8 @@ class StrategyOrchestrator:
         sentiment_analyzer: Optional[SentimentAnalyzer] = None,
         metrics: Optional[Any] = None,
         redis_client: Optional[Any] = None,
-        bot_name: Optional[str] = None
+        bot_name: Optional[str] = None,
+        db_manager: Optional[Any] = None
     ):
         """
         Initialize the orchestrator.
@@ -74,6 +75,7 @@ class StrategyOrchestrator:
         self.metrics = metrics
         self.redis_client = redis_client
         self.bot_name = bot_name
+        self.db_manager = db_manager
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
         
         # Initialize regime detector if needed
@@ -222,6 +224,31 @@ class StrategyOrchestrator:
                         )
                     except Exception as e:
                         self.logger.warning("failed_to_store_regime_in_redis", error=str(e))
+                
+                # Store regime change in database for history
+                if hasattr(self, 'db_manager') and self.db_manager:
+                    try:
+                        with self.db_manager.session() as session:
+                            from datetime import datetime
+                            import json
+                            session.execute(
+                                """
+                                INSERT INTO regime_history 
+                                (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp)
+                                VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp)
+                                """,
+                                {
+                                    'bot_name': self.bot_name,
+                                    'regime': regime.value if hasattr(regime, 'value') else regime,
+                                    'method': 'ml' if self.use_ml_regime else 'rule_based',
+                                    'confidence': indicators.get('ml_confidence', 1.0),
+                                    'risk_multiplier': self.regime_risk_multiplier,
+                                    'allocation': json.dumps(self.capital_allocation),
+                                    'timestamp': datetime.utcnow()
+                                }
+                            )
+                    except Exception as e:
+                        self.logger.warning("failed_to_store_regime_in_db", error=str(e))
         
         # Generate signals from each strategy
         for strategy in self.strategies:

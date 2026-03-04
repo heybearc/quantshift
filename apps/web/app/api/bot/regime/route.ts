@@ -57,8 +57,43 @@ export async function GET(request: Request) {
       timestamp: current.timestamp,
     };
 
-    // For now, use mock history (will implement database storage later)
-    const history = generateMockHistory(7);
+    // Fetch regime history from database
+    let history = [];
+    try {
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        host: process.env.DATABASE_HOST || 'localhost',
+        port: parseInt(process.env.DATABASE_PORT || '5432'),
+        database: process.env.DATABASE_NAME || 'quantshift',
+        user: process.env.DATABASE_USER || 'quantshift',
+        password: process.env.DATABASE_PASSWORD,
+      });
+
+      const result = await pool.query(
+        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp 
+         FROM regime_history 
+         WHERE bot_name = $1 
+         AND timestamp > NOW() - INTERVAL '30 days'
+         ORDER BY timestamp DESC 
+         LIMIT 100`,
+        [botName]
+      );
+
+      history = result.rows.map((row: any) => ({
+        timestamp: row.timestamp,
+        regime: row.regime,
+        confidence: row.confidence,
+        method: row.method,
+        riskMultiplier: row.risk_multiplier,
+        allocation: typeof row.allocation === 'string' ? JSON.parse(row.allocation) : row.allocation,
+      }));
+
+      await pool.end();
+    } catch (dbError) {
+      console.error('Database error fetching history:', dbError);
+      // Fallback to mock data if database unavailable
+      history = generateMockHistory(7);
+    }
 
     return NextResponse.json({
       current: currentFormatted,

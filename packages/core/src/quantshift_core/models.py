@@ -78,3 +78,16 @@ class BotHealth(BaseModel):
     trades_today: int = 0
     positions_open: int = 0
     daily_pnl: Decimal = Decimal("0")
+
+
+class RegimeHistory(BaseModel):
+    """Market regime history."""
+
+    id: int | None = None
+    bot_name: str
+    regime: str  # BULL_TRENDING, BEAR_TRENDING, etc.
+    method: str  # ml or rule_based
+    confidence: float
+    risk_multiplier: float
+    allocation: dict  # Strategy allocation percentages
+    timestamp: datetime = Field(default_factory=datetime.utcnow)

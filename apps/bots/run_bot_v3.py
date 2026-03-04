@@ -180,7 +180,8 @@ class QuantShiftUnifiedBot:
             use_risk_management=use_risk_management,
             use_sentiment_analysis=use_sentiment_analysis,
             redis_client=self.state_manager.redis_client,
-            bot_name=self.bot_name
+            bot_name=self.bot_name,
+            db_manager=self.state_manager.db
         )
         
         logger.info(
