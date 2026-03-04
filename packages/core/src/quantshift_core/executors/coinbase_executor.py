@@ -480,6 +480,51 @@ class CoinbaseExecutor:
         response = self.coinbase_client.create_order(**order_config)
         return response
     
+    def close_position(self, symbol: str, quantity: float, reason: str = "Position closure") -> Optional[Dict[str, Any]]:
+        """
+        Close a position by submitting a market sell order.
+        
+        Args:
+            symbol: Symbol to close
+            quantity: Quantity to close (absolute value)
+            reason: Reason for closure (for logging)
+            
+        Returns:
+            Order details if successful, None otherwise
+        """
+        try:
+            # Submit market sell order to close position
+            order_config = {
+                'product_id': symbol,
+                'side': 'SELL',
+                'order_configuration': {
+                    'market_market_ioc': {
+                        'base_size': str(abs(quantity))
+                    }
+                }
+            }
+            
+            response = self.coinbase_client.market_order(**order_config)
+            order = response.get('order', {})
+            
+            logger.info(
+                f"Position closed: SELL {quantity} {symbol} @ market - {reason}"
+            )
+            
+            return {
+                'id': order.get('order_id'),
+                'symbol': symbol,
+                'qty': quantity,
+                'side': 'SELL',
+                'type': 'market',
+                'status': order.get('status', 'UNKNOWN'),
+                'reason': reason
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to close position {symbol}: {e}", exc_info=True)
+            return None
+    
     def _place_take_profit_order(self, symbol: str, quantity: float, limit_price: float) -> dict:
         """
         Place a take-profit limit order for a position.
