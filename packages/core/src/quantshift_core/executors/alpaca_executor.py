@@ -17,7 +17,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest, LimitOrderRequest, StopOrderRequest, GetOrderByIdRequest
-from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus, OrderStatus
+from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus, OrderStatus, OrderClass
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -261,58 +261,93 @@ class AlpacaExecutor:
             # Determine order side
             side = OrderSide.BUY if signal.signal_type == SignalType.BUY else OrderSide.SELL
             
-            # Create and submit market order
-            order_request = MarketOrderRequest(
-                symbol=signal.symbol,
-                qty=signal.position_size or 1,
-                side=side,
-                time_in_force=TimeInForce.DAY
-            )
-            order = self.alpaca_client.submit_order(order_request)
-            logger.info(
-                f"Order submitted: {side.value} {signal.position_size} {signal.symbol} @ market"
-            )
+            # For BUY signals with stop_loss and take_profit: use atomic bracket order
+            if signal.signal_type == SignalType.BUY and signal.stop_loss and signal.take_profit:
+                # Calculate stop loss and take profit prices
+                stop_loss_price = round(signal.stop_loss, 2)
+                take_profit_price = round(signal.take_profit, 2)
+                
+                # Create atomic bracket order (entry + SL + TP in one request)
+                order_request = MarketOrderRequest(
+                    symbol=signal.symbol,
+                    qty=signal.position_size or 1,
+                    side=OrderSide.BUY,
+                    time_in_force=TimeInForce.DAY,
+                    order_class=OrderClass.BRACKET,
+                    stop_loss={'stop_price': stop_loss_price},
+                    take_profit={'limit_price': take_profit_price}
+                )
+                
+                order = self.alpaca_client.submit_order(order_request)
+                
+                # Calculate risk/reward for logging
+                entry_price = signal.price
+                risk_pct = ((entry_price - stop_loss_price) / entry_price * 100) if entry_price > 0 else 0
+                reward_pct = ((take_profit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
+                reward_risk_ratio = (reward_pct / risk_pct) if risk_pct > 0 else 0
+                
+                logger.info(
+                    f"Bracket order submitted: BUY {signal.position_size} {signal.symbol} @ market | "
+                    f"SL: ${stop_loss_price} (-{risk_pct:.2f}%) | "
+                    f"TP: ${take_profit_price} (+{reward_pct:.2f}%) | "
+                    f"R:R = {reward_risk_ratio:.2f}:1"
+                )
+                
+                fill_price = signal.price  # Will be updated when filled
+                
+            else:
+                # Non-bracket order (SELL signals or missing SL/TP)
+                order_request = MarketOrderRequest(
+                    symbol=signal.symbol,
+                    qty=signal.position_size or 1,
+                    side=side,
+                    time_in_force=TimeInForce.DAY
+                )
+                order = self.alpaca_client.submit_order(order_request)
+                logger.info(
+                    f"Order submitted: {side.value} {signal.position_size} {signal.symbol} @ market"
+                )
+                
+                fill_price = signal.price  # fallback
+                
+                # For BUY signals without bracket: place SL/TP separately (legacy behavior)
+                if signal.signal_type == SignalType.BUY:
+                    filled_order = self._wait_for_fill(str(order.id), timeout=15)
+                    if filled_order and filled_order.filled_avg_price:
+                        fill_price = float(filled_order.filled_avg_price)
+                        filled_qty = float(filled_order.filled_qty)
+                    else:
+                        filled_qty = float(order.qty)
 
-            fill_price = signal.price  # fallback
+                    # Stop loss — use StopOrderRequest (GTC sell stop)
+                    if signal.stop_loss:
+                        try:
+                            sl_request = StopOrderRequest(
+                                symbol=signal.symbol,
+                                qty=filled_qty,
+                                side=OrderSide.SELL,
+                                time_in_force=TimeInForce.GTC,
+                                stop_price=round(signal.stop_loss, 2)
+                            )
+                            self.alpaca_client.submit_order(sl_request)
+                            logger.info(f"Stop loss placed: SELL {filled_qty} {signal.symbol} stop @ ${signal.stop_loss:.2f}")
+                        except Exception as e:
+                            logger.warning(f"Failed to place stop loss for {signal.symbol}: {e}")
 
-            # For BUY signals: wait for fill then place SL/TP bracket orders
-            if signal.signal_type == SignalType.BUY:
-                filled_order = self._wait_for_fill(str(order.id), timeout=15)
-                if filled_order and filled_order.filled_avg_price:
-                    fill_price = float(filled_order.filled_avg_price)
-                    filled_qty = float(filled_order.filled_qty)
-                else:
-                    filled_qty = float(order.qty)
-
-                # Stop loss — use StopOrderRequest (GTC sell stop)
-                if signal.stop_loss:
-                    try:
-                        sl_request = StopOrderRequest(
-                            symbol=signal.symbol,
-                            qty=filled_qty,
-                            side=OrderSide.SELL,
-                            time_in_force=TimeInForce.GTC,
-                            stop_price=round(signal.stop_loss, 2)
-                        )
-                        self.alpaca_client.submit_order(sl_request)
-                        logger.info(f"Stop loss placed: SELL {filled_qty} {signal.symbol} stop @ ${signal.stop_loss:.2f}")
-                    except Exception as e:
-                        logger.warning(f"Failed to place stop loss for {signal.symbol}: {e}")
-
-                # Take profit — limit order after confirmed fill
-                if signal.take_profit:
-                    try:
-                        tp_request = LimitOrderRequest(
-                            symbol=signal.symbol,
-                            qty=filled_qty,
-                            side=OrderSide.SELL,
-                            time_in_force=TimeInForce.GTC,
-                            limit_price=round(signal.take_profit, 2)
-                        )
-                        self.alpaca_client.submit_order(tp_request)
-                        logger.info(f"Take profit placed: SELL {filled_qty} {signal.symbol} limit @ ${signal.take_profit:.2f}")
-                    except Exception as e:
-                        logger.warning(f"Failed to place take profit for {signal.symbol}: {e}")
+                    # Take profit — limit order after confirmed fill
+                    if signal.take_profit:
+                        try:
+                            tp_request = LimitOrderRequest(
+                                symbol=signal.symbol,
+                                qty=filled_qty,
+                                side=OrderSide.SELL,
+                                time_in_force=TimeInForce.GTC,
+                                limit_price=round(signal.take_profit, 2)
+                            )
+                            self.alpaca_client.submit_order(tp_request)
+                            logger.info(f"Take profit placed: SELL {filled_qty} {signal.symbol} limit @ ${signal.take_profit:.2f}")
+                        except Exception as e:
+                            logger.warning(f"Failed to place take profit for {signal.symbol}: {e}")
 
             return {
                 'id': str(order.id),
