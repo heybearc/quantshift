@@ -278,71 +278,160 @@ class CoinbaseExecutor:
             # Determine order side
             side = 'BUY' if signal.signal_type == SignalType.BUY else 'SELL'
             
-            # Create market order
-            order_config = {
-                'product_id': signal.symbol,
-                'side': side,
-                'order_configuration': {
-                    'market_market_ioc': {
-                        'base_size': str(signal.position_size or 1)
+            # For BUY signals with stop_loss and take_profit: use bracket order pattern
+            if signal.signal_type == SignalType.BUY and signal.stop_loss and signal.take_profit:
+                # Calculate stop loss and take profit prices
+                stop_loss_price = round(signal.stop_loss, 8)  # Crypto needs more precision
+                take_profit_price = round(signal.take_profit, 8)
+                
+                # Calculate risk/reward for logging
+                entry_price = signal.price
+                risk_pct = ((entry_price - stop_loss_price) / entry_price * 100) if entry_price > 0 else 0
+                reward_pct = ((take_profit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
+                reward_risk_ratio = (reward_pct / risk_pct) if risk_pct > 0 else 0
+                
+                # Submit entry order
+                order_config = {
+                    'product_id': signal.symbol,
+                    'side': 'BUY',
+                    'order_configuration': {
+                        'market_market_ioc': {
+                            'base_size': str(signal.position_size or 1)
+                        }
                     }
                 }
-            }
-            
-            # Submit order
-            response = self.coinbase_client.market_order(**order_config)
-            order = response.get('order', {})
-            order_id = order.get('order_id')
-            
-            logger.info(
-                f"Order submitted: {side} {signal.position_size} {signal.symbol} @ market"
-            )
-            
-            fill_price = signal.price  # fallback
-            
-            # For BUY signals: wait for fill then place SL/TP orders
-            if signal.signal_type == SignalType.BUY:
+                
+                response = self.coinbase_client.market_order(**order_config)
+                order = response.get('order', {})
+                order_id = order.get('order_id')
+                
+                logger.info(
+                    f"Bracket order entry submitted: BUY {signal.position_size} {signal.symbol} @ market | "
+                    f"SL: ${stop_loss_price} (-{risk_pct:.2f}%) | "
+                    f"TP: ${take_profit_price} (+{reward_pct:.2f}%) | "
+                    f"R:R = {reward_risk_ratio:.2f}:1"
+                )
+                
+                fill_price = signal.price  # fallback
+                
+                # Wait for fill to get actual fill price
                 filled_order = self._wait_for_fill(order_id, timeout=15)
                 if filled_order:
-                    # Extract fill price from filled order
                     fills = filled_order.get('fills', [])
                     if fills:
                         fill_price = float(fills[0].get('price', signal.price))
                 
-                # Place stop-loss and take-profit orders for risk management
-                if signal.stop_loss:
-                    try:
-                        sl_order = self._place_stop_loss_order(
-                            signal.symbol,
-                            signal.position_size or 1,
-                            signal.stop_loss
-                        )
-                        logger.info(
-                            "stop_loss_placed",
-                            symbol=signal.symbol,
-                            qty=signal.position_size,
-                            stop_price=signal.stop_loss,
-                            order_id=sl_order.get('order_id')
-                        )
-                    except Exception as e:
-                        logger.error("stop_loss_placement_failed", error=str(e))
+                # Immediately place stop-loss and take-profit (bracket pattern)
+                sl_success = False
+                tp_success = False
                 
-                if signal.take_profit:
-                    try:
-                        tp_order = self._place_take_profit_order(
-                            signal.symbol,
-                            signal.position_size or 1,
-                            signal.take_profit
-                        )
-                        logger.info(
-                            "take_profit_placed",
-                            symbol=signal.symbol,
-                            qty=signal.position_size,
-                            limit_price=signal.take_profit,
-                            order_id=tp_order.get('order_id')
-                        )
-                    except Exception as e:
-                        logger.error("take_profit_placement_failed", error=str(e))
+                try:
+                    sl_order = self._place_stop_loss_order(
+                        signal.symbol,
+                        signal.position_size or 1,
+                        stop_loss_price
+                    )
+                    sl_success = True
+                    logger.info(
+                        "bracket_stop_loss_placed",
+                        symbol=signal.symbol,
+                        qty=signal.position_size,
+                        stop_price=stop_loss_price,
+                        order_id=sl_order.get('order_id')
+                    )
+                except Exception as e:
+                    logger.error("bracket_stop_loss_failed", symbol=signal.symbol, error=str(e), exc_info=True)
+                
+                try:
+                    tp_order = self._place_take_profit_order(
+                        signal.symbol,
+                        signal.position_size or 1,
+                        take_profit_price
+                    )
+                    tp_success = True
+                    logger.info(
+                        "bracket_take_profit_placed",
+                        symbol=signal.symbol,
+                        qty=signal.position_size,
+                        limit_price=take_profit_price,
+                        order_id=tp_order.get('order_id')
+                    )
+                except Exception as e:
+                    logger.error("bracket_take_profit_failed", symbol=signal.symbol, error=str(e), exc_info=True)
+                
+                # Log bracket order completion status
+                if sl_success and tp_success:
+                    logger.info("bracket_order_complete", symbol=signal.symbol, status="fully_protected")
+                elif sl_success:
+                    logger.warning("bracket_order_partial", symbol=signal.symbol, status="stop_loss_only")
+                elif tp_success:
+                    logger.warning("bracket_order_partial", symbol=signal.symbol, status="take_profit_only")
+                else:
+                    logger.critical("bracket_order_failed", symbol=signal.symbol, status="unprotected")
+                
+            else:
+                # Non-bracket order (SELL signals or missing SL/TP)
+                order_config = {
+                    'product_id': signal.symbol,
+                    'side': side,
+                    'order_configuration': {
+                        'market_market_ioc': {
+                            'base_size': str(signal.position_size or 1)
+                        }
+                    }
+                }
+                
+                response = self.coinbase_client.market_order(**order_config)
+                order = response.get('order', {})
+                order_id = order.get('order_id')
+                
+                logger.info(
+                    f"Order submitted: {side} {signal.position_size} {signal.symbol} @ market"
+                )
+                
+                fill_price = signal.price  # fallback
+                
+                # For BUY signals without bracket: place SL/TP separately (legacy behavior)
+                if signal.signal_type == SignalType.BUY:
+                    filled_order = self._wait_for_fill(order_id, timeout=15)
+                    if filled_order:
+                        fills = filled_order.get('fills', [])
+                        if fills:
+                            fill_price = float(fills[0].get('price', signal.price))
+                    
+                    if signal.stop_loss:
+                        try:
+                            sl_order = self._place_stop_loss_order(
+                                signal.symbol,
+                                signal.position_size or 1,
+                                signal.stop_loss
+                            )
+                            logger.info(
+                                "stop_loss_placed",
+                                symbol=signal.symbol,
+                                qty=signal.position_size,
+                                stop_price=signal.stop_loss,
+                                order_id=sl_order.get('order_id')
+                            )
+                        except Exception as e:
+                            logger.error("stop_loss_placement_failed", error=str(e))
+                    
+                    if signal.take_profit:
+                        try:
+                            tp_order = self._place_take_profit_order(
+                                signal.symbol,
+                                signal.position_size or 1,
+                                signal.take_profit
+                            )
+                            logger.info(
+                                "take_profit_placed",
+                                symbol=signal.symbol,
+                                qty=signal.position_size,
+                                limit_price=signal.take_profit,
+                                order_id=tp_order.get('order_id')
+                            )
+                        except Exception as e:
+                            logger.error("take_profit_placement_failed", error=str(e))
             
             return {
                 'id': order_id,
