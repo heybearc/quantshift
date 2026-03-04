@@ -623,6 +623,100 @@ class AlpacaExecutor:
             logger.error(f"Failed to close position {symbol}: {e}", exc_info=True)
             return None
     
+    def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
+        """
+        Sync positions from broker to database on bot startup.
+        
+        Compares broker positions with database positions and:
+        - Adds orphaned positions (in broker but not in DB)
+        - Removes ghost positions (in DB but not in broker)
+        
+        Args:
+            db_session: SQLAlchemy database session
+            bot_name: Name of the bot (e.g., 'quantshift-equity')
+            
+        Returns:
+            Dict with recovery statistics
+        """
+        from quantshift_core.state_manager import StateManager
+        
+        recovery_stats = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'broker_positions': 0,
+            'db_positions': 0,
+            'orphaned_added': 0,
+            'ghosts_removed': 0,
+            'symbols_orphaned': [],
+            'symbols_ghost': []
+        }
+        
+        try:
+            # Get all positions from broker
+            broker_positions = self.alpaca_client.get_all_positions()
+            recovery_stats['broker_positions'] = len(broker_positions)
+            
+            # Get all positions from database for this bot
+            state_manager = StateManager(db_session)
+            db_positions = state_manager.get_positions(bot_name)
+            recovery_stats['db_positions'] = len(db_positions)
+            
+            # Create sets of symbols for comparison
+            broker_symbols = {pos.symbol for pos in broker_positions}
+            db_symbols = {pos.symbol for pos in db_positions}
+            
+            # Find orphaned positions (in broker but not in DB)
+            orphaned_symbols = broker_symbols - db_symbols
+            recovery_stats['symbols_orphaned'] = list(orphaned_symbols)
+            
+            for symbol in orphaned_symbols:
+                broker_pos = next(p for p in broker_positions if p.symbol == symbol)
+                
+                # Add to database
+                state_manager.update_position(
+                    bot_name=bot_name,
+                    symbol=symbol,
+                    quantity=float(broker_pos.qty),
+                    entry_price=float(broker_pos.avg_entry_price),
+                    current_price=float(broker_pos.current_price),
+                    unrealized_pl=float(broker_pos.unrealized_pl),
+                    strategy_name='RECOVERED'
+                )
+                recovery_stats['orphaned_added'] += 1
+                logger.warning(
+                    f"Position recovery: Added orphaned position {symbol} "
+                    f"(qty={broker_pos.qty}, entry=${broker_pos.avg_entry_price:.2f})"
+                )
+            
+            # Find ghost positions (in DB but not in broker)
+            ghost_symbols = db_symbols - broker_symbols
+            recovery_stats['symbols_ghost'] = list(ghost_symbols)
+            
+            for symbol in ghost_symbols:
+                # Remove from database
+                state_manager.delete_position(bot_name, symbol)
+                recovery_stats['ghosts_removed'] += 1
+                logger.warning(
+                    f"Position recovery: Removed ghost position {symbol} "
+                    f"(existed in DB but not in broker)"
+                )
+            
+            # Log summary
+            if recovery_stats['orphaned_added'] > 0 or recovery_stats['ghosts_removed'] > 0:
+                logger.warning(
+                    f"Position recovery complete: "
+                    f"{recovery_stats['orphaned_added']} orphaned added, "
+                    f"{recovery_stats['ghosts_removed']} ghosts removed"
+                )
+            else:
+                logger.info("Position recovery: Database matches broker (no discrepancies)")
+            
+            return recovery_stats
+            
+        except Exception as e:
+            logger.error(f"Position recovery failed: {e}", exc_info=True)
+            recovery_stats['error'] = str(e)
+            return recovery_stats
+    
     def get_strategy_state(self) -> Dict[str, Any]:
         """
         Get current strategy state for monitoring.

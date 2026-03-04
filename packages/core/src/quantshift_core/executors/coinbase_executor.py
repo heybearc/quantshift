@@ -678,3 +678,118 @@ class CoinbaseExecutor:
         except Exception as e:
             logger.error(f"Error in strategy cycle: {e}", exc_info=True)
             return []
+    
+    def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
+        """
+        Sync positions from broker to database on bot startup.
+        
+        Compares broker positions with database positions and:
+        - Adds orphaned positions (in broker but not in DB)
+        - Removes ghost positions (in DB but not in broker)
+        
+        Args:
+            db_session: SQLAlchemy database session
+            bot_name: Name of the bot (e.g., 'quantshift-crypto')
+            
+        Returns:
+            Dict with recovery statistics
+        """
+        from quantshift_core.state_manager import StateManager
+        
+        recovery_stats = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'broker_positions': 0,
+            'db_positions': 0,
+            'orphaned_added': 0,
+            'ghosts_removed': 0,
+            'symbols_orphaned': [],
+            'symbols_ghost': []
+        }
+        
+        try:
+            # Get all positions from broker (Coinbase accounts)
+            accounts_response = self.coinbase_client.get_accounts()
+            broker_positions = []
+            
+            if hasattr(accounts_response, 'accounts'):
+                for account in accounts_response.accounts:
+                    # Only include accounts with non-zero balance
+                    if hasattr(account, 'available_balance') and float(account.available_balance.value) > 0:
+                        # Convert to position format (symbol is currency-USD)
+                        symbol = f"{account.currency}-USD"
+                        broker_positions.append({
+                            'symbol': symbol,
+                            'quantity': float(account.available_balance.value),
+                            'currency': account.currency
+                        })
+            
+            recovery_stats['broker_positions'] = len(broker_positions)
+            
+            # Get all positions from database for this bot
+            state_manager = StateManager(db_session)
+            db_positions = state_manager.get_positions(bot_name)
+            recovery_stats['db_positions'] = len(db_positions)
+            
+            # Create sets of symbols for comparison
+            broker_symbols = {pos['symbol'] for pos in broker_positions}
+            db_symbols = {pos.symbol for pos in db_positions}
+            
+            # Find orphaned positions (in broker but not in DB)
+            orphaned_symbols = broker_symbols - db_symbols
+            recovery_stats['symbols_orphaned'] = list(orphaned_symbols)
+            
+            for symbol in orphaned_symbols:
+                broker_pos = next(p for p in broker_positions if p['symbol'] == symbol)
+                
+                # Get current price for this symbol
+                try:
+                    product = self.coinbase_client.get_product(symbol)
+                    current_price = float(product.price) if hasattr(product, 'price') else 0.0
+                except:
+                    current_price = 0.0
+                
+                # Add to database (we don't know entry price, use current price as estimate)
+                state_manager.update_position(
+                    bot_name=bot_name,
+                    symbol=symbol,
+                    quantity=broker_pos['quantity'],
+                    entry_price=current_price,
+                    current_price=current_price,
+                    unrealized_pl=0.0,
+                    strategy_name='RECOVERED'
+                )
+                recovery_stats['orphaned_added'] += 1
+                logger.warning(
+                    f"Position recovery: Added orphaned position {symbol} "
+                    f"(qty={broker_pos['quantity']}, price=${current_price:.2f})"
+                )
+            
+            # Find ghost positions (in DB but not in broker)
+            ghost_symbols = db_symbols - broker_symbols
+            recovery_stats['symbols_ghost'] = list(ghost_symbols)
+            
+            for symbol in ghost_symbols:
+                # Remove from database
+                state_manager.delete_position(bot_name, symbol)
+                recovery_stats['ghosts_removed'] += 1
+                logger.warning(
+                    f"Position recovery: Removed ghost position {symbol} "
+                    f"(existed in DB but not in broker)"
+                )
+            
+            # Log summary
+            if recovery_stats['orphaned_added'] > 0 or recovery_stats['ghosts_removed'] > 0:
+                logger.warning(
+                    f"Position recovery complete: "
+                    f"{recovery_stats['orphaned_added']} orphaned added, "
+                    f"{recovery_stats['ghosts_removed']} ghosts removed"
+                )
+            else:
+                logger.info("Position recovery: Database matches broker (no discrepancies)")
+            
+            return recovery_stats
+            
+        except Exception as e:
+            logger.error(f"Position recovery failed: {e}", exc_info=True)
+            recovery_stats['error'] = str(e)
+            return recovery_stats

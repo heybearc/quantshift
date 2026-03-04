@@ -980,6 +980,23 @@ class QuantShiftUnifiedBot:
                             state = self.state_manager.load_state()
                             if state:
                                 logger.info("state_loaded_from_redis", keys=list(state.keys()))
+                            
+                            # Recover positions from broker on startup
+                            try:
+                                recovery_stats = self.executor.recover_positions_on_startup(
+                                    db_session=self.db_conn,
+                                    bot_name=self.bot_name
+                                )
+                                self.recovered_positions = recovery_stats
+                                logger.info(
+                                    "position_recovery_complete",
+                                    broker_positions=recovery_stats.get('broker_positions', 0),
+                                    db_positions=recovery_stats.get('db_positions', 0),
+                                    orphaned_added=recovery_stats.get('orphaned_added', 0),
+                                    ghosts_removed=recovery_stats.get('ghosts_removed', 0)
+                                )
+                            except Exception as e:
+                                logger.error("position_recovery_failed", error=str(e))
                         elif not is_primary and was_primary:
                             logger.info("became_standby", bot_name=self.bot_name)
                     except Exception as e:
