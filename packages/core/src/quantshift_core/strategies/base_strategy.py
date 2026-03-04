@@ -85,6 +85,7 @@ class Position:
     unrealized_pl: float
     unrealized_plpc: float
     side: str  # 'long' or 'short'
+    metadata: Optional[Dict[str, Any]] = None
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -95,7 +96,8 @@ class Position:
             'market_value': self.market_value,
             'unrealized_pl': self.unrealized_pl,
             'unrealized_plpc': self.unrealized_plpc,
-            'side': self.side
+            'side': self.side,
+            'metadata': self.metadata
         }
 
 
