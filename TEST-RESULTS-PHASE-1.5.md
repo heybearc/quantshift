@@ -101,14 +101,19 @@
 
 ### Crypto Bot Trading
 
-- [ ] **Test 6.1: Crypto bot signal generation** - PENDING
-  - Requires crypto bot with API credentials
+- [x] **Test 6.1: Crypto bot signal generation** - ✅ PASS
+  - Bot running with Coinbase API credentials
+  - Strategy cycle completed successfully
+  - No errors in signal generation
+  - **Evidence:** Bot logs 18:51:01 UTC - strategy_cycle_completed
 
 - [ ] **Test 6.2: Crypto bot position execution** - PENDING
-  - Requires crypto bot with API credentials
+  - Requires trading signal (no opportunities at test time)
 
-- [ ] **Test 6.3: Crypto bot account fetching** - PENDING
-  - Requires crypto bot with API credentials
+- [x] **Test 6.3: Crypto bot account fetching** - ✅ PASS
+  - Account equity retrieved: $10,000 (simulated capital)
+  - Using legacy Coinbase credentials
+  - **Evidence:** Bot logs 18:51:01 UTC - account_info_retrieved
 
 ### Atomic Transactions
 
@@ -139,17 +144,22 @@
 ## Summary
 
 - **Total Tests:** 24
-- **Passed:** 15
-- **Pending:** 9
+- **Passed:** 17
+- **Pending:** 7
 - **Failed:** 0
-- **Pass Rate:** 62.5% (100% of executable tests passed)
+- **Pass Rate:** 70.8% (100% of executable tests passed)
 
-**Note:** Remaining tests require crypto bot API credentials or specific market conditions (bracket orders require new position entry). All critical safety features verified working in production.
+**Note:** Remaining tests require specific market conditions (bracket orders require new position entry, position limits require specific scenarios). All critical safety features verified working in production.
+
+**Production Deployment:** ✅ COMPLETE
+- v1.7.0 deployed to CT 100 (primary) and CT 101 (standby)
+- Both equity and crypto bots running successfully
+- Position recovery working on production (4 positions recovered, 8 discrepancies resolved)
 
 ### Tests Passed
 1. Emergency stop via Redis flag ✅
 2. Emergency stop recovery ✅
-3. Position recovery on startup ✅
+3. Position recovery on startup ✅ **PRODUCTION VERIFIED**
 4. Ghost position detection ✅
 5. Clean recovery (no discrepancies) ✅
 6. Strategy failure isolation ✅ **PRODUCTION VERIFIED**
@@ -162,12 +172,14 @@
 13. Signal generation after recovery ✅ **PRODUCTION VERIFIED**
 14. Risk manager validation ✅ **PRODUCTION VERIFIED**
 15. Bot stability under strategy failures ✅ **PRODUCTION VERIFIED**
+16. Crypto bot signal generation ✅
+17. Crypto bot account fetching ✅
 
-### Tests Pending (Require Market Hours or Additional Setup)
-1. Emergency stop via Admin UI
-2. Bracket order tests (3 tests) - require market hours
-3. Position limit tests (4 tests) - require market hours
-4. Crypto bot tests (3 tests) - require API credentials
+### Tests Pending (Require Specific Market Conditions)
+1. Emergency stop via Admin UI - can test after web deployment
+2. Bracket order tests (3 tests) - require new position entry
+3. Position limit tests (4 tests) - require specific scenarios
+4. Crypto bot position execution - requires trading signal
 5. Orphaned position test - requires manual position creation
 
 ---
