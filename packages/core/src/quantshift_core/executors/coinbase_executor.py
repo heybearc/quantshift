@@ -17,6 +17,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 from coinbase.rest import RESTClient
 
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
+from quantshift_core.risk import PositionLimits
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,9 @@ class CoinbaseExecutor:
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
         
+        # Initialize hard position limits
+        self.position_limits = PositionLimits()
+        
         # Initialize symbol universe
         if use_dynamic_symbols:
             from quantshift_core.symbol_universe import SymbolUniverse
@@ -70,12 +74,6 @@ class CoinbaseExecutor:
         else:
             self.symbol_universe = None
             self.symbols = symbols or ['BTC-USD']
-        
-        # Circuit breaker state (reset daily)
-        self._daily_trades = 0
-        self._daily_loss = 0.0
-        self._circuit_breaker_open = False
-        self._last_reset_date = datetime.utcnow().date()
         
         symbol_info = "dynamic (lazy loading)" if use_dynamic_symbols else f"{len(self.symbols)} symbols"
         logger.info(
@@ -274,6 +272,54 @@ class CoinbaseExecutor:
         try:
             if signal.signal_type == SignalType.HOLD:
                 return None
+            
+            # Validate position limits for BUY signals
+            if signal.signal_type == SignalType.BUY:
+                account = self.get_account()
+                positions = self.get_positions()
+                
+                # Calculate position value
+                position_value = signal.price * signal.position_size if signal.price and signal.position_size else 0
+                
+                # Calculate total risk (sum of all stop-loss distances)
+                total_risk = 0.0
+                for pos in positions:
+                    if hasattr(pos, 'unrealized_pl'):
+                        # Estimate risk as unrealized P&L if negative
+                        total_risk += abs(min(0, float(pos.unrealized_pl)))
+                
+                # Add risk from new position
+                if signal.stop_loss and signal.price:
+                    new_position_risk = abs(signal.price - signal.stop_loss) * signal.position_size
+                    total_risk += new_position_risk
+                
+                # Validate against limits
+                violation = self.position_limits.validate_new_position(
+                    position_value=position_value,
+                    portfolio_value=float(account.portfolio_value),
+                    current_positions=len(positions),
+                    total_risk=total_risk
+                )
+                
+                if violation:
+                    logger.warning(
+                        "position_limit_violation",
+                        symbol=signal.symbol,
+                        limit_type=violation.limit_type,
+                        current_value=violation.current_value,
+                        limit_value=violation.limit_value,
+                        message=violation.message,
+                        severity=violation.severity
+                    )
+                    
+                    # Reject trade if critical violation
+                    if violation.severity == 'critical':
+                        logger.critical(
+                            "trade_rejected_limit_violation",
+                            symbol=signal.symbol,
+                            violation=violation.message
+                        )
+                        return None
             
             # Determine order side
             side = 'BUY' if signal.signal_type == SignalType.BUY else 'SELL'

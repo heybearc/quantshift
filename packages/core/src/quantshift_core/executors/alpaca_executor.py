@@ -23,6 +23,7 @@ from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
+from quantshift_core.risk import PositionLimits
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,9 @@ class AlpacaExecutor:
         self.use_dynamic_symbols = use_dynamic_symbols
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
+        
+        # Initialize hard position limits
+        self.position_limits = PositionLimits()
         
         # Initialize symbol universe
         if use_dynamic_symbols:
@@ -257,6 +261,54 @@ class AlpacaExecutor:
         try:
             if signal.signal_type == SignalType.HOLD:
                 return None
+            
+            # Validate position limits for BUY signals
+            if signal.signal_type == SignalType.BUY:
+                account = self.get_account()
+                positions = self.get_positions()
+                
+                # Calculate position value
+                position_value = signal.price * signal.position_size if signal.price and signal.position_size else 0
+                
+                # Calculate total risk (sum of all stop-loss distances)
+                total_risk = 0.0
+                for pos in positions:
+                    if hasattr(pos, 'unrealized_pl'):
+                        # Estimate risk as unrealized P&L if negative
+                        total_risk += abs(min(0, float(pos.unrealized_pl)))
+                
+                # Add risk from new position
+                if signal.stop_loss and signal.price:
+                    new_position_risk = abs(signal.price - signal.stop_loss) * signal.position_size
+                    total_risk += new_position_risk
+                
+                # Validate against limits
+                violation = self.position_limits.validate_new_position(
+                    position_value=position_value,
+                    portfolio_value=float(account.portfolio_value),
+                    current_positions=len(positions),
+                    total_risk=total_risk
+                )
+                
+                if violation:
+                    logger.warning(
+                        "position_limit_violation",
+                        symbol=signal.symbol,
+                        limit_type=violation.limit_type,
+                        current_value=violation.current_value,
+                        limit_value=violation.limit_value,
+                        message=violation.message,
+                        severity=violation.severity
+                    )
+                    
+                    # Reject trade if critical violation
+                    if violation.severity == 'critical':
+                        logger.critical(
+                            "trade_rejected_limit_violation",
+                            symbol=signal.symbol,
+                            violation=violation.message
+                        )
+                        return None
             
             # Determine order side
             side = OrderSide.BUY if signal.signal_type == SignalType.BUY else OrderSide.SELL
