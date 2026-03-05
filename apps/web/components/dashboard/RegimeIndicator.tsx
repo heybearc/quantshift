@@ -153,7 +153,7 @@ export function RegimeIndicator({ botName }: { botName: string }) {
       <div className="space-y-2">
         <p className="text-slate-400 text-xs font-medium">Strategy Allocation</p>
         <div className="space-y-1.5">
-          {Object.entries(regimeData.allocation).map(([strategy, allocation]) => (
+          {regimeData.allocation && Object.entries(regimeData.allocation).map(([strategy, allocation]) => (
             <div key={strategy} className="flex items-center justify-between">
               <span className="text-slate-300 text-xs">{strategy}</span>
               <div className="flex items-center gap-2">

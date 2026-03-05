@@ -123,7 +123,7 @@ export function RegimeDashboard() {
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Strategy Allocation</h3>
         <div className="space-y-4">
-          {Object.entries(current.allocation).map(([strategy, allocation]) => (
+          {current.allocation && Object.entries(current.allocation).map(([strategy, allocation]) => (
             <div key={strategy}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="font-medium text-slate-200">{strategy}</span>
@@ -165,7 +165,7 @@ export function RegimeDashboard() {
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Regime Distribution (7 Days)</h3>
         <div className="space-y-4">
-          {Object.entries(stats.regimeDistribution)
+          {stats.regimeDistribution && Object.entries(stats.regimeDistribution)
             .sort(([, a], [, b]) => b - a)
             .map(([regime, percentage]) => (
               <div key={regime}>
