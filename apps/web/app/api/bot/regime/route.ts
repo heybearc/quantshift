@@ -11,27 +11,68 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const botName = searchParams.get('bot') || 'quantshift-equity';
 
-    // Read regime data from Redis
-    const Redis = require('ioredis');
-    const redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD,
-    });
-
+    // Fetch regime data from database (primary source)
     let current = null;
+    let history = [];
+    
     try {
-      const regimeData = await redis.get(`bot:${botName}:regime`);
-      if (regimeData) {
-        current = JSON.parse(regimeData);
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        host: process.env.DATABASE_HOST || '10.92.3.21',
+        port: parseInt(process.env.DATABASE_PORT || '5432'),
+        database: process.env.DATABASE_NAME || 'quantshift',
+        user: process.env.DATABASE_USER || 'quantshift',
+        password: process.env.DATABASE_PASSWORD,
+      });
+
+      // Get most recent regime data for current state
+      const currentResult = await pool.query(
+        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp 
+         FROM regime_history 
+         WHERE bot_name = $1 
+         ORDER BY timestamp DESC 
+         LIMIT 1`,
+        [botName]
+      );
+
+      if (currentResult.rows.length > 0) {
+        const row = currentResult.rows[0];
+        current = {
+          regime: row.regime,
+          method: row.method,
+          confidence: row.confidence,
+          risk_multiplier: row.risk_multiplier,
+          allocation: typeof row.allocation === 'string' ? JSON.parse(row.allocation) : row.allocation,
+          timestamp: row.timestamp,
+        };
       }
-    } catch (redisError) {
-      console.error('Redis error:', redisError);
-    } finally {
-      redis.disconnect();
+
+      // Get regime history
+      const historyResult = await pool.query(
+        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp 
+         FROM regime_history 
+         WHERE bot_name = $1 
+         AND timestamp > NOW() - INTERVAL '30 days'
+         ORDER BY timestamp DESC 
+         LIMIT 100`,
+        [botName]
+      );
+
+      history = historyResult.rows.map((row: any) => ({
+        timestamp: row.timestamp,
+        regime: row.regime,
+        confidence: row.confidence,
+        method: row.method,
+        riskMultiplier: row.risk_multiplier,
+        allocation: typeof row.allocation === 'string' ? JSON.parse(row.allocation) : row.allocation,
+      }));
+
+      await pool.end();
+    } catch (dbError) {
+      console.error('Database error fetching regime data:', dbError);
     }
 
-    // Fallback to mock data if Redis unavailable
+    // Fallback to mock data if database unavailable or no data
     if (!current) {
       current = {
         regime: 'LOW_VOL_RANGE',
@@ -47,53 +88,19 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    if (history.length === 0) {
+      history = generateMockHistory(7);
+    }
+
     // Convert snake_case to camelCase for frontend
     const currentFormatted = {
       regime: current.regime,
       method: current.method,
       confidence: current.confidence,
-      riskMultiplier: current.risk_multiplier || current.riskMultiplier || 1.0,
+      riskMultiplier: current.risk_multiplier || 1.0,
       allocation: current.allocation,
       timestamp: current.timestamp,
     };
-
-    // Fetch regime history from database
-    let history = [];
-    try {
-      const { Pool } = require('pg');
-      const pool = new Pool({
-        host: process.env.DATABASE_HOST || 'localhost',
-        port: parseInt(process.env.DATABASE_PORT || '5432'),
-        database: process.env.DATABASE_NAME || 'quantshift',
-        user: process.env.DATABASE_USER || 'quantshift',
-        password: process.env.DATABASE_PASSWORD,
-      });
-
-      const result = await pool.query(
-        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp 
-         FROM regime_history 
-         WHERE bot_name = $1 
-         AND timestamp > NOW() - INTERVAL '30 days'
-         ORDER BY timestamp DESC 
-         LIMIT 100`,
-        [botName]
-      );
-
-      history = result.rows.map((row: any) => ({
-        timestamp: row.timestamp,
-        regime: row.regime,
-        confidence: row.confidence,
-        method: row.method,
-        riskMultiplier: row.risk_multiplier,
-        allocation: typeof row.allocation === 'string' ? JSON.parse(row.allocation) : row.allocation,
-      }));
-
-      await pool.end();
-    } catch (dbError) {
-      console.error('Database error fetching history:', dbError);
-      // Fallback to mock data if database unavailable
-      history = generateMockHistory(7);
-    }
 
     return NextResponse.json({
       current: currentFormatted,
