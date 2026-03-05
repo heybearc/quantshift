@@ -16,6 +16,7 @@ import { SessionsStatsCard } from "@/components/dashboard/admin/SessionsStatsCar
 import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
 import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard";
 import { EmergencyStopButton } from "@/components/emergency-stop-button";
+import EmergencyStopControl from "@/components/admin/EmergencyStopControl";
 
 type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto';
 
@@ -339,21 +340,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* EMERGENCY STOP CONTROLS — admin only */}
-                {isAdmin && (
-                  <div className="bg-red-900/10 border border-red-700/30 rounded-xl p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
-                      <div className="flex-1">
-                        <h2 className="text-lg font-semibold text-white mb-1">Emergency Stop Controls</h2>
-                        <p className="text-sm text-slate-400">Immediately close all positions and halt trading for a bot</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <EmergencyStopButton botName="quantshift-equity" botDisplayName="Equity Bot" />
-                      <EmergencyStopButton botName="quantshift-crypto" botDisplayName="Crypto Bot" />
-                    </div>
-                  </div>
-                )}
+                {isAdmin && <EmergencyStopControl />}
 
                 {/* ADMIN SYSTEM OVERVIEW — bottom, admin only */}
                 {isAdmin && adminStats && (
