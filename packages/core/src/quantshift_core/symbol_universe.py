@@ -245,16 +245,16 @@ class SymbolUniverse:
             'BTC-USD', 'ETH-USD', 'USDT-USD', 'BNB-USD', 'SOL-USD',
             'XRP-USD', 'USDC-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD',
             
-            # Top 11-30
-            'TRX-USD', 'DOT-USD', 'MATIC-USD', 'LTC-USD', 'SHIB-USD',
+            # Top 11-30 (removed MATIC - migrated to POL)
+            'TRX-USD', 'DOT-USD', 'TON-USD', 'LTC-USD', 'SHIB-USD',
             'BCH-USD', 'LINK-USD', 'UNI-USD', 'ATOM-USD', 'XLM-USD',
             'ETC-USD', 'FIL-USD', 'HBAR-USD', 'APT-USD', 'ARB-USD',
             'VET-USD', 'ALGO-USD', 'NEAR-USD', 'GRT-USD', 'SAND-USD',
             
-            # Top 31-50 (high volume, good liquidity)
+            # Top 31-50 (high volume, good liquidity) (removed ENJ - delisted)
             'MANA-USD', 'AAVE-USD', 'MKR-USD', 'SNX-USD', 'COMP-USD',
             'SUSHI-USD', 'YFI-USD', 'CRV-USD', 'BAL-USD', 'REN-USD',
-            'ZRX-USD', 'ENJ-USD', 'BAT-USD', 'LRC-USD', 'OMG-USD',
+            'ZRX-USD', 'OP-USD', 'BAT-USD', 'LRC-USD', 'OMG-USD',
             'SKL-USD', 'STORJ-USD', 'AMP-USD', 'ANKR-USD', 'NKN-USD'
         ]
     
@@ -271,15 +271,16 @@ class SymbolUniverse:
         self.logger.warning("using_fallback_crypto_symbols")
         
         # Top 50 cryptos by market cap (as of 2026)
+        # Removed delisted/invalid symbols: MATIC (migrated to POL), ENJ, GALA, FTM
         top_50 = [
             'BTC-USD', 'ETH-USD', 'BNB-USD', 'SOL-USD', 'XRP-USD',
-            'ADA-USD', 'AVAX-USD', 'DOT-USD', 'MATIC-USD', 'LINK-USD',
+            'ADA-USD', 'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD',
             'UNI-USD', 'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD',
             'VET-USD', 'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD',
             'SNX-USD', 'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD',
-            'ZRX-USD', 'ENJ-USD', 'MANA-USD', 'SAND-USD', 'AXS-USD',
-            'GALA-USD', 'CHZ-USD', 'BAT-USD', 'ZEC-USD', 'DASH-USD',
-            'ETC-USD', 'XTZ-USD', 'EOS-USD', 'NEAR-USD', 'FTM-USD',
+            'ZRX-USD', 'TRX-USD', 'MANA-USD', 'SAND-USD', 'AXS-USD',
+            'SHIB-USD', 'CHZ-USD', 'BAT-USD', 'ZEC-USD', 'DASH-USD',
+            'ETC-USD', 'XTZ-USD', 'EOS-USD', 'NEAR-USD', 'BCH-USD',
             'HBAR-USD', 'ICP-USD', 'APE-USD', 'LDO-USD', 'ARB-USD',
             'OP-USD', 'IMX-USD', 'RNDR-USD', 'INJ-USD', 'STX-USD'
         ]
