@@ -203,31 +203,31 @@ class StrategyOrchestrator:
                     risk_multiplier=self.regime_risk_multiplier,
                     indicators=indicators
                 )
-                
-                # Store regime change in database for history (only on regime change)
-                if hasattr(self, 'db_manager') and self.db_manager:
-                    try:
-                        with self.db_manager.session() as session:
-                            from datetime import datetime
-                            import json
-                            session.execute(
-                                """
-                                INSERT INTO regime_history 
-                                (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp)
-                                VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp)
-                                """,
-                                {
-                                    'bot_name': self.bot_name,
-                                    'regime': regime.value if hasattr(regime, 'value') else regime,
-                                    'method': 'ml' if self.use_ml_regime else 'rule_based',
-                                    'confidence': indicators.get('ml_confidence', 1.0),
-                                    'risk_multiplier': self.regime_risk_multiplier,
-                                    'allocation': json.dumps(self.capital_allocation),
-                                    'timestamp': datetime.utcnow()
-                                }
-                            )
-                    except Exception as e:
-                        self.logger.warning("failed_to_store_regime_in_db", error=str(e))
+            
+            # Store regime data in database (every cycle for dashboard access)
+            if hasattr(self, 'db_manager') and self.db_manager:
+                try:
+                    with self.db_manager.session() as session:
+                        from datetime import datetime
+                        import json
+                        session.execute(
+                            """
+                            INSERT INTO regime_history 
+                            (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp)
+                            VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp)
+                            """,
+                            {
+                                'bot_name': self.bot_name,
+                                'regime': regime.value if hasattr(regime, 'value') else regime,
+                                'method': 'ml' if self.use_ml_regime else 'rule_based',
+                                'confidence': indicators.get('ml_confidence', 1.0),
+                                'risk_multiplier': self.regime_risk_multiplier,
+                                'allocation': json.dumps(self.capital_allocation),
+                                'timestamp': datetime.utcnow()
+                            }
+                        )
+                except Exception as e:
+                    self.logger.warning("failed_to_store_regime_in_db", error=str(e))
             
             # Store regime data in Redis for dashboard access (every cycle, not just on change)
             # This ensures dashboard always has fresh data even if regime stays the same
