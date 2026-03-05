@@ -204,28 +204,7 @@ class StrategyOrchestrator:
                     indicators=indicators
                 )
                 
-                # Store regime data in Redis for dashboard access
-                if hasattr(self, 'redis_client') and self.redis_client:
-                    import json
-                    from datetime import datetime
-                    regime_data = {
-                        'regime': regime.value if hasattr(regime, 'value') else regime,
-                        'method': 'ml' if self.use_ml_regime else 'rule_based',
-                        'allocation': self.capital_allocation,
-                        'risk_multiplier': self.regime_risk_multiplier,
-                        'confidence': indicators.get('ml_confidence', 1.0),
-                        'timestamp': datetime.utcnow().isoformat()
-                    }
-                    try:
-                        self.redis_client.setex(
-                            f'bot:{self.bot_name}:regime',
-                            3600,  # Expire after 1 hour
-                            json.dumps(regime_data)
-                        )
-                    except Exception as e:
-                        self.logger.warning("failed_to_store_regime_in_redis", error=str(e))
-                
-                # Store regime change in database for history
+                # Store regime change in database for history (only on regime change)
                 if hasattr(self, 'db_manager') and self.db_manager:
                     try:
                         with self.db_manager.session() as session:
@@ -249,6 +228,28 @@ class StrategyOrchestrator:
                             )
                     except Exception as e:
                         self.logger.warning("failed_to_store_regime_in_db", error=str(e))
+            
+            # Store regime data in Redis for dashboard access (every cycle, not just on change)
+            # This ensures dashboard always has fresh data even if regime stays the same
+            if hasattr(self, 'redis_client') and self.redis_client:
+                import json
+                from datetime import datetime
+                regime_data = {
+                    'regime': regime.value if hasattr(regime, 'value') else regime,
+                    'method': 'ml' if self.use_ml_regime else 'rule_based',
+                    'allocation': self.capital_allocation,
+                    'risk_multiplier': self.regime_risk_multiplier,
+                    'confidence': indicators.get('ml_confidence', 1.0),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                try:
+                    self.redis_client.setex(
+                        f'bot:{self.bot_name}:regime',
+                        3600,  # Expire after 1 hour
+                        json.dumps(regime_data)
+                    )
+                except Exception as e:
+                    self.logger.warning("failed_to_store_regime_in_redis", error=str(e))
         
         # Generate signals from each strategy
         for strategy in self.strategies:
