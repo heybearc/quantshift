@@ -257,6 +257,17 @@ class QuantShiftUnifiedBot:
         api_secret = os.getenv('COINBASE_API_SECRET')
         cdp_key_name = os.getenv('CDP_API_KEY_NAME')
         cdp_private_key = os.getenv('CDP_API_KEY_PRIVATE_KEY')
+        cdp_private_key_path = os.getenv('CDP_API_KEY_PRIVATE_KEY_PATH')
+        
+        # If private key path is provided, read the key from file
+        if cdp_key_name and cdp_private_key_path:
+            try:
+                with open(cdp_private_key_path, 'r') as f:
+                    cdp_private_key = f.read()
+                logger.info("using_cdp_sdk_credentials_from_file", path=cdp_private_key_path)
+            except Exception as e:
+                logger.error("failed_to_read_private_key_file", path=cdp_private_key_path, error=str(e))
+                raise
         
         # Use CDP credentials if available, otherwise fall back to legacy
         if cdp_key_name and cdp_private_key:

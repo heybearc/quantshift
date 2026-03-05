@@ -148,16 +148,24 @@ orchestrator:
 
 # Risk management configuration
 risk_management:
+  # SAFE PAPER TRADING LIMITS (No Leverage)
+  max_leverage: 1.0  # NO LEVERAGE - cash only
+  max_position_size: 0.10  # Max 10% per position (crypto is more volatile)
+  max_positions: 8  # Max 8 concurrent positions
+  max_capital_deployed: 0.80  # Max 80% of capital deployed (crypto is 24/7)
+  
+  # Portfolio risk limits
   max_portfolio_heat: 0.15  # 15% max total risk (higher for crypto paper trading)
   max_position_correlation: 0.8  # Crypto correlates more
   max_sector_exposure: 0.50  # Less relevant for crypto
   daily_loss_limit: 0.08  # 8% daily loss limit (crypto is more volatile)
   max_drawdown_limit: 0.20  # 20% max drawdown (crypto drawdowns are larger)
   
-  # Kelly Criterion position sizing
-  use_kelly_sizing: true  # Enable Kelly Criterion (requires 20+ trades)
-  kelly_fraction: 0.25  # Use 25% Kelly for safety
-  kelly_min_trades: 20  # Minimum trades required for Kelly calculation
+  # Position sizing
+  use_kelly_sizing: false  # Disable Kelly until we have 50+ trades
+  kelly_fraction: 0.25  # Use 25% Kelly for safety (when enabled)
+  kelly_min_trades: 50  # Minimum trades required for Kelly calculation
+  default_position_size: 0.03  # 3% per trade (crypto is volatile)
 
 # Phase 4: Adaptive Optimization & ML Learning
 adaptive_optimization:

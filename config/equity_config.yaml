@@ -149,16 +149,24 @@ orchestrator:
 
 # Risk management configuration
 risk_management:
+  # SAFE PAPER TRADING LIMITS (No Leverage)
+  max_leverage: 1.0  # NO LEVERAGE - cash only
+  max_position_size: 0.05  # Max 5% per position
+  max_positions: 10  # Max 10 concurrent positions
+  max_capital_deployed: 0.50  # Max 50% of capital deployed at once
+  
+  # Portfolio risk limits
   max_portfolio_heat: 0.10  # 10% max total risk
   max_position_correlation: 0.7
   max_sector_exposure: 0.30
   daily_loss_limit: 0.05  # 5% daily loss limit
   max_drawdown_limit: 0.15  # 15% max drawdown
   
-  # Kelly Criterion position sizing
-  use_kelly_sizing: true  # Enable Kelly Criterion (requires 20+ trades)
-  kelly_fraction: 0.25  # Use 25% Kelly for safety
-  kelly_min_trades: 20  # Minimum trades required for Kelly calculation
+  # Position sizing
+  use_kelly_sizing: false  # Disable Kelly until we have 50+ trades
+  kelly_fraction: 0.25  # Use 25% Kelly for safety (when enabled)
+  kelly_min_trades: 50  # Minimum trades required for Kelly calculation
+  default_position_size: 0.02  # 2% per trade (conservative)
 
 # Phase 4: Adaptive Optimization & ML Learning
 adaptive_optimization:
