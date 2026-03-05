@@ -27,24 +27,48 @@ export async function GET(request: NextRequest) {
       console.error('Redis error:', redisError);
     }
 
-    // Fallback to mock data if Redis unavailable
-    const mockMetrics = {
-      portfolio_heat: 0.0,
-      portfolio_heat_pct: 0.0,
-      max_heat_limit: 0.10,
-      heat_utilization: 0.0,
-      daily_pl: 0.0,
-      daily_pl_pct: 0.0,
-      daily_loss_limit: 0.05,
-      drawdown: 0.0,
-      max_drawdown_limit: 0.15,
-      peak_equity: 100000.0,
-      circuit_breaker_status: 'normal',
-      circuit_breaker_reason: null,
-      num_positions: 0
+    // Fallback to database query if Redis unavailable
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    const positions = await prisma.$queryRaw<any[]>`
+      SELECT COUNT(*) as count, SUM(unrealized_pl) as total_unrealized_pl
+      FROM positions
+      WHERE quantity > 0
+    `;
+
+    const botStatus = await prisma.$queryRaw<any[]>`
+      SELECT portfolio_value, unrealized_pl, realized_pl
+      FROM bot_status
+      LIMIT 1
+    `;
+
+    const portfolioValue = botStatus[0]?.portfolio_value || 100000;
+    const unrealizedPl = botStatus[0]?.unrealized_pl || 0;
+    const openPositions = positions[0]?.count || 0;
+
+    // Calculate metrics
+    const portfolioHeat = portfolioValue > 0 ? Math.abs(unrealizedPl) / portfolioValue : 0;
+    const maxPortfolioHeat = 0.10; // 10% max
+    const maxDrawdown = 0.0; // TODO: Calculate from trade history
+    const maxDrawdownLimit = 0.15; // 15% max
+    const dailyPnl = botStatus[0]?.realized_pl || 0;
+    const dailyLossLimit = portfolioValue * 0.03; // 3% daily loss limit
+    const maxPositions = 5;
+
+    const metrics = {
+      portfolioHeat,
+      maxPortfolioHeat,
+      maxDrawdown,
+      maxDrawdownLimit,
+      dailyPnl,
+      dailyLossLimit,
+      openPositions,
+      maxPositions,
     };
 
-    return NextResponse.json(mockMetrics);
+    await prisma.$disconnect();
+    return NextResponse.json(metrics);
   } catch (error) {
     console.error('Error fetching risk metrics:', error);
     return NextResponse.json(
