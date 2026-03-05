@@ -34,6 +34,7 @@ export function Navigation() {
 
   const platformNav = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Monitoring", href: "/monitoring", icon: Activity },
     { name: "Trades", href: "/trades", icon: TrendingUp },
     { name: "Positions", href: "/positions", icon: Activity },
     { name: "Performance", href: "/performance", icon: BarChart3 },
