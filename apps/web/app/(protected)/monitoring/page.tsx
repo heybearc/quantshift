@@ -141,7 +141,8 @@ export default function MonitoringPage() {
     return `${hours}h ${minutes}m`;
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value == null || isNaN(value)) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -149,7 +150,8 @@ export default function MonitoringPage() {
     }).format(value);
   };
 
-  const formatPercent = (value: number) => {
+  const formatPercent = (value: number | null | undefined) => {
+    if (value == null || isNaN(value)) return 'N/A';
     return `${(value * 100).toFixed(1)}%`;
   };
 
