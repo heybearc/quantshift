@@ -255,3 +255,35 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/haproxy-blue-green-standard.md`
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
+
+## D-QS-015: MCP Tool Traffic Switch State Tracking Issue
+
+**Date:** 2026-03-05  
+**Status:** ⚠️ Known Issue  
+**Context:** Deploying Phase 5.2 monitoring dashboard to production, MCP tool reported successful traffic switch but HAProxy routing unchanged.
+
+**Issue:**
+- MCP `switch_traffic` tool reports "Traffic switch complete" with success message
+- HAProxy deployment status shows GREEN still LIVE (not BLUE as reported)
+- Production traffic continues routing to GREEN despite switch command
+- Monitoring page deployed to BLUE but inaccessible on production URL
+
+**Root Cause:**
+- MCP tool state tracking doesn't match actual HAProxy backend routing
+- Tool updates internal state but HAProxy configuration not actually changed
+- Possible HAProxy config update failure or state sync issue
+
+**Workaround:**
+- Deploy code to both BLUE and GREEN to ensure production availability
+- Verify actual HAProxy routing via direct backend testing (curl to IPs)
+- Don't rely solely on MCP tool status for deployment verification
+
+**Impact:**
+- Monitoring dashboard 404 on production URL
+- Confusion about which server is actually serving production traffic
+- Deployment workflow interrupted
+
+**Next Steps:**
+- Investigate MCP tool HAProxy integration
+- Verify HAProxy configuration update mechanism
+- Consider manual HAProxy verification step in deployment workflow
