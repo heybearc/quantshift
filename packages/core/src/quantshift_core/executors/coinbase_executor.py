@@ -64,6 +64,12 @@ class CoinbaseExecutor:
         # Initialize hard position limits
         self.position_limits = PositionLimits()
         
+        # Initialize circuit breaker tracking
+        self._daily_trades = 0
+        self._daily_loss = 0.0
+        self._circuit_breaker_open = False
+        self._last_reset_date = datetime.utcnow().date()
+        
         # Initialize symbol universe
         if use_dynamic_symbols:
             from quantshift_core.symbol_universe import SymbolUniverse
@@ -182,7 +188,12 @@ class CoinbaseExecutor:
                     if currency in ['USD', 'USDC']:
                         continue
                     
-                    quantity = float(account.available_balance.value)
+                    # Handle both dict and object formats for available_balance
+                    if isinstance(account.available_balance, dict):
+                        quantity = float(account.available_balance.get('value', 0))
+                    else:
+                        quantity = float(account.available_balance.value)
+                    
                     if quantity == 0:
                         continue
                     
