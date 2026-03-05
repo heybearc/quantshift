@@ -251,6 +251,11 @@ class StateManager:
                 {"bot_name": bot_name, "symbol": symbol}
             ).fetchone()
             
+            # Calculate unrealized P&L percentage
+            unrealized_pl_pct = 0.0
+            if entry_price and entry_price > 0:
+                unrealized_pl_pct = ((current_price - entry_price) / entry_price) * 100
+            
             if result:
                 # Update existing position
                 session.execute(
@@ -260,6 +265,7 @@ class StateManager:
                             entry_price = :entry_price,
                             current_price = :current_price,
                             unrealized_pl = :unrealized_pl,
+                            unrealized_pl_pct = :unrealized_pl_pct,
                             strategy_name = :strategy_name,
                             updated_at = NOW()
                         WHERE bot_name = :bot_name AND symbol = :symbol
@@ -271,6 +277,7 @@ class StateManager:
                         "entry_price": entry_price,
                         "current_price": current_price,
                         "unrealized_pl": unrealized_pl,
+                        "unrealized_pl_pct": unrealized_pl_pct,
                         "strategy_name": strategy_name
                     }
                 )
@@ -281,10 +288,10 @@ class StateManager:
                     text("""
                         INSERT INTO positions 
                         (bot_name, symbol, quantity, entry_price, current_price, 
-                         unrealized_pl, strategy_name, created_at, updated_at)
+                         unrealized_pl, unrealized_pl_pct, strategy_name, created_at, updated_at)
                         VALUES 
                         (:bot_name, :symbol, :quantity, :entry_price, :current_price,
-                         :unrealized_pl, :strategy_name, NOW(), NOW())
+                         :unrealized_pl, :unrealized_pl_pct, :strategy_name, NOW(), NOW())
                     """),
                     {
                         "bot_name": bot_name,
@@ -293,6 +300,7 @@ class StateManager:
                         "entry_price": entry_price,
                         "current_price": current_price,
                         "unrealized_pl": unrealized_pl,
+                        "unrealized_pl_pct": unrealized_pl_pct,
                         "strategy_name": strategy_name
                     }
                 )
@@ -387,6 +395,11 @@ class StateManager:
                 symbol = pos["symbol"]
                 new_symbols.add(symbol)
                 
+                # Calculate unrealized P&L percentage
+                unrealized_pl_pct = 0.0
+                if pos["entry_price"] and pos["entry_price"] > 0:
+                    unrealized_pl_pct = ((pos["current_price"] - pos["entry_price"]) / pos["entry_price"]) * 100
+                
                 if symbol in existing_symbols:
                     # Update
                     session.execute(
@@ -396,6 +409,7 @@ class StateManager:
                                 entry_price = :entry_price,
                                 current_price = :current_price,
                                 unrealized_pl = :unrealized_pl,
+                                unrealized_pl_pct = :unrealized_pl_pct,
                                 strategy_name = :strategy_name,
                                 updated_at = NOW()
                             WHERE bot_name = :bot_name AND symbol = :symbol
@@ -407,6 +421,7 @@ class StateManager:
                             "entry_price": pos["entry_price"],
                             "current_price": pos["current_price"],
                             "unrealized_pl": pos["unrealized_pl"],
+                            "unrealized_pl_pct": unrealized_pl_pct,
                             "strategy_name": pos.get("strategy_name", "UNKNOWN")
                         }
                     )
@@ -417,10 +432,10 @@ class StateManager:
                         text("""
                             INSERT INTO positions 
                             (bot_name, symbol, quantity, entry_price, current_price, 
-                             unrealized_pl, strategy_name, created_at, updated_at)
+                             unrealized_pl, unrealized_pl_pct, strategy_name, created_at, updated_at)
                             VALUES 
                             (:bot_name, :symbol, :quantity, :entry_price, :current_price,
-                             :unrealized_pl, :strategy_name, NOW(), NOW())
+                             :unrealized_pl, :unrealized_pl_pct, :strategy_name, NOW(), NOW())
                         """),
                         {
                             "bot_name": bot_name,
@@ -429,6 +444,7 @@ class StateManager:
                             "entry_price": pos["entry_price"],
                             "current_price": pos["current_price"],
                             "unrealized_pl": pos["unrealized_pl"],
+                            "unrealized_pl_pct": unrealized_pl_pct,
                             "strategy_name": pos.get("strategy_name", "UNKNOWN")
                         }
                     )
