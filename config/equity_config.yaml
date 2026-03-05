@@ -65,23 +65,23 @@ risk_management:
   max_drawdown_limit: 0.15  # 15% max drawdown
   
   # Kelly Criterion position sizing
-  use_kelly_sizing: false  # Enable Kelly Criterion (requires 20+ trades)
+  use_kelly_sizing: true  # Enable Kelly Criterion (requires 20+ trades)
   kelly_fraction: 0.25  # Use 25% Kelly for safety
   kelly_min_trades: 20  # Minimum trades required for Kelly calculation
 
 # Phase 4: Adaptive Optimization & ML Learning
 adaptive_optimization:
   # Parameter optimization
-  enable_parameter_optimization: false  # Enable automated parameter re-optimization
-  optimization_interval_days: 30  # Days between optimizations
-  min_trades_for_optimization: 50  # Minimum trades needed to run optimization
+  enable_parameter_optimization: true  # Enable automated parameter re-optimization
+  optimization_interval_days: 7  # Days between optimizations (weekly for faster learning)
+  min_trades_for_optimization: 30  # Minimum trades needed to run optimization
   
   # Strategy auto-disable
-  enable_auto_disable: false  # Enable automated strategy disable based on performance
+  enable_auto_disable: true  # Enable automated strategy disable based on performance
   min_win_rate: 0.40  # Minimum acceptable win rate (40%)
   min_sharpe: 0.5  # Minimum acceptable Sharpe ratio
-  performance_lookback_days: 30  # Days to evaluate performance
-  reenable_check_days: 7  # Days between re-enable checks
+  performance_lookback_days: 14  # Days to evaluate performance (shorter for faster feedback)
+  reenable_check_days: 3  # Days between re-enable checks (faster iteration)
   
   # Regime prediction tracking
   enable_regime_tracking: true  # Track ML vs rule-based regime accuracy
