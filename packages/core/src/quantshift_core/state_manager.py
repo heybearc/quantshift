@@ -266,7 +266,7 @@ class StateManager:
                             current_price = :current_price,
                             unrealized_pl = :unrealized_pl,
                             unrealized_pl_pct = :unrealized_pl_pct,
-                            strategy_name = :strategy_name,
+                            strategy = :strategy_name,
                             updated_at = NOW()
                         WHERE bot_name = :bot_name AND symbol = :symbol
                     """),
@@ -288,7 +288,7 @@ class StateManager:
                     text("""
                         INSERT INTO positions 
                         (bot_name, symbol, quantity, entry_price, current_price, 
-                         unrealized_pl, unrealized_pl_pct, strategy_name, created_at, updated_at)
+                         unrealized_pl, unrealized_pl_pct, strategy, created_at, updated_at)
                         VALUES 
                         (:bot_name, :symbol, :quantity, :entry_price, :current_price,
                          :unrealized_pl, :unrealized_pl_pct, :strategy_name, NOW(), NOW())
@@ -410,7 +410,7 @@ class StateManager:
                                 current_price = :current_price,
                                 unrealized_pl = :unrealized_pl,
                                 unrealized_pl_pct = :unrealized_pl_pct,
-                                strategy_name = :strategy_name,
+                                strategy = :strategy_name,
                                 updated_at = NOW()
                             WHERE bot_name = :bot_name AND symbol = :symbol
                         """),
@@ -432,7 +432,7 @@ class StateManager:
                         text("""
                             INSERT INTO positions 
                             (bot_name, symbol, quantity, entry_price, current_price, 
-                             unrealized_pl, unrealized_pl_pct, strategy_name, created_at, updated_at)
+                             unrealized_pl, unrealized_pl_pct, strategy, created_at, updated_at)
                             VALUES 
                             (:bot_name, :symbol, :quantity, :entry_price, :current_price,
                              :unrealized_pl, :unrealized_pl_pct, :strategy_name, NOW(), NOW())
