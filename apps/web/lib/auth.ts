@@ -84,8 +84,30 @@ export async function getRefreshToken(): Promise<string | undefined> {
 }
 
 export async function getCurrentUser() {
-  const token = await getAccessToken();
-  if (!token) return null;
+  let token = await getAccessToken();
+  
+  // If no access token or invalid, try to refresh
+  if (!token || !verifyToken(token)) {
+    const refreshToken = await getRefreshToken();
+    if (refreshToken) {
+      const user = await verifyRefreshToken(refreshToken);
+      if (user) {
+        // Create new tokens
+        const newAccessToken = createAccessToken(user.id, user.email, user.role);
+        const newRefreshToken = createRefreshToken(user.id);
+        
+        // Set new cookies
+        await setAuthCookies(newAccessToken, newRefreshToken);
+        
+        // Use the new access token
+        token = newAccessToken;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
 
   const payload = verifyToken(token);
   if (!payload || payload.type !== 'access') return null;
