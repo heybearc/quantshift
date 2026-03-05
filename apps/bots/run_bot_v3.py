@@ -921,7 +921,7 @@ class QuantShiftUnifiedBot:
                     float(pos.market_value),
                     float(pos.cost_basis) if hasattr(pos, 'cost_basis') else float(pos.market_value),
                     float(pos.unrealized_pl),
-                    float(pos.unrealized_pl / pos.cost_basis * 100) if hasattr(pos, 'cost_basis') and pos.cost_basis > 0 else 0.0,
+                    float((pos.current_price - pos.entry_price) / pos.entry_price * 100) if pos.entry_price > 0 else 0.0,
                     strategy_name
                 ))
             
