@@ -102,6 +102,7 @@ export default function MonitoringPage() {
   }, []);
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'text-gray-400';
     switch (status.toLowerCase()) {
       case 'active':
       case 'running':
@@ -117,6 +118,7 @@ export default function MonitoringPage() {
   };
 
   const getRegimeColor = (regime: string) => {
+    if (!regime) return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
     switch (regime.toLowerCase()) {
       case 'bull':
         return 'bg-green-500/20 text-green-400 border-green-500/50';
