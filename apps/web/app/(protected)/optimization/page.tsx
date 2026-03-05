@@ -239,7 +239,7 @@ function OptimizationContent() {
                     <td className="px-4 py-3 text-sm font-medium text-white">{record.strategy_name}</td>
                     <td className="px-4 py-3 text-sm text-slate-300">
                       <div className="space-y-1">
-                        {Object.entries(record.optimal_params).slice(0, 2).map(([key, value]) => (
+                        {record.optimal_params && Object.entries(record.optimal_params).slice(0, 2).map(([key, value]) => (
                           <div key={key} className="text-xs">
                             <span className="text-slate-500">{key}:</span>{' '}
                             <span className="text-slate-300">{String(value)}</span>
