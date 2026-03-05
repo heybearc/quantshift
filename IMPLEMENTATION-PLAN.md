@@ -775,18 +775,26 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 ### **PHASE 5: Dashboard & Monitoring** (Week 6)
 **Goal:** Real-time visibility into bot performance and health
 
-#### 5.1 Trading Pages Enhancement (2 days)
-- [x] Trades page — DONE (bot filter tabs, exit reasons)
-- [x] Positions page — DONE (bot badges, smart qty formatting)
-- [x] Performance page — DONE (dark theme, bot filters)
-- [ ] Add strategy breakdown to Performance page
+#### 5.1 Trading Pages Enhancement ⏳ IN PROGRESS
+- [x] ✅ Trades page — DONE (bot filter tabs, exit reasons)
+- [x] ✅ Positions page — DONE (bot badges, smart qty formatting)
+- [x] ✅ Performance page — DONE (dark theme, bot filters)
+- [x] ✅ Add regime indicator to Dashboard
+  - Current regime badge (bull/bear/high vol/low vol/crisis)
+  - ML vs rule-based detection method
+  - Confidence score and risk multiplier
+  - Strategy allocation breakdown with visual bars
+  - File: `components/dashboard/RegimeIndicator.tsx`
+- [x] ✅ Add Kelly Criterion stats to Risk page
+  - Kelly percentage and fractional Kelly display
+  - Trade history progress (need 20+ trades)
+  - Win rate, avg win/loss statistics
+  - Enabled/disabled status indicators
+  - File: `components/dashboard/KellyStatsCard.tsx`
+- [ ] ⏳ Add strategy breakdown to Performance page
   - P&L per strategy (Bollinger, RSI, Breakout)
   - Win rate per strategy
   - Active positions per strategy
-- [ ] Add regime indicator to Dashboard
-  - Current regime badge (bull/bear/high vol/low vol/crisis)
-  - Regime history chart (last 30 days)
-  - Strategy allocation by regime
 
 #### 5.2 Real-Time Monitoring Dashboard (3 days)
 - [ ] **Bot Health Section**
