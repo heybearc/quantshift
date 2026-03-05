@@ -91,26 +91,26 @@ export default function EmergencyStopControl() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+      <div className="rounded-xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
-          <h3 className="text-lg font-semibold">Emergency Stop Controls</h3>
+          <AlertTriangle className="h-5 w-5 text-red-400" />
+          <h3 className="text-lg font-semibold text-white">Emergency Stop Controls</h3>
         </div>
-        <div className="text-sm text-gray-500">Loading...</div>
+        <div className="text-sm text-slate-400">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+    <div className="rounded-xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
-          <h3 className="text-lg font-semibold">Emergency Stop Controls</h3>
+          <AlertTriangle className="h-5 w-5 text-red-400" />
+          <h3 className="text-lg font-semibold text-white">Emergency Stop Controls</h3>
         </div>
         <button
           onClick={fetchStatus}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
           title="Refresh status"
         >
           <RefreshCw className="h-4 w-4" />
@@ -119,12 +119,12 @@ export default function EmergencyStopControl() {
 
       <div className="space-y-4">
         {/* Equity Bot */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50 border border-slate-700">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${status.equity ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
             <div>
-              <div className="font-medium">Equity Bot</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-white">Equity Bot</div>
+              <div className="text-sm text-slate-400">
                 {status.equity ? '🛑 Emergency Stop Active' : '✅ Trading Normally'}
               </div>
             </div>
@@ -171,12 +171,12 @@ export default function EmergencyStopControl() {
         </div>
 
         {/* Crypto Bot */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50 border border-slate-700">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${status.crypto ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
             <div>
-              <div className="font-medium">Crypto Bot</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-white">Crypto Bot</div>
+              <div className="text-sm text-slate-400">
                 {status.crypto ? '🛑 Emergency Stop Active' : '✅ Trading Normally'}
               </div>
             </div>
@@ -223,10 +223,10 @@ export default function EmergencyStopControl() {
         </div>
       </div>
 
-      <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+      <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
         <div className="flex gap-2">
-          <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-800 dark:text-yellow-200">
+          <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-200">
             <strong>Warning:</strong> Emergency stop will immediately close all positions at market price and halt trading. Use only in emergencies.
           </div>
         </div>
