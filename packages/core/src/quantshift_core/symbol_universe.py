@@ -240,22 +240,19 @@ class SymbolUniverse:
         This is a curated list of top cryptocurrencies.
         Phase 2 will replace this with dynamic ranking.
         """
+        # Top 50 cryptos verified on Coinbase (March 2026)
+        # Removed: USDT, USDC (stablecoins), BNB (not on Coinbase), MATIC, ENJ, GALA, FTM, TRX (delisted)
         return [
-            # Top 10 by market cap
-            'BTC-USD', 'ETH-USD', 'USDT-USD', 'BNB-USD', 'SOL-USD',
-            'XRP-USD', 'USDC-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD',
-            
-            # Top 11-30 (removed MATIC - migrated to POL)
-            'TRX-USD', 'DOT-USD', 'TON-USD', 'LTC-USD', 'SHIB-USD',
-            'BCH-USD', 'LINK-USD', 'UNI-USD', 'ATOM-USD', 'XLM-USD',
-            'ETC-USD', 'FIL-USD', 'HBAR-USD', 'APT-USD', 'ARB-USD',
-            'VET-USD', 'ALGO-USD', 'NEAR-USD', 'GRT-USD', 'SAND-USD',
-            
-            # Top 31-50 (high volume, good liquidity) (removed ENJ - delisted)
-            'MANA-USD', 'AAVE-USD', 'MKR-USD', 'SNX-USD', 'COMP-USD',
-            'SUSHI-USD', 'YFI-USD', 'CRV-USD', 'BAL-USD', 'REN-USD',
-            'ZRX-USD', 'OP-USD', 'BAT-USD', 'LRC-USD', 'OMG-USD',
-            'SKL-USD', 'STORJ-USD', 'AMP-USD', 'ANKR-USD', 'NKN-USD'
+            'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'ADA-USD',
+            'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD', 'UNI-USD',
+            'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD', 'BCH-USD',
+            'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD', 'SNX-USD',
+            'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD', 'ZRX-USD',
+            'MANA-USD', 'SAND-USD', 'AXS-USD', 'SHIB-USD', 'CHZ-USD',
+            'BAT-USD', 'ZEC-USD', 'DASH-USD', 'ETC-USD', 'XTZ-USD',
+            'EOS-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
+            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RNDR-USD',
+            'INJ-USD', 'STX-USD', 'GRT-USD', 'LRC-USD', 'SKL-USD'
         ]
     
     def _get_fallback_equity_symbols(self) -> List[str]:
@@ -270,19 +267,19 @@ class SymbolUniverse:
         """
         self.logger.warning("using_fallback_crypto_symbols")
         
-        # Top 50 cryptos by market cap (as of 2026)
-        # Removed delisted/invalid symbols: MATIC (migrated to POL), ENJ, GALA, FTM
+        # Top 50 cryptos by market cap (verified on Coinbase as of March 2026)
+        # Removed delisted/invalid symbols: MATIC, ENJ, GALA, FTM, TRX
         top_50 = [
-            'BTC-USD', 'ETH-USD', 'BNB-USD', 'SOL-USD', 'XRP-USD',
-            'ADA-USD', 'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD',
-            'UNI-USD', 'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD',
-            'VET-USD', 'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD',
-            'SNX-USD', 'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD',
-            'ZRX-USD', 'TRX-USD', 'MANA-USD', 'SAND-USD', 'AXS-USD',
-            'SHIB-USD', 'CHZ-USD', 'BAT-USD', 'ZEC-USD', 'DASH-USD',
-            'ETC-USD', 'XTZ-USD', 'EOS-USD', 'NEAR-USD', 'BCH-USD',
-            'HBAR-USD', 'ICP-USD', 'APE-USD', 'LDO-USD', 'ARB-USD',
-            'OP-USD', 'IMX-USD', 'RNDR-USD', 'INJ-USD', 'STX-USD'
+            'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'ADA-USD',
+            'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD', 'UNI-USD',
+            'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD', 'BCH-USD',
+            'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD', 'SNX-USD',
+            'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD', 'ZRX-USD',
+            'MANA-USD', 'SAND-USD', 'AXS-USD', 'SHIB-USD', 'CHZ-USD',
+            'BAT-USD', 'ZEC-USD', 'DASH-USD', 'ETC-USD', 'XTZ-USD',
+            'EOS-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
+            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RNDR-USD',
+            'INJ-USD', 'STX-USD', 'GRT-USD', 'LRC-USD', 'SKL-USD'
         ]
         
         return top_50[:self.max_symbols]
