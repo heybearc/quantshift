@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const botName = searchParams.get('botName');
-    const where: any = {};
+    const where: any = {
+      quantity: { gt: 0 }, // Only show actual positions, not tracked symbols
+    };
     if (botName) where.botName = botName;
 
     const positions = await prisma.position.findMany({
