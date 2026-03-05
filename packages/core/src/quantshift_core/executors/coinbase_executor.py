@@ -278,9 +278,11 @@ class CoinbaseExecutor:
             )
             
             # Convert to DataFrame
-            # Coinbase returns: [timestamp, low, high, open, close, volume]
+            # Coinbase SDK returns a response object with 'candles' attribute
+            # Each candle: [timestamp, low, high, open, close, volume]
+            candles_list = candles.candles if hasattr(candles, 'candles') else []
             df = pd.DataFrame(
-                candles.get('candles', []),
+                candles_list,
                 columns=['timestamp', 'low', 'high', 'open', 'close', 'volume']
             )
             
