@@ -14,28 +14,50 @@ executor:
     min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: null  # Use actual account balance
 
-# Strategy configuration
+# Strategy configuration - EQUITY OPTIMIZED (7 STRATEGIES)
 strategies:
+  # Mean Reversion Strategies (4)
   - type: "BollingerBounce"
     params:
       bb_period: 20
       bb_std: 2.0
       rsi_period: 14
-      rsi_entry_threshold: 45  # Relaxed from 40 for more signals
+      rsi_entry_threshold: 45
       atr_period: 14
       atr_sl_multiplier: 1.5
-      risk_per_trade: 0.01
+      risk_per_trade: 0.015
   
   - type: "RSIMeanReversion"
     params:
       rsi_period: 14
-      rsi_oversold: 35  # Relaxed from 30 for more signals
-      rsi_overbought: 65  # Tightened from 70 for earlier exits
+      rsi_oversold: 35
+      rsi_overbought: 65
       atr_period: 14
       atr_sl_multiplier: 2.0
       atr_tp_multiplier: 3.0
-      risk_per_trade: 0.01
+      risk_per_trade: 0.015
   
+  - type: "KeltnerChannelStrategy"
+    params:
+      ema_period: 20
+      atr_period: 14
+      atr_multiplier: 2.0
+      rsi_period: 14
+      rsi_buy_threshold: 45
+      rsi_sell_threshold: 55
+      risk_per_trade: 0.015
+      volume_confirmation: true
+  
+  - type: "VWAPReversionStrategy"
+    params:
+      vwap_std_multiplier: 2.0
+      volume_spike_threshold: 1.5
+      atr_period: 14
+      atr_sl_multiplier: 2.0
+      atr_tp_multiplier: 3.0
+      risk_per_trade: 0.015
+  
+  # Trend Following Strategies (3)
   - type: "BreakoutMomentum"
     params:
       breakout_period: 20
@@ -43,18 +65,87 @@ strategies:
       atr_period: 14
       atr_trail_multiplier: 1.5
       breakdown_period: 10
-      risk_per_trade: 0.01
+      risk_per_trade: 0.015
+  
+  - type: "MACrossoverStrategy"
+    params:
+      short_window: 20
+      long_window: 50
+      atr_period: 14
+      risk_per_trade: 0.015
+      volume_confirmation: true
+      trend_confirmation: true
+      support_resistance_filter: true
+  
+  - type: "DonchianBreakoutStrategy"
+    params:
+      entry_period: 20
+      exit_period: 10
+      atr_period: 14
+      atr_sl_multiplier: 2.0
+      atr_trail_multiplier: 3.0
+      risk_per_trade: 0.015
+      volume_confirmation: true
+      min_atr_filter: 0.0
 
-# Strategy orchestrator configuration
+# Strategy orchestrator configuration - 7 STRATEGIES
 orchestrator:
+  # Base allocation (equal weight to start, AI will optimize)
   capital_allocation:
-    BollingerBounce: 0.33
-    RSIMeanReversion: 0.33
-    BreakoutMomentum: 0.34
+    BollingerBounce: 0.14
+    RSIMeanReversion: 0.14
+    KeltnerChannelStrategy: 0.14
+    VWAPReversionStrategy: 0.14
+    BreakoutMomentum: 0.15
+    MACrossoverStrategy: 0.15
+    DonchianBreakoutStrategy: 0.14
+  
   use_regime_detection: true
   use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)
   use_risk_management: true
-  use_sentiment_analysis: true  # Use FinBERT sentiment analysis for signal filtering
+  use_sentiment_analysis: true  # Use FinBERT sentiment analysis
+  
+  # Regime-based allocation (AI/ML adaptive)
+  regime_allocation:
+    bull_trending:
+      # Favor trend-following in bull markets
+      MACrossoverStrategy: 0.25
+      DonchianBreakoutStrategy: 0.22
+      BreakoutMomentum: 0.20
+      BollingerBounce: 0.12
+      RSIMeanReversion: 0.10
+      KeltnerChannelStrategy: 0.08
+      VWAPReversionStrategy: 0.03
+    
+    bear_trending:
+      # Favor mean reversion in bear markets
+      RSIMeanReversion: 0.22
+      BollingerBounce: 0.20
+      KeltnerChannelStrategy: 0.18
+      VWAPReversionStrategy: 0.15
+      BreakoutMomentum: 0.12
+      DonchianBreakoutStrategy: 0.08
+      MACrossoverStrategy: 0.05
+    
+    high_volatility:
+      # Balanced with volatility-based strategies
+      VWAPReversionStrategy: 0.22
+      KeltnerChannelStrategy: 0.20
+      BollingerBounce: 0.18
+      BreakoutMomentum: 0.15
+      DonchianBreakoutStrategy: 0.12
+      RSIMeanReversion: 0.08
+      MACrossoverStrategy: 0.05
+    
+    low_volatility:
+      # Favor mean reversion in ranging markets
+      BollingerBounce: 0.25
+      RSIMeanReversion: 0.22
+      KeltnerChannelStrategy: 0.20
+      VWAPReversionStrategy: 0.15
+      MACrossoverStrategy: 0.10
+      BreakoutMomentum: 0.05
+      DonchianBreakoutStrategy: 0.03
 
 # Risk management configuration
 risk_management:

@@ -13,66 +13,138 @@ executor:
     min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: 10000  # Paper trading with $10,000 simulated capital
 
-# Strategy configuration - CRYPTO OPTIMIZED
+# Strategy configuration - CRYPTO OPTIMIZED (7 STRATEGIES)
 strategies:
+  # Mean Reversion Strategies (4)
   - type: "BollingerBounce"
     params:
       bb_period: 20
       bb_std: 2.5  # Wider bands for crypto volatility
       rsi_period: 14
-      rsi_entry_threshold: 50  # Higher threshold for crypto
+      rsi_entry_threshold: 50
       atr_period: 14
-      atr_sl_multiplier: 2.0  # Wider stops for crypto volatility
-      risk_per_trade: 0.02  # 2% risk for paper trading (faster learning)
+      atr_sl_multiplier: 2.0
+      risk_per_trade: 0.02
   
   - type: "RSIMeanReversion"
     params:
       rsi_period: 14
-      rsi_oversold: 25  # Lower for crypto (can go very oversold)
-      rsi_overbought: 75  # Higher for crypto (can go very overbought)
+      rsi_oversold: 25  # Lower for crypto
+      rsi_overbought: 75  # Higher for crypto
       atr_period: 14
-      atr_sl_multiplier: 2.5  # Wider stops for volatility
-      atr_tp_multiplier: 4.0  # Wider targets for bigger moves
-      risk_per_trade: 0.02  # 2% risk for paper trading
+      atr_sl_multiplier: 2.5
+      atr_tp_multiplier: 4.0
+      risk_per_trade: 0.02
   
+  - type: "KeltnerChannelStrategy"
+    params:
+      ema_period: 20
+      atr_period: 14
+      atr_multiplier: 2.5  # Wider for crypto
+      rsi_period: 14
+      rsi_buy_threshold: 40
+      rsi_sell_threshold: 60
+      risk_per_trade: 0.02
+      volume_confirmation: true
+  
+  - type: "VWAPReversionStrategy"
+    params:
+      vwap_std_multiplier: 2.5  # Wider for crypto
+      volume_spike_threshold: 1.5
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_tp_multiplier: 4.0
+      risk_per_trade: 0.02
+  
+  # Trend Following Strategies (3)
   - type: "BreakoutMomentum"
     params:
-      breakout_period: 15  # Shorter period for faster crypto moves
-      volume_multiplier: 2.0  # Higher volume confirmation for crypto
+      breakout_period: 15  # Shorter for crypto
+      volume_multiplier: 2.0
       atr_period: 14
-      atr_trail_multiplier: 2.0  # Wider trailing stop
+      atr_trail_multiplier: 2.0
       breakdown_period: 10
-      risk_per_trade: 0.02  # 2% risk for paper trading
+      risk_per_trade: 0.02
+  
+  - type: "MACrossoverStrategy"
+    params:
+      short_window: 10  # Faster for crypto
+      long_window: 30
+      atr_period: 14
+      risk_per_trade: 0.02
+      volume_confirmation: true
+      trend_confirmation: false  # Too slow for crypto
+      support_resistance_filter: true
+  
+  - type: "DonchianBreakoutStrategy"
+    params:
+      entry_period: 20
+      exit_period: 10
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_trail_multiplier: 3.0
+      risk_per_trade: 0.02
+      volume_confirmation: true
+      min_atr_filter: 0.0
 
-# Strategy orchestrator configuration
+# Strategy orchestrator configuration - 7 STRATEGIES
 orchestrator:
+  # Base allocation (equal weight to start, AI will optimize)
   capital_allocation:
-    BollingerBounce: 0.25  # Less allocation to mean reversion in crypto
-    RSIMeanReversion: 0.25
-    BreakoutMomentum: 0.50  # More allocation to momentum (crypto trends hard)
+    BollingerBounce: 0.14
+    RSIMeanReversion: 0.14
+    KeltnerChannelStrategy: 0.14
+    VWAPReversionStrategy: 0.14
+    BreakoutMomentum: 0.15
+    MACrossoverStrategy: 0.15
+    DonchianBreakoutStrategy: 0.14
+  
   use_regime_detection: true
   use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)
   use_risk_management: true
-  use_sentiment_analysis: true  # Use FinBERT sentiment analysis for signal filtering
+  use_sentiment_analysis: true  # Use FinBERT sentiment analysis
   
-  # Regime-based allocation (AI/ML adaptive)
+  # Regime-based allocation (AI/ML adaptive - will shift capital dynamically)
   regime_allocation:
     bull_trending:
-      BreakoutMomentum: 0.60
-      BollingerBounce: 0.20
-      RSIMeanReversion: 0.20
+      # Favor trend-following in bull markets
+      BreakoutMomentum: 0.25
+      MACrossoverStrategy: 0.20
+      DonchianBreakoutStrategy: 0.20
+      BollingerBounce: 0.12
+      RSIMeanReversion: 0.10
+      KeltnerChannelStrategy: 0.08
+      VWAPReversionStrategy: 0.05
+    
     bear_trending:
-      BreakoutMomentum: 0.50
-      BollingerBounce: 0.25
-      RSIMeanReversion: 0.25
+      # Favor mean reversion in bear markets (buy dips)
+      RSIMeanReversion: 0.20
+      BollingerBounce: 0.18
+      VWAPReversionStrategy: 0.17
+      KeltnerChannelStrategy: 0.15
+      BreakoutMomentum: 0.15
+      DonchianBreakoutStrategy: 0.10
+      MACrossoverStrategy: 0.05
+    
     high_volatility:
-      BreakoutMomentum: 0.40
-      BollingerBounce: 0.30
-      RSIMeanReversion: 0.30
+      # Balanced approach in volatile markets
+      VWAPReversionStrategy: 0.20
+      KeltnerChannelStrategy: 0.18
+      BreakoutMomentum: 0.17
+      DonchianBreakoutStrategy: 0.15
+      BollingerBounce: 0.12
+      RSIMeanReversion: 0.10
+      MACrossoverStrategy: 0.08
+    
     low_volatility:
-      BreakoutMomentum: 0.30
-      BollingerBounce: 0.35
-      RSIMeanReversion: 0.35
+      # Favor mean reversion in ranging markets
+      BollingerBounce: 0.22
+      RSIMeanReversion: 0.20
+      KeltnerChannelStrategy: 0.18
+      VWAPReversionStrategy: 0.15
+      MACrossoverStrategy: 0.12
+      BreakoutMomentum: 0.08
+      DonchianBreakoutStrategy: 0.05
 
 # Risk management configuration
 risk_management:

@@ -10,6 +10,9 @@ from .ma_crossover import MACrossoverStrategy
 from .bollinger_bounce import BollingerBounce
 from .rsi_mean_reversion import RSIMeanReversion
 from .breakout_momentum import BreakoutMomentum
+from .keltner_channel import KeltnerChannelStrategy
+from .vwap_reversion import VWAPReversionStrategy
+from .donchian_breakout import DonchianBreakoutStrategy
 
 __all__ = [
     'BaseStrategy',
@@ -21,4 +24,7 @@ __all__ = [
     'BollingerBounce',
     'RSIMeanReversion',
     'BreakoutMomentum',
+    'KeltnerChannelStrategy',
+    'VWAPReversionStrategy',
+    'DonchianBreakoutStrategy',
 ]
