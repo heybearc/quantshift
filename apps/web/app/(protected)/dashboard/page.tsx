@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap, BarCh
 import { WinRateCard } from "@/components/dashboard/WinRateCard";
 import { MaxDrawdownCard } from "@/components/dashboard/MaxDrawdownCard";
 import { StrategyCard } from "@/components/dashboard/StrategyCard";
+import { RegimeIndicator } from "@/components/dashboard/RegimeIndicator";
 import { UsersStatsCard } from "@/components/dashboard/admin/UsersStatsCard";
 import { SessionsStatsCard } from "@/components/dashboard/admin/SessionsStatsCard";
 import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
@@ -258,6 +259,9 @@ export default function DashboardPage() {
                     <p className="text-slate-500 text-xs mt-1">All time, all bots</p>
                   </div>
                 </div>
+
+                {/* REGIME INDICATOR — Phase 5 */}
+                <RegimeIndicator botName={activeTab === 'all' ? 'quantshift-equity' : activeTab} />
 
                 {/* BOT TAB SWITCHER */}
                 <div>
