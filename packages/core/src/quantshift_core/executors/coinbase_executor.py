@@ -265,8 +265,9 @@ class CoinbaseExecutor:
         
         try:
             # Calculate start and end times
+            # Coinbase limits to 350 candles max, so 14 days × 24 hours = 336 candles (safe)
             end_time = int(datetime.utcnow().timestamp())
-            start_time = int((datetime.utcnow() - timedelta(days=30)).timestamp())
+            start_time = int((datetime.utcnow() - timedelta(days=14)).timestamp())
             
             # Fetch candles from Coinbase
             candles = self.coinbase_client.get_candles(
