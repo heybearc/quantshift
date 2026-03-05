@@ -279,20 +279,30 @@ class CoinbaseExecutor:
             
             # Convert to DataFrame
             # Coinbase SDK returns a response object with 'candles' attribute
-            # Each candle: [timestamp, low, high, open, close, volume]
+            # Each candle is an object with: start, low, high, open, close, volume
             candles_list = candles.candles if hasattr(candles, 'candles') else []
-            df = pd.DataFrame(
-                candles_list,
-                columns=['timestamp', 'low', 'high', 'open', 'close', 'volume']
-            )
+            
+            # Convert candle objects to list of dicts
+            data = []
+            for candle in candles_list:
+                data.append({
+                    'timestamp': int(candle.start),
+                    'open': float(candle.open),
+                    'high': float(candle.high),
+                    'low': float(candle.low),
+                    'close': float(candle.close),
+                    'volume': float(candle.volume)
+                })
+            
+            df = pd.DataFrame(data)
+            
+            if len(df) == 0:
+                logger.warning(f"No candle data returned for {symbol}")
+                return pd.DataFrame()
             
             # Convert timestamp to datetime
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
             df.set_index('timestamp', inplace=True)
-            
-            # Convert to numeric
-            for col in ['open', 'high', 'low', 'close', 'volume']:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
             
             # Sort by date (oldest first)
             df = df.sort_index()
