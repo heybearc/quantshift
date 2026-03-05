@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useState, useEffect } from 'react';
 import { AlertTriangle, TrendingDown, Shield, Activity, RefreshCw } from 'lucide-react';
+import { KellyStatsCard } from '@/components/dashboard/KellyStatsCard';
 
 interface RiskMetrics {
   portfolio_heat: number;
@@ -264,6 +265,11 @@ function RiskManagementContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Kelly Criterion Stats - Phase 5 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <KellyStatsCard botName="quantshift-equity" />
       </div>
 
       {/* Risk Limits Information */}
