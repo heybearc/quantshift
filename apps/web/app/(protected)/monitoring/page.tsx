@@ -288,7 +288,7 @@ export default function MonitoringPage() {
                             {formatPercent(strategy.winRate)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
-                            {strategy.sharpeRatio.toFixed(2)}
+                            {strategy.sharpeRatio != null ? strategy.sharpeRatio.toFixed(2) : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
                             {strategy.activePositions}
@@ -412,7 +412,7 @@ export default function MonitoringPage() {
 
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">Volatility</p>
-                    <p className="text-2xl font-bold text-white">{marketRegime.volatility.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-white">{marketRegime.volatility != null ? marketRegime.volatility.toFixed(2) : 'N/A'}</p>
                     <p className="text-xs text-slate-500 mt-1">ATR ratio</p>
                   </div>
 
@@ -425,7 +425,7 @@ export default function MonitoringPage() {
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">VIX Level</p>
                     <p className={`text-2xl font-bold ${marketRegime.vix > 30 ? 'text-red-400' : marketRegime.vix > 20 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {marketRegime.vix.toFixed(2)}
+                      {marketRegime.vix != null ? marketRegime.vix.toFixed(2) : 'N/A'}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">Fear index</p>
                   </div>
