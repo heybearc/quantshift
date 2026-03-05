@@ -285,13 +285,19 @@ class CoinbaseExecutor:
             # Convert candle objects to list of dicts
             data = []
             for candle in candles_list:
+                # Handle both object attributes and dict format
+                if hasattr(candle, '__dict__'):
+                    candle_dict = candle.__dict__
+                else:
+                    candle_dict = candle
+                
                 data.append({
-                    'timestamp': int(candle.start),
-                    'open': float(candle.open),
-                    'high': float(candle.high),
-                    'low': float(candle.low),
-                    'close': float(candle.close),
-                    'volume': float(candle.volume)
+                    'timestamp': int(candle_dict.get('start', candle_dict.get('timestamp', 0))),
+                    'open': float(candle_dict.get('open', 0)),
+                    'high': float(candle_dict.get('high', 0)),
+                    'low': float(candle_dict.get('low', 0)),
+                    'close': float(candle_dict.get('close', 0)),
+                    'volume': float(candle_dict.get('volume', 0))
                 })
             
             df = pd.DataFrame(data)
