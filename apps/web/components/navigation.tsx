@@ -39,6 +39,7 @@ export function Navigation() {
     { name: "Performance", href: "/performance", icon: BarChart3 },
     { name: "Regime Analysis", href: "/regime", icon: Brain },
     { name: "Risk Management", href: "/risk", icon: Shield },
+    { name: "Optimization", href: "/optimization", icon: Settings },
     { name: "Email Notifications", href: "/settings/notifications", icon: Mail },
     { name: "Help", href: "/help", icon: BookOpen },
   ];
