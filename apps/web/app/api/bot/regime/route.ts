@@ -92,35 +92,18 @@ export async function GET(request: NextRequest) {
       history = generateMockHistory(7);
     }
 
-    // Convert snake_case to camelCase for frontend
-    const currentFormatted = {
+    // Format response to match frontend expectations
+    return NextResponse.json({
       regime: current.regime,
-      method: current.method,
       confidence: current.confidence,
+      trend: 'N/A', // TODO: Add trend calculation to bot
+      volatility: null, // TODO: Add volatility to regime data
+      marketBreadth: null, // TODO: Add market breadth to regime data
+      vix: null, // TODO: Add VIX to regime data
+      method: current.method,
       riskMultiplier: current.risk_multiplier || 1.0,
       allocation: current.allocation,
       timestamp: current.timestamp,
-    };
-
-    return NextResponse.json({
-      current: currentFormatted,
-      history,
-      stats: {
-        totalChanges: calculateRegimeChanges(history),
-        averageConfidence: calculateAverageConfidence(history),
-        regimeDistribution: calculateRegimeDistribution(history),
-      },
-      mlModel: {
-        accuracy: 0.917,
-        trainDate: '2026-02-21T23:42:31Z',
-        features: [
-          { name: 'atr_ratio', importance: 0.294 },
-          { name: 'sma_50_slope', importance: 0.221 },
-          { name: 'sma_200_slope', importance: 0.205 },
-          { name: 'macd_signal', importance: 0.092 },
-          { name: 'macd', importance: 0.057 },
-        ],
-      },
     });
   } catch (error) {
     console.error('Error fetching regime data:', error);
