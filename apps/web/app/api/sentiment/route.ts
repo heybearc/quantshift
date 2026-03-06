@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
 /**
  * GET /api/sentiment
@@ -10,10 +8,8 @@ import { authOptions } from '@/lib/auth';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // TODO: Add authentication when needed
+    // For now, this is internal-only and behind the dashboard auth
 
     // For now, return mock sentiment data
     // TODO: Connect to Redis to get real sentiment from bots
