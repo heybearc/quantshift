@@ -18,7 +18,7 @@ import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard"
 import { EmergencyStopButton } from "@/components/emergency-stop-button";
 import EmergencyStopControl from "@/components/admin/EmergencyStopControl";
 
-type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto';
+type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
 
 interface BotStatus {
   botName: string;
@@ -124,10 +124,11 @@ export default function DashboardPage() {
 
   const equityBot = allBotStatus.find(b => b.botName === 'quantshift-equity');
   const cryptoBot = allBotStatus.find(b => b.botName === 'quantshift-crypto');
-  const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0);
-  const totalPl = (equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0);
-  const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0);
-  const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0);
+  const krakenBot = allBotStatus.find(b => b.botName === 'quantshift-kraken');
+  const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0) + (krakenBot?.portfolioValue || 0);
+  const totalPl = (equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0);
+  const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0) + (krakenBot?.positionsCount || 0);
+  const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0) + (krakenBot?.tradesCount || 0);
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
 
   const StatusDot = ({ status }: { status: string }) => {
@@ -143,16 +144,21 @@ export default function DashboardPage() {
 
   const borderFor = (s: string) => (s === 'RUNNING' || s === 'PRIMARY' || s === 'STANDBY') ? 'border-green-700/40' : s === 'STALE' ? 'border-yellow-700/40' : 'border-slate-700';
 
-  const BotDetail = ({ bot, isEquity }: { bot: BotStatus | undefined; isEquity: boolean }) => {
+  const BotDetail = ({ bot, botType }: { bot: BotStatus | undefined; botType: 'equity' | 'crypto' | 'kraken' }) => {
     if (!bot) return <div className="text-center text-slate-500 py-16">No data available yet — bot may not have heartbeated.</div>;
+    
+    const botConfig = {
+      equity: { name: 'Equity Bot', desc: 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 5 },
+      crypto: { name: 'Crypto Bot', desc: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 3 },
+      kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 8 }
+    }[botType];
+    
     return (
       <div className="space-y-4">
         <div className={`rounded-xl p-4 border flex items-center justify-between bg-slate-800/30 ${borderFor(bot.status)}`}>
           <div>
-            <p className="text-white font-semibold">{isEquity ? 'Equity Bot' : 'Crypto Bot'}</p>
-            <p className="text-slate-400 text-xs mt-0.5">
-              {isEquity ? 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy' : 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy'}
-            </p>
+            <p className="text-white font-semibold">{botConfig.name}</p>
+            <p className="text-slate-400 text-xs mt-0.5">{botConfig.desc}</p>
           </div>
           <div className="text-right">
             <StatusDot status={bot.status} />
@@ -164,17 +170,17 @@ export default function DashboardPage() {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Portfolio Value</p>
             <p className="text-white text-xl font-bold">{fmt(bot.portfolioValue)}</p>
-            <p className="text-slate-500 text-xs mt-1">{isEquity ? `Cash: ${fmt(bot.accountCash)}` : 'Paper balance'}</p>
+            <p className="text-slate-500 text-xs mt-1">{botType === 'equity' ? `Cash: ${fmt(bot.accountCash)}` : botType === 'kraken' ? 'Simulated' : 'Paper balance'}</p>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Unrealized P&L</p>
             <p className={`text-xl font-bold ${bot.unrealizedPl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(bot.unrealizedPl)}</p>
-            {isEquity && <p className="text-slate-500 text-xs mt-1">Realized: {fmt(bot.realizedPl)}</p>}
+            {botType === 'equity' && <p className="text-slate-500 text-xs mt-1">Realized: {fmt(bot.realizedPl)}</p>}
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Open Positions</p>
             <p className="text-white text-xl font-bold">{bot.positionsCount}</p>
-            <p className="text-slate-500 text-xs mt-1">{isEquity ? 'Max 5 allowed' : 'Max 3 allowed'}</p>
+            <p className="text-slate-500 text-xs mt-1">Max {botConfig.maxPos} allowed</p>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Total Trades</p>
@@ -183,7 +189,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {isEquity && (
+        {botType === 'equity' && (
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 flex items-center justify-between">
             <div>
               <p className="text-slate-400 text-xs">Buying Power</p>
@@ -271,6 +277,7 @@ export default function DashboardPage() {
                       { id: 'all' as BotTab, label: 'All Bots', icon: null, bot: undefined },
                       { id: 'quantshift-equity' as BotTab, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" />, bot: equityBot },
                       { id: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" />, bot: cryptoBot },
+                      { id: 'quantshift-kraken' as BotTab, label: 'Kraken Bot', icon: <Zap className="h-3.5 w-3.5" />, bot: krakenBot },
                     ]).map(({ id, label, icon, bot }) => (
                       <button
                         key={id}
@@ -294,9 +301,10 @@ export default function DashboardPage() {
                   {activeTab === 'all' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
-                        { bot: equityBot, isEquity: true, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
-                        { bot: cryptoBot, isEquity: false, tab: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
-                      ]).map(({ bot, isEquity, tab, label, sub, iconBg, icon }) => (
+                        { bot: equityBot, botType: 'equity' as const, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
+                        { bot: cryptoBot, botType: 'crypto' as const, tab: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
+                        { bot: krakenBot, botType: 'kraken' as const, tab: 'quantshift-kraken' as BotTab, label: 'Kraken Bot', sub: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x)', iconBg: 'bg-purple-900/50 border-purple-700/50', icon: <Zap className="h-5 w-5 text-purple-400" /> },
+                      ]).map(({ bot, botType, tab, label, sub, iconBg, icon }) => (
                         <div key={tab} className={`bg-slate-800/50 rounded-xl p-5 border ${borderFor(bot?.status || 'UNKNOWN')}`}>
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -315,8 +323,8 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="text-slate-400 text-xs">P&L</p>
-                              <p className={`font-semibold text-sm ${((bot?.unrealizedPl || 0) + (isEquity ? (bot?.realizedPl || 0) : 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {fmt((bot?.unrealizedPl || 0) + (isEquity ? (bot?.realizedPl || 0) : 0))}
+                              <p className={`font-semibold text-sm ${((bot?.unrealizedPl || 0) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {fmt((bot?.unrealizedPl || 0) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0))}
                               </p>
                             </div>
                             <div>
@@ -335,8 +343,9 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {activeTab === 'quantshift-equity' && <BotDetail bot={equityBot} isEquity={true} />}
-                  {activeTab === 'quantshift-crypto' && <BotDetail bot={cryptoBot} isEquity={false} />}
+                  {activeTab === 'quantshift-equity' && <BotDetail bot={equityBot} botType="equity" />}
+                  {activeTab === 'quantshift-crypto' && <BotDetail bot={cryptoBot} botType="crypto" />}
+                  {activeTab === 'quantshift-kraken' && <BotDetail bot={krakenBot} botType="kraken" />}
                 </div>
 
                 {/* EMERGENCY STOP CONTROLS — admin only */}

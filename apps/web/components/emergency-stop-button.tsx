@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 interface EmergencyStopButtonProps {
-  botName: 'quantshift-equity' | 'quantshift-crypto';
+  botName: 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
   botDisplayName?: string;
 }
 
@@ -13,7 +13,11 @@ export function EmergencyStopButton({ botName, botDisplayName }: EmergencyStopBu
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const displayName = botDisplayName || (botName === 'quantshift-equity' ? 'Equity Bot' : 'Crypto Bot');
+  const displayName = botDisplayName || (
+    botName === 'quantshift-equity' ? 'Equity Bot' : 
+    botName === 'quantshift-crypto' ? 'Crypto Bot' : 
+    'Kraken Bot'
+  );
 
   const handleEmergencyStop = async () => {
     setIsLoading(true);
