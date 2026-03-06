@@ -199,7 +199,7 @@ class QuantShiftUnifiedBot:
         )
     
     def _init_executor(self):
-        """Initialize broker-specific executor from config."""
+        """Initialize broker-specific executor."""
         executor_config = self.config.get('executor', {})
         executor_type = executor_config.get('type')
         
@@ -207,6 +207,8 @@ class QuantShiftUnifiedBot:
             self._init_alpaca_executor(executor_config)
         elif executor_type == 'coinbase':
             self._init_coinbase_executor(executor_config)
+        elif executor_type == 'kraken':
+            self._init_kraken_executor(executor_config)
         else:
             raise ValueError(f"Unknown executor type: {executor_type}")
     
@@ -309,6 +311,71 @@ class QuantShiftUnifiedBot:
             symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
             simulated_capital=simulated_capital
         )
+    
+    def _init_kraken_executor(self, config: Dict[str, Any]):
+        """Initialize Kraken executor for crypto margin trading."""
+        # Check if simulation mode is enabled
+        simulation_mode = config.get('simulation_mode', True)
+        
+        # Get API credentials from environment
+        api_key = os.getenv('KRAKEN_API_KEY', 'SIMULATION')
+        api_secret = os.getenv('KRAKEN_API_SECRET', 'SIMULATION')
+        
+        # In simulation mode, API keys are optional (only used for market data)
+        if not simulation_mode and (not api_key or api_key == 'SIMULATION'):
+            raise ValueError("Kraken API credentials required for live trading. Set KRAKEN_API_KEY and KRAKEN_API_SECRET")
+        
+        # Get symbols and risk config
+        use_dynamic_symbols = config.get('use_dynamic_symbols', False)
+        symbol_universe_config = config.get('symbol_universe')
+        symbols = config.get('symbols', ['XXBTZUSD', 'XETHZUSD']) if not use_dynamic_symbols else None
+        simulated_capital = config.get('simulated_capital', 5000.0)
+        risk_config = self.config.get('risk_management', {})
+        max_leverage = config.get('max_leverage', 2.0)
+        
+        # Choose executor based on simulation mode
+        if simulation_mode:
+            from quantshift_core.executors.simulated_kraken_executor import SimulatedKrakenExecutor
+            self.executor = SimulatedKrakenExecutor(
+                strategy=self.strategy,
+                kraken_api_key=api_key,
+                kraken_api_secret=api_secret,
+                symbols=symbols,
+                simulated_capital=simulated_capital,
+                risk_config=risk_config,
+                use_dynamic_symbols=use_dynamic_symbols,
+                symbol_universe_config=symbol_universe_config,
+                max_leverage=max_leverage
+            )
+            logger.info(
+                "simulated_kraken_executor_initialized",
+                mode="SIMULATION",
+                use_dynamic_symbols=use_dynamic_symbols,
+                symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
+                simulated_capital=simulated_capital,
+                max_leverage=max_leverage
+            )
+        else:
+            from quantshift_core.executors.kraken_executor import KrakenExecutor
+            self.executor = KrakenExecutor(
+                strategy=self.strategy,
+                kraken_api_key=api_key,
+                kraken_api_secret=api_secret,
+                symbols=symbols,
+                simulated_capital=simulated_capital,
+                risk_config=risk_config,
+                use_dynamic_symbols=use_dynamic_symbols,
+                symbol_universe_config=symbol_universe_config,
+                max_leverage=max_leverage
+            )
+            logger.info(
+                "kraken_executor_initialized",
+                mode="LIVE",
+                use_dynamic_symbols=use_dynamic_symbols,
+                symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
+                simulated_capital=simulated_capital,
+                max_leverage=max_leverage
+            )
     
     def _init_trailing_stop_manager(self):
         """Initialize trailing stop manager for position monitoring."""

@@ -1,0 +1,189 @@
+# QuantShift Kraken Bot Configuration
+# Margin trading and shorting support
+
+bot_name: "quantshift-kraken"
+bot_type: "crypto"
+
+# Executor configuration
+executor:
+  type: "kraken"
+  simulation_mode: true  # Set to false when ready for live trading
+  max_leverage: 2.0  # Conservative 2x leverage (max 5x available)
+  use_dynamic_symbols: false  # Use curated list for now
+  symbols:
+    # Kraken symbol format (XXBTZUSD = BTC-USD, XETHZUSD = ETH-USD)
+    - "XXBTZUSD"   # Bitcoin
+    - "XETHZUSD"   # Ethereum
+    - "SOLUSD"     # Solana
+    - "ADAUSD"     # Cardano
+    - "DOTUSD"     # Polkadot
+    - "MATICUSD"   # Polygon
+    - "AVAXUSD"    # Avalanche
+    - "LINKUSD"    # Chainlink
+  simulated_capital: 5000  # Start with $5,000
+
+# Strategy configuration - MEAN REVERSION FOCUSED (good for margin/shorts)
+strategies:
+  # Mean Reversion Strategies (better for range-bound + shorts)
+  - type: "RSIMeanReversion"
+    params:
+      rsi_period: 14
+      rsi_oversold: 25  # Lower for crypto
+      rsi_overbought: 75  # Higher for crypto
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_tp_multiplier: 4.0
+      risk_per_trade: 0.02
+      enable_shorts: true  # Enable short positions
+  
+  - type: "BollingerBounce"
+    params:
+      bb_period: 20
+      bb_std: 2.5  # Wider bands for crypto volatility
+      rsi_period: 14
+      rsi_entry_threshold: 50
+      atr_period: 14
+      atr_sl_multiplier: 2.0
+      risk_per_trade: 0.02
+      enable_shorts: true  # Enable short positions
+  
+  - type: "KeltnerChannelStrategy"
+    params:
+      ema_period: 20
+      atr_period: 14
+      atr_multiplier: 2.5
+      rsi_period: 14
+      rsi_buy_threshold: 40
+      rsi_sell_threshold: 60
+      risk_per_trade: 0.02
+      volume_confirmation: true
+      enable_shorts: true  # Enable short positions
+
+# Risk management - MARGIN TRADING SPECIFIC
+risk_management:
+  # Leverage and margin limits
+  max_leverage: 2.0  # Conservative 2x (can go up to 5x)
+  max_margin_usage: 0.70  # Use max 70% of available margin
+  liquidation_buffer: 0.30  # Keep 30% buffer from liquidation price
+  
+  # Position limits (more conservative for margin)
+  max_position_size: 0.08  # Max 8% per position (lower for margin risk)
+  max_positions: 6  # Max 6 concurrent positions
+  max_capital_deployed: 0.70  # Max 70% of capital deployed
+  
+  # Portfolio risk limits
+  max_portfolio_heat: 0.12  # 12% max total risk (lower for margin)
+  max_position_correlation: 0.8
+  max_sector_exposure: 0.50
+  daily_loss_limit: 0.06  # 6% daily loss limit (tighter for margin)
+  max_drawdown_limit: 0.15  # 15% max drawdown
+  
+  # Position sizing
+  use_kelly_sizing: false  # Disable Kelly until we have 50+ trades
+  kelly_fraction: 0.25
+  kelly_min_trades: 50
+  default_position_size: 0.025  # 2.5% per trade (conservative for margin)
+  
+  # Margin-specific risk controls
+  margin_call_action: "close_all"  # Close all positions on margin call
+  monitor_margin_level: true  # Continuously monitor margin levels
+  min_margin_level: 1.5  # Minimum margin level (1.5x = 150%)
+  margin_alert_threshold: 2.0  # Alert if margin level drops below 2.0x
+  
+  # Trailing stop-loss configuration
+  trailing_stops:
+    enabled: true
+    activation_threshold_pct: 0.015  # Activate after +1.5% gain
+    trail_distance_atr_mult: 2.0  # Trail 2.0×ATR below high water mark
+    min_trail_distance_pct: 0.008  # Minimum 0.8% trail distance
+    update_frequency_seconds: 30
+    only_improve_stop: true
+
+# Phase 2: Market Regime Detection
+market_regime:
+  enabled: true
+  use_ml_classifier: true  # Use ML regime detection
+  fallback_to_rules: true  # Fallback to rule-based if ML unavailable
+  regime_update_frequency: 3600  # Update regime every hour
+  
+  # Regime-based risk multipliers (more conservative for margin)
+  regime_risk_multipliers:
+    BULL_TRENDING: 1.0      # Normal risk in bull markets
+    BEAR_TRENDING: 0.8      # Reduce risk 20% in bear (but shorts work!)
+    HIGH_VOL_CHOPPY: 0.6    # Reduce risk 40% in high volatility
+    LOW_VOL_RANGE: 1.2      # Increase risk 20% in range-bound (good for mean reversion)
+    CRISIS: 0.3             # Reduce risk 70% in crisis
+  
+  # Strategy allocation by regime (mean reversion focus)
+  regime_strategy_allocation:
+    BULL_TRENDING:
+      RSIMeanReversion: 0.30
+      BollingerBounce: 0.40
+      KeltnerChannelStrategy: 0.30
+    BEAR_TRENDING:  # Shorts work well here
+      RSIMeanReversion: 0.40  # Mean reversion + shorts
+      BollingerBounce: 0.30
+      KeltnerChannelStrategy: 0.30
+    HIGH_VOL_CHOPPY:
+      RSIMeanReversion: 0.50  # Mean reversion best in choppy
+      BollingerBounce: 0.50
+      KeltnerChannelStrategy: 0.00
+    LOW_VOL_RANGE:  # Best for mean reversion
+      RSIMeanReversion: 0.40
+      BollingerBounce: 0.40
+      KeltnerChannelStrategy: 0.20
+    CRISIS:
+      RSIMeanReversion: 0.00  # Disable all in crisis
+      BollingerBounce: 0.00
+      KeltnerChannelStrategy: 0.00
+
+# Phase 3: Advanced Risk Management
+advanced_risk:
+  # Kelly Criterion
+  kelly_criterion:
+    enabled: false  # Disabled until 50+ trades
+    fraction: 0.25  # Use 25% of Kelly recommendation
+    min_trades_required: 50
+    recalculation_frequency: 10  # Recalculate every 10 trades
+  
+  # Sentiment analysis
+  sentiment_analysis:
+    enabled: true
+    provider: "finbert"  # Using FinBERT
+    sentiment_threshold: 0.3  # Only trade if sentiment > 0.3 or < -0.3
+    sentiment_weight: 0.3  # 30% weight in position sizing
+    update_frequency: 3600  # Update every hour
+
+# Phase 4: Adaptive Optimization & ML Learning
+adaptive_optimization:
+  # Parameter optimization
+  enable_parameter_optimization: true
+  optimization_interval_days: 7
+  min_trades_for_optimization: 30
+  
+  # Strategy auto-disable
+  enable_auto_disable: true
+  min_win_rate: 0.35  # Lower threshold for crypto
+  min_sharpe: 0.3
+  performance_lookback_days: 14
+  reenable_check_days: 3
+  
+  # Regime prediction tracking
+  enable_regime_tracking: true
+  regime_accuracy_window_days: 30
+  regime_comparison_interval_hours: 24
+
+# Redis configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+# Bot timing
+cycle_interval_seconds: 60  # Run strategy every 1 minute
+heartbeat_interval_seconds: 30  # Send heartbeat every 30 seconds
+
+# Prometheus metrics
+metrics:
+  enabled: true
+  port: 9202  # Different port from other bots (9200=equity, 9201=coinbase, 9202=kraken)
