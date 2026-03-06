@@ -908,9 +908,9 @@ class QuantShiftUnifiedBot:
                 INSERT INTO bot_status (
                     id, bot_name, status, last_heartbeat, account_equity, account_cash,
                     buying_power, portfolio_value, unrealized_pl, realized_pl,
-                    positions_count, created_at, updated_at
+                    positions_count, trades_count, created_at, updated_at
                 )
-                VALUES (DEFAULT, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, 0, NOW(), NOW())
                 ON CONFLICT (bot_name) DO UPDATE SET
                     status = EXCLUDED.status,
                     last_heartbeat = EXCLUDED.last_heartbeat,
@@ -923,7 +923,8 @@ class QuantShiftUnifiedBot:
                     positions_count = EXCLUDED.positions_count,
                     updated_at = NOW()
             """, (
-                self.bot_name,
+                self.bot_name,  # id (same as bot_name)
+                self.bot_name,  # bot_name
                 bot_status,
                 float(account.equity),
                 float(account.cash),
