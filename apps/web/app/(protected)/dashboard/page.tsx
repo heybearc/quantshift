@@ -17,6 +17,7 @@ import { AuditStatsCard } from "@/components/dashboard/admin/AuditStatsCard";
 import { SystemHealthCard } from "@/components/dashboard/admin/SystemHealthCard";
 import { EmergencyStopButton } from "@/components/emergency-stop-button";
 import EmergencyStopControl from "@/components/admin/EmergencyStopControl";
+import { SentimentOverview } from "@/components/dashboard/SentimentOverview";
 
 type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
 
@@ -347,6 +348,9 @@ export default function DashboardPage() {
                   {activeTab === 'quantshift-crypto' && <BotDetail bot={cryptoBot} botType="crypto" />}
                   {activeTab === 'quantshift-kraken' && <BotDetail bot={krakenBot} botType="kraken" />}
                 </div>
+
+                {/* MARKET SENTIMENT — AI-powered sentiment analysis */}
+                <SentimentOverview />
 
                 {/* EMERGENCY STOP CONTROLS — admin only */}
                 {isAdmin && <EmergencyStopControl />}
