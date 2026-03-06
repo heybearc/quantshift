@@ -131,6 +131,7 @@ class SimulatedKrakenExecutor:
             equity=equity,
             cash=self._cash,
             buying_power=free_margin * self.max_leverage,
+            portfolio_value=equity,  # For dashboard display
             margin_used=margin_used,
             maintenance_margin=margin_used * 0.4  # 40% maintenance margin
         )
