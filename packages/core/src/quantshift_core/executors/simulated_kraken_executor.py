@@ -455,6 +455,17 @@ class SimulatedKrakenExecutor:
         """
         return True
     
+    def get_symbols(self) -> List[str]:
+        """
+        Get list of symbols to trade.
+        
+        Returns:
+            List of trading symbols
+        """
+        if self.symbol_universe:
+            return self.symbol_universe.get_symbols()
+        return self.symbols or []
+    
     def recover_positions_on_startup(self) -> Dict[str, Any]:
         """
         Recover positions on startup (no-op for simulation).
