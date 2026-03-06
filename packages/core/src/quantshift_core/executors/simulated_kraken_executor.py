@@ -422,10 +422,18 @@ class SimulatedKrakenExecutor:
                 return None
             
             result = response.get('result', {})
-            ohlc_data = result.get(symbol, [])
+            
+            # Kraken returns data with internal symbol names (e.g., XXBTZUSD for XBTUSD)
+            # Get the first key that's not 'last' (which is the timestamp)
+            data_keys = [k for k in result.keys() if k != 'last']
+            if not data_keys:
+                logger.warning(f"No OHLC data returned for {symbol}")
+                return None
+            
+            ohlc_data = result.get(data_keys[0], [])
             
             if not ohlc_data:
-                logger.warning(f"No OHLC data returned for {symbol}")
+                logger.warning(f"No OHLC data in result for {symbol}")
                 return None
             
             # Convert to DataFrame
