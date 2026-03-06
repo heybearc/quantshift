@@ -186,6 +186,15 @@ adaptive_optimization:
   regime_accuracy_window_days: 30  # Days to calculate accuracy over
   regime_comparison_interval_hours: 24  # Hours between comparisons
 
+  # Trailing stop-loss configuration
+  trailing_stops:
+    enabled: true  # Enable trailing stops
+    activation_threshold_pct: 0.015  # Activate after +1.5% gain (crypto is more volatile)
+    trail_distance_atr_mult: 2.0  # Trail 2.0×ATR below high water mark (wider for crypto)
+    min_trail_distance_pct: 0.008  # Minimum 0.8% trail distance (wider for crypto)
+    update_frequency_seconds: 30  # Check positions every 30 seconds
+    only_improve_stop: true  # Never move stop against us (only higher for longs)
+
 # Redis configuration
 redis:
   host: "localhost"

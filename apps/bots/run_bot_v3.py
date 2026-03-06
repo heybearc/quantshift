@@ -317,14 +317,14 @@ class QuantShiftUnifiedBot:
             risk_config = self.config.get('risk_management', {})
             trailing_stop_config = risk_config.get('trailing_stops', {})
             
-            # Only initialize for Alpaca executor (not supported for Coinbase yet)
-            if not isinstance(self.executor, AlpacaExecutor):
-                logger.info("trailing_stop_manager_skipped", reason="not_alpaca_executor")
-                return
-            
             # Check if trailing stops are enabled
             if not trailing_stop_config.get('enabled', False):
                 logger.info("trailing_stop_manager_disabled", reason="config_disabled")
+                return
+            
+            # Verify executor supports stop orders (both Alpaca and Coinbase do)
+            if not hasattr(self.executor, 'place_stop_order') or not hasattr(self.executor, 'cancel_order'):
+                logger.warning("trailing_stop_manager_skipped", reason="executor_missing_stop_order_methods")
                 return
             
             # Initialize database writer for persistence (will be set later when db_conn is available)
@@ -337,8 +337,10 @@ class QuantShiftUnifiedBot:
                 config=trailing_stop_config
             )
             
+            executor_type = "Alpaca" if isinstance(self.executor, AlpacaExecutor) else "Coinbase"
             logger.info(
                 "trailing_stop_manager_initialized",
+                executor=executor_type,
                 enabled=trailing_stop_config.get('enabled'),
                 activation_threshold=f"{trailing_stop_config.get('activation_threshold_pct', 0.01) * 100:.1f}%",
                 trail_distance=f"{trailing_stop_config.get('trail_distance_atr_mult', 1.5)}×ATR"

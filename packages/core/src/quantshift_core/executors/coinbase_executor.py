@@ -660,6 +660,65 @@ class CoinbaseExecutor:
             logger.error(f"Failed to close position {symbol}: {e}", exc_info=True)
             return None
     
+    def place_stop_order(self, symbol: str, quantity: float, stop_price: float) -> Optional[str]:
+        """
+        Place a stop-loss order (for trailing stop updates).
+        
+        Args:
+            symbol: Trading symbol
+            quantity: Order quantity
+            stop_price: Stop price
+            
+        Returns:
+            Order ID if successful, None otherwise
+        """
+        try:
+            import time
+            
+            order_config = {
+                "client_order_id": f"trailing_sl_{symbol}_{int(time.time())}",
+                "product_id": symbol,
+                "side": "SELL",
+                "order_configuration": {
+                    "stop_limit_stop_limit_gtc": {
+                        "base_size": str(quantity),
+                        "limit_price": str(stop_price * 0.995),  # 0.5% slippage buffer
+                        "stop_price": str(stop_price),
+                        "stop_direction": "STOP_DIRECTION_STOP_DOWN"
+                    }
+                }
+            }
+            
+            response = self.coinbase_client.create_order(**order_config)
+            order_id = response.get('order_id') or response.get('success_response', {}).get('order_id')
+            
+            logger.info(
+                f"Stop order placed: {symbol} qty={quantity} stop=${stop_price:.2f} order_id={order_id}"
+            )
+            return str(order_id) if order_id else None
+            
+        except Exception as e:
+            logger.error(f"Failed to place stop order for {symbol}: {e}")
+            return None
+    
+    def cancel_order(self, order_id: str) -> bool:
+        """
+        Cancel an existing order.
+        
+        Args:
+            order_id: Order ID to cancel
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            response = self.coinbase_client.cancel_orders([order_id])
+            logger.info(f"Order cancelled: {order_id}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to cancel order {order_id}: {e}")
+            return False
+    
     def _place_take_profit_order(self, symbol: str, quantity: float, limit_price: float) -> dict:
         """
         Place a take-profit limit order for a position.
