@@ -906,11 +906,11 @@ class QuantShiftUnifiedBot:
             cursor = self.db_conn.cursor()
             cursor.execute("""
                 INSERT INTO bot_status (
-                    bot_name, status, last_heartbeat, account_equity, account_cash,
+                    id, bot_name, status, last_heartbeat, account_equity, account_cash,
                     buying_power, portfolio_value, unrealized_pl, realized_pl,
                     positions_count, created_at, updated_at
                 )
-                VALUES (%s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                VALUES (DEFAULT, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                 ON CONFLICT (bot_name) DO UPDATE SET
                     status = EXCLUDED.status,
                     last_heartbeat = EXCLUDED.last_heartbeat,
