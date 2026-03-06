@@ -348,3 +348,89 @@ class DatabaseWriter:
         except Exception as e:
             logger.error(f"Error recording daily performance: {e}")
             self.conn.rollback()
+    
+    def update_position_trailing_stop(
+        self,
+        symbol: str,
+        high_water_mark: float,
+        current_stop_loss: float,
+        trailing_stop_active: bool,
+        stop_order_id: Optional[str] = None
+    ):
+        """
+        Update trailing stop fields for a position.
+        
+        Args:
+            symbol: Trading symbol
+            high_water_mark: Highest price reached
+            current_stop_loss: Current stop-loss price
+            trailing_stop_active: Whether trailing stop is active
+            stop_order_id: Broker stop order ID
+        """
+        try:
+            cursor = self.conn.cursor()
+            
+            cursor.execute("""
+                UPDATE positions
+                SET high_water_mark = %s,
+                    current_stop_loss = %s,
+                    trailing_stop_active = %s,
+                    stop_order_id = %s,
+                    last_stop_update = %s,
+                    updated_at = %s
+                WHERE bot_name = %s AND symbol = %s
+            """, (
+                high_water_mark,
+                current_stop_loss,
+                trailing_stop_active,
+                stop_order_id,
+                datetime.now(),
+                datetime.now(),
+                self.bot_name,
+                symbol
+            ))
+            
+            self.conn.commit()
+            logger.debug(f"Updated trailing stop for {symbol}: HWM=${high_water_mark:.2f}, Stop=${current_stop_loss:.2f}")
+            
+        except Exception as e:
+            logger.error(f"Error updating trailing stop for {symbol}: {e}")
+            self.conn.rollback()
+    
+    def get_open_positions_with_trailing_stops(self) -> List[Dict[str, Any]]:
+        """
+        Get all open positions with trailing stop data.
+        
+        Returns:
+            List of position dicts with trailing stop fields
+        """
+        try:
+            cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+            
+            cursor.execute("""
+                SELECT 
+                    symbol,
+                    bot_name,
+                    quantity,
+                    entry_price,
+                    current_price,
+                    stop_loss,
+                    take_profit,
+                    high_water_mark,
+                    current_stop_loss,
+                    trailing_stop_active,
+                    stop_order_id,
+                    take_profit_order_id,
+                    strategy,
+                    entered_at
+                FROM positions
+                WHERE bot_name = %s
+                ORDER BY entered_at DESC
+            """, (self.bot_name,))
+            
+            positions = cursor.fetchall()
+            return [dict(pos) for pos in positions]
+            
+        except Exception as e:
+            logger.error(f"Error fetching positions with trailing stops: {e}")
+            return []

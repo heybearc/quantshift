@@ -22,6 +22,8 @@ import time
 import signal
 import argparse
 import yaml
+import json
+import pandas as pd
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
@@ -45,6 +47,7 @@ from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
 from quantshift_core.metrics import BotMetrics
 from quantshift_core.strategy_performance_tracker import StrategyPerformanceTracker
+from quantshift_core.trailing_stop_manager import TrailingStopManager
 
 import psycopg2
 
@@ -84,6 +87,7 @@ class QuantShiftUnifiedBot:
         self.executor = None
         self.db_conn = None
         self.performance_tracker = None
+        self.trailing_stop_manager = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
         self.recovered_positions = {}
         
@@ -106,6 +110,7 @@ class QuantShiftUnifiedBot:
         self._init_state_manager()
         self._init_strategies()
         self._init_executor()
+        self._init_trailing_stop_manager()
         
         # Recover positions from Redis (for failover/restart)
         self._recover_positions()
@@ -304,6 +309,45 @@ class QuantShiftUnifiedBot:
             symbol_count=len(self.executor.symbols) if self.executor.symbols else "lazy_loading",
             simulated_capital=simulated_capital
         )
+    
+    def _init_trailing_stop_manager(self):
+        """Initialize trailing stop manager for position monitoring."""
+        try:
+            # Get trailing stop configuration
+            risk_config = self.config.get('risk_management', {})
+            trailing_stop_config = risk_config.get('trailing_stops', {})
+            
+            # Only initialize for Alpaca executor (not supported for Coinbase yet)
+            if not isinstance(self.executor, AlpacaExecutor):
+                logger.info("trailing_stop_manager_skipped", reason="not_alpaca_executor")
+                return
+            
+            # Check if trailing stops are enabled
+            if not trailing_stop_config.get('enabled', False):
+                logger.info("trailing_stop_manager_disabled", reason="config_disabled")
+                return
+            
+            # Initialize database writer for persistence (will be set later when db_conn is available)
+            db_writer = None  # Will be set in run() after database connection
+            
+            # Initialize trailing stop manager
+            self.trailing_stop_manager = TrailingStopManager(
+                executor=self.executor,
+                db_writer=db_writer,
+                config=trailing_stop_config
+            )
+            
+            logger.info(
+                "trailing_stop_manager_initialized",
+                enabled=trailing_stop_config.get('enabled'),
+                activation_threshold=f"{trailing_stop_config.get('activation_threshold_pct', 0.01) * 100:.1f}%",
+                trail_distance=f"{trailing_stop_config.get('trail_distance_atr_mult', 1.5)}×ATR"
+            )
+            
+        except Exception as e:
+            logger.error("trailing_stop_manager_init_failed", error=str(e))
+            # Don't raise - trailing stops are optional enhancement
+            self.trailing_stop_manager = None
     
     def _recover_positions(self):
         """
@@ -947,6 +991,67 @@ class QuantShiftUnifiedBot:
                 except:
                     pass
     
+    def _update_trailing_stops(self):
+        """Update trailing stops for all open positions."""
+        try:
+            # Get current positions
+            positions = self.executor.get_positions()
+            
+            if not positions:
+                return
+            
+            # Build current prices dict
+            current_prices = {}
+            atr_values = {}
+            
+            for pos in positions:
+                symbol = pos.symbol
+                current_prices[symbol] = float(pos.current_price)
+                
+                # Calculate ATR for the symbol
+                try:
+                    # Fetch recent bars for ATR calculation
+                    df = self.executor.get_market_data(symbol, days=30)
+                    if df is not None and len(df) >= 14:
+                        # Calculate ATR (Average True Range)
+                        high = df['high']
+                        low = df['low']
+                        close = df['close']
+                        
+                        tr1 = high - low
+                        tr2 = abs(high - close.shift())
+                        tr3 = abs(low - close.shift())
+                        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+                        atr = tr.rolling(window=14).mean().iloc[-1]
+                        
+                        atr_values[symbol] = float(atr)
+                    else:
+                        # Fallback: estimate ATR as 2% of price
+                        atr_values[symbol] = current_prices[symbol] * 0.02
+                        logger.debug("atr_estimated_fallback", symbol=symbol, atr=atr_values[symbol])
+                        
+                except Exception as e:
+                    # Fallback: estimate ATR as 2% of price
+                    atr_values[symbol] = current_prices[symbol] * 0.02
+                    logger.warning("atr_calculation_failed", symbol=symbol, error=str(e))
+            
+            # Update trailing stops
+            self.trailing_stop_manager.update_positions(current_prices, atr_values)
+            
+            # Get stats for logging
+            stats = self.trailing_stop_manager.get_stats()
+            if stats['active_trailing_stops'] > 0:
+                logger.info(
+                    "trailing_stops_updated",
+                    total_positions=stats['total_positions'],
+                    active_trailing=stats['active_trailing_stops'],
+                    locked_profit=f"${stats['total_locked_profit']:.2f}"
+                )
+            
+        except Exception as e:
+            logger.error("trailing_stop_update_error", error=str(e), exc_info=True)
+            raise
+    
     def run(self):
         """Main bot loop with hot-standby failover support."""
         self.running = True
@@ -1058,6 +1163,15 @@ class QuantShiftUnifiedBot:
                                 orders_executed=len(executed_orders),
                                 duration=cycle_duration
                             )
+                            
+                            # Update trailing stops if manager is initialized
+                            if self.trailing_stop_manager:
+                                try:
+                                    self._update_trailing_stops()
+                                except Exception as e:
+                                    logger.error("trailing_stop_update_failed", error=str(e), exc_info=True)
+                                    # Don't fail the cycle if trailing stops fail
+                            
                         except Exception as e:
                             # Record cycle error
                             self.metrics.record_cycle_error(type(e).__name__)
