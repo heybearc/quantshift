@@ -466,10 +466,14 @@ class SimulatedKrakenExecutor:
             return self.symbol_universe.get_symbols()
         return self.symbols or []
     
-    def recover_positions_on_startup(self) -> Dict[str, Any]:
+    def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
         """
         Recover positions on startup (no-op for simulation).
         
+        Args:
+            db_session: Database session (unused in simulation)
+            bot_name: Name of the bot (unused in simulation)
+            
         Returns:
             Empty recovery stats
         """
