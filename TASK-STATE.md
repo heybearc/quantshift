@@ -38,6 +38,12 @@ Fixed 404 error on production URL (`https://quantshift.io/monitoring`) by deploy
   - Monitoring page now accessible at https://quantshift.io/monitoring
   - Identified MCP tool deployment issue (always targets BLUE)
   - Documented workaround: verify HAProxy status before deployment
+- ✅ **Dashboard P&L Verification** (COMPLETE)
+  - Verified bots are syncing data correctly to database
+  - Equity bot: $92,974.43 portfolio, -$679.58 unrealized P&L, 1 position
+  - Crypto bot: $10,000 portfolio, $0 P&L, 3 positions, 3 trades
+  - Dashboard displaying real-time data correctly
+  - Issue was misdiagnosis - system working as designed
 
 **2026-03-05:**
 - ✅ **Phase 4: Adaptive Optimization & ML Learning** (COMPLETE)
@@ -655,7 +661,7 @@ Fixed 404 error on production URL (`https://quantshift.io/monitoring`) by deploy
 ---
 
 ## Known Issues
-- **Dashboard P&L display** - Shows $0, unrealized gains/losses not displayed (BACKLOG - needs positions/trades/performance data wiring)
+- ~~**Dashboard P&L display**~~ - ✅ RESOLVED (bots syncing correctly: $102,974 portfolio, -$679 P&L, real-time data)
 - **Coinbase API unreliable** - `get_products()` hangs, using curated list workaround (tracked in IMPLEMENTATION-PLAN.md)
 - **ML models not yet trained** - Training scripts ready, need to run (Phase 0.4)
 - **Primary bot (CT100) not updated with AI/ML code yet** - Standby has full ML platform
