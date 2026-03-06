@@ -1367,7 +1367,129 @@ None currently identified.
 
 ---
 
-## 📊 Effort Sizing Guide
+## � BACKLOG & UPCOMING FEATURES
+
+### Phase 1.5: Critical Safety Features ✅ COMPLETE (Mar 6, 2026)
+
+#### Trailing Stop-Loss Implementation ✅ COMPLETE
+- [x] ✅ Create PositionTracker class for high water mark tracking
+- [x] ✅ Create TrailingStopManager for position monitoring
+- [x] ✅ Database migration (6 new columns in positions table)
+- [x] ✅ AlpacaExecutor integration (place_stop_order, cancel_order)
+- [x] ✅ CoinbaseExecutor integration (stop_limit_stop_limit_gtc orders)
+- [x] ✅ Bot loop integration with ATR calculation
+- [x] ✅ Configuration added to equity_config.yaml and crypto_config.yaml
+- [x] ✅ Database writer methods (update_position_trailing_stop)
+- [x] ✅ Deployed to PRIMARY (CT 100) - both equity and crypto bots
+- [x] ✅ Deployed to STANDBY (CT 101) - code ready for failover
+- **Status:** Production deployed, tracking 5 positions (2 equity, 3 crypto)
+- **Config:** Equity: 1% activation, 1.5×ATR trail | Crypto: 1.5% activation, 2.0×ATR trail
+- **Files:** `position_tracker.py`, `trailing_stop_manager.py`, `add_trailing_stop_columns.sql`
+
+### Phase 6: Dashboard Enhancements (Upcoming)
+
+#### 6.1 Sentiment Visualization (4-6 hours) 📋 PLANNED
+**Goal:** Add real-time sentiment analysis visualization to dashboard
+
+**Backend (1 hour):**
+- [ ] Create `/api/sentiment` endpoint - current sentiment scores
+- [ ] Create `/api/news` endpoint - fetch news with sentiment
+- [ ] Create `/api/sentiment/history` endpoint - historical sentiment
+- [ ] Database table: `sentiment_history` (symbol, score, label, timestamp)
+
+**Frontend Components (2 hours):**
+- [ ] `SentimentGauge.tsx` - visual gauge with color-coded indicator
+- [ ] `SentimentChart.tsx` - time-series chart with price overlay
+- [ ] `NewsFeed.tsx` - scrollable news list with sentiment scores
+- [ ] `SymbolSentiment.tsx` - per-symbol sentiment badges
+
+**Integration (1 hour):**
+- [ ] Add sentiment widget to dashboard page
+- [ ] Add sentiment indicators to positions page
+- [ ] Add sentiment to trade history
+
+**News API Setup (30 min):**
+- [ ] Sign up for NewsAPI.org (free tier: 100 req/day, paid: $449/month)
+- [ ] Add API key to environment variables
+- [ ] Configure rate limiting and caching (Redis)
+- [ ] Test API integration
+
+**Features:**
+- Real-time sentiment gauges on dashboard
+- Sentiment charts showing trends over time
+- Per-position sentiment indicators
+- News feed with sentiment scores
+- Sentiment vs price correlation
+
+**Status:** Ready to implement - awaiting approval
+**Estimated Time:** 4-6 hours
+**Cost:** Free tier or $449/month for production
+
+#### 6.2 Streaming News Feed Integration (included in 6.1)
+- [ ] NewsAPI.org integration (recommended)
+- [ ] Real-time financial news feed
+- [ ] Automatic sentiment scoring via FinBERT
+- [ ] Filter by symbol, source, date
+- [ ] Auto-refresh every 5-15 minutes
+
+**Alternative APIs:**
+- Alpha Vantage: $49.99/month (financial-specific)
+- Finnhub: $59.99/month (real-time financial news)
+
+### Phase 7: Crypto Exchange Migration (1 week) 📋 PLANNED
+
+#### 7.1 Kraken Integration for Shorting Capability
+**Goal:** Enable margin trading and short positions on crypto
+
+**Why Kraken:**
+- ✅ Margin trading: Up to 5× leverage
+- ✅ Perpetual futures: Up to 50× leverage
+- ✅ US-compliant and regulated
+- ✅ 40-57% lower fees than Coinbase (0.16%/0.26% vs 0.40%/0.60%)
+- ✅ Excellent API for algo trading
+- ✅ Advanced order types
+
+**Migration Tasks:**
+- [ ] Create Kraken account and complete KYC (1-2 hours)
+- [ ] Enable margin trading (additional verification)
+- [ ] Generate API keys and fund account
+- [ ] Create `KrakenExecutor` class (4-6 hours)
+  - Implement margin trading methods
+  - Add short position support
+  - Place/cancel stop orders
+  - Handle margin levels and liquidation
+- [ ] Update `crypto_config.yaml` with Kraken settings
+- [ ] Add Kraken-specific risk management
+  - Max leverage limits (recommend 2-3×)
+  - Liquidation monitoring
+  - Margin level alerts
+- [ ] Test on STANDBY bot (1-2 days)
+- [ ] Deploy to PRIMARY (1 hour)
+
+**Cost/Benefit:**
+- Development: $0 (we build it)
+- Fee savings: $720-1,020/month on $10k daily volume
+- Capability: Shorting unlocked (strategic advantage)
+
+**Risk Mitigation:**
+- Start with low leverage (2-3×)
+- Use trailing stops (already implemented)
+- Strict position limits
+- Monitor margin levels
+- Emergency stop functionality (already have)
+
+**Status:** Planned - awaiting approval
+**Estimated Time:** 1 week including testing
+**Priority:** High - enables shorting strategies
+
+**Alternatives Considered:**
+- ❌ Binance.us: No margin/futures (removed 2023)
+- ❌ Binance.com: Best globally but not US-accessible
+- ❌ Coinbase: Current, but no shorting capability
+
+---
+
+## �📊 Effort Sizing Guide
 
 - **S (Small):** 1-4 hours - Quick fixes, minor tweaks
 - **M (Medium):** 1-2 days - Standard features, moderate bugs
