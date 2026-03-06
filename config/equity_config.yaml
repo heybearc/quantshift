@@ -167,6 +167,15 @@ risk_management:
   kelly_fraction: 0.25  # Use 25% Kelly for safety (when enabled)
   kelly_min_trades: 50  # Minimum trades required for Kelly calculation
   default_position_size: 0.02  # 2% per trade (conservative)
+  
+  # Trailing stop-loss configuration
+  trailing_stops:
+    enabled: true  # Enable trailing stops
+    activation_threshold_pct: 0.01  # Activate after +1% gain from entry
+    trail_distance_atr_mult: 1.5  # Trail 1.5×ATR below high water mark
+    min_trail_distance_pct: 0.005  # Minimum 0.5% trail distance
+    update_frequency_seconds: 30  # Check positions every 30 seconds
+    only_improve_stop: true  # Never move stop against us (only higher for longs)
 
 # Phase 4: Adaptive Optimization & ML Learning
 adaptive_optimization:

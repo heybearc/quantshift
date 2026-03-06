@@ -425,6 +425,53 @@ class AlpacaExecutor:
         except Exception as e:
             logger.warning(f"Could not check market clock: {e} — assuming closed")
             return False
+    
+    def place_stop_order(self, symbol: str, quantity: float, stop_price: float) -> Optional[str]:
+        """
+        Place a stop-loss order (for trailing stop updates).
+        
+        Args:
+            symbol: Trading symbol
+            quantity: Order quantity
+            stop_price: Stop price
+            
+        Returns:
+            Order ID if successful, None otherwise
+        """
+        try:
+            sl_request = StopOrderRequest(
+                symbol=symbol,
+                qty=quantity,
+                side=OrderSide.SELL,
+                time_in_force=TimeInForce.GTC,
+                stop_price=round(stop_price, 2)
+            )
+            order = self.alpaca_client.submit_order(sl_request)
+            logger.info(
+                f"Stop order placed: {symbol} qty={quantity} stop=${stop_price:.2f} order_id={order.id}"
+            )
+            return str(order.id)
+        except Exception as e:
+            logger.error(f"Failed to place stop order for {symbol}: {e}")
+            return None
+    
+    def cancel_order(self, order_id: str) -> bool:
+        """
+        Cancel an existing order.
+        
+        Args:
+            order_id: Order ID to cancel
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.alpaca_client.cancel_order_by_id(order_id)
+            logger.info(f"Order cancelled: {order_id}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to cancel order {order_id}: {e}")
+            return False
 
     def _reset_daily_counters_if_needed(self):
         """Reset daily circuit breaker counters at the start of each trading day."""
