@@ -11,9 +11,9 @@ executor:
   max_leverage: 2.0  # Conservative 2x leverage (max 5x available)
   use_dynamic_symbols: false  # Use curated list for now
   symbols:
-    # Kraken symbol format (XXBTZUSD = BTC-USD, XETHZUSD = ETH-USD)
-    - "XXBTZUSD"   # Bitcoin
-    - "XETHZUSD"   # Ethereum
+    # Kraken API format (use simple pair names)
+    - "XBTUSD"     # Bitcoin
+    - "ETHUSD"     # Ethereum
     - "SOLUSD"     # Solana
     - "ADAUSD"     # Cardano
     - "DOTUSD"     # Polkadot
