@@ -484,13 +484,75 @@ class SimulatedKrakenExecutor:
             'recovered_positions': []
         }
     
-    def run_strategy_cycle(self):
+    def run_strategy_cycle(self) -> List[Dict[str, Any]]:
         """
-        Run strategy cycle (delegated to orchestrator).
+        Run one complete strategy cycle:
+        1. Fetch account and positions
+        2. Fetch market data
+        3. Generate signals
+        4. Execute signals (simulated)
         
-        This is a no-op - the bot framework handles strategy execution.
+        Returns:
+            List of executed orders
         """
-        pass
+        try:
+            # Check circuit breaker
+            current_date = datetime.utcnow().date()
+            if current_date != self._last_reset_date:
+                self._daily_trades = 0
+                self._daily_loss = 0.0
+                self._circuit_breaker_open = False
+                self._last_reset_date = current_date
+            
+            if self._circuit_breaker_open:
+                logger.warning("[SIMULATED] Circuit breaker is open, skipping strategy cycle")
+                return []
+            
+            # 1. Get account and positions
+            account = self.get_account()
+            positions = self.get_positions()
+            
+            # 2. Ensure symbols are loaded
+            if not self.symbols:
+                logger.warning("[SIMULATED] No symbols configured, skipping cycle")
+                return []
+            
+            logger.info(f"[SIMULATED] Fetching market data for {len(self.symbols)} symbols")
+            
+            # 3. Fetch market data for all symbols
+            market_data = {}
+            for symbol in self.symbols:
+                try:
+                    df = self.get_market_data(symbol)
+                    if df is not None:
+                        market_data[symbol] = df
+                except Exception as e:
+                    logger.error(f"[SIMULATED] Failed to fetch data for {symbol}: {e}")
+            
+            if not market_data:
+                logger.warning("[SIMULATED] No market data available, skipping cycle")
+                return []
+            
+            # 4. Generate signals from strategy
+            signals = self.strategy.generate_signals(market_data, account, positions)
+            
+            if not signals:
+                logger.debug("[SIMULATED] No signals generated")
+                return []
+            
+            # 5. Execute signals (simulated)
+            executed_orders = []
+            for signal in signals:
+                order = self.execute_signal(signal)
+                if order:
+                    executed_orders.append(order)
+                    self._daily_trades += 1
+            
+            return executed_orders
+            
+        except Exception as e:
+            logger.error(f"[SIMULATED] Error in strategy cycle: {e}", exc_info=True)
+            return []
     
     def get_simulation_stats(self) -> Dict[str, Any]:
         """
