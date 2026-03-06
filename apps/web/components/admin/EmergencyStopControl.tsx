@@ -6,10 +6,11 @@ import { AlertTriangle, Power, RefreshCw } from 'lucide-react';
 interface EmergencyStopStatus {
   equity: boolean;
   crypto: boolean;
+  kraken: boolean;
 }
 
 export default function EmergencyStopControl() {
-  const [status, setStatus] = useState<EmergencyStopStatus>({ equity: false, crypto: false });
+  const [status, setStatus] = useState<EmergencyStopStatus>({ equity: false, crypto: false, kraken: false });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -207,6 +208,58 @@ export default function EmergencyStopControl() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {actionLoading === 'quantshift-crypto' ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Stopping...
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="h-4 w-4" />
+                    Emergency Stop
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Kraken Bot */}
+        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${status.kraken ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+            <div>
+              <div className="font-medium text-white">Kraken Bot</div>
+              <div className="text-sm text-slate-400">
+                {status.kraken ? '🛑 Emergency Stop Active' : '✅ Trading Normally (Simulation)'}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {status.kraken ? (
+              <button
+                onClick={() => releaseEmergencyStop('quantshift-kraken')}
+                disabled={actionLoading === 'quantshift-kraken'}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {actionLoading === 'quantshift-kraken' ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Releasing...
+                  </>
+                ) : (
+                  <>
+                    <Power className="h-4 w-4" />
+                    Release Stop
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => triggerEmergencyStop('quantshift-kraken')}
+                disabled={actionLoading === 'quantshift-kraken'}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {actionLoading === 'quantshift-kraken' ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
                     Stopping...
