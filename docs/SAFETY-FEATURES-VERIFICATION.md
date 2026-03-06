@@ -289,18 +289,60 @@ orchestrator:
 
 ---
 
+## ⚠️ CRITICAL GAP IDENTIFIED
+
+### Missing Feature: Trailing Stop-Loss
+
+**Status:** ❌ **NOT IMPLEMENTED**
+
+**Current Behavior:**
+- Stop-loss is calculated at entry (e.g., Entry - 2×ATR)
+- Bracket order placed with Alpaca
+- **Stop NEVER adjusts** as price moves favorably
+
+**Impact:**
+- Winners can turn into losers (give back all unrealized gains)
+- Suboptimal risk-adjusted returns
+- Not maximizing edge from winning trades
+
+**Example - WFC Position:**
+```
+Entry: $78.41
+Current: $80.31 (+2.53%, +$613 unrealized)
+Stop: ~$75.41 (static, never moved)
+
+Problem: If price reverses, we lose entire $613 gain 
+         plus hit original stop = -$927 total loss
+
+With Trailing Stop:
+High water mark: $80.31
+Trailing stop: $79.11 (locks in $216 profit minimum)
+```
+
+**What Exists:**
+- ✅ Trailing stop in backtest code (`strategy_breakout_momentum.py`)
+- ✅ Trailing stop in challenge bot (`million_dollar_trader.py`)
+- ❌ **NO trailing stop in production live trading**
+
+**Implementation Plan:** See `docs/TRAILING-STOP-IMPLEMENTATION-PLAN.md`
+
+**Priority:** **HIGH** - Should be implemented within 1 week before increasing position sizes
+
+---
+
 ## Recommendations
 
-### Immediate Actions
-1. ✅ **No action required** - All safety features working correctly
+### Immediate Actions (CRITICAL)
+1. ⚠️ **IMPLEMENT TRAILING STOPS** - Critical gap, see implementation plan
 2. ⚠️ **Monitor capital deployment** - Currently at 54%, slightly over 50% target
 3. ✅ **Continue paper trading** - Accumulate 50+ trades before considering live
+4. ⚠️ **Reduce position sizes** - Until trailing stops implemented, consider 1% per trade instead of 1.5%
 
 ### Enhancement Opportunities
 1. **Store SL/TP in database** - Update `database_writer.py` to record bracket order prices
-2. **Add trailing stop-loss** - Implement trailing stops for trend-following strategies
-3. **Position correlation tracking** - Add real-time correlation monitoring
-4. **Sector exposure tracking** - Monitor sector concentration
+2. **Position correlation tracking** - Add real-time correlation monitoring
+3. **Sector exposure tracking** - Monitor sector concentration
+4. **Advanced trailing methods** - Parabolic SAR, Chandelier Exit (after basic trailing stops)
 
 ### Long-Term
 1. **Phase 1.5.9: Paper Trading Validation** (2-4 weeks)
@@ -317,9 +359,10 @@ orchestrator:
 
 ## Conclusion
 
-**All critical safety features are implemented and working correctly:**
+**Safety features status:**
 
-✅ Stop-loss and take-profit bracket orders  
+✅ Stop-loss and take-profit bracket orders (STATIC ONLY)  
+❌ **Trailing stop-loss (NOT IMPLEMENTED - CRITICAL GAP)**  
 ✅ ATR-based position sizing  
 ✅ Position limits (10 max)  
 ✅ Capital deployment limits (50% max)  
@@ -331,7 +374,9 @@ orchestrator:
 ✅ Sentiment analysis filtering  
 ✅ Real-time monitoring and heartbeats  
 
-**Current positions are well-protected with proper risk management. The bot is trading conservatively within all defined safety parameters.**
+**Current positions are protected from catastrophic losses with static stop-loss orders. However, the lack of trailing stops means unrealized gains are not protected and winners can turn into losers.**
+
+**CRITICAL RECOMMENDATION:** Implement trailing stop-loss feature before increasing position sizes or deploying live capital. See `docs/TRAILING-STOP-IMPLEMENTATION-PLAN.md` for detailed implementation plan (6-8 hours effort).
 
 ---
 
