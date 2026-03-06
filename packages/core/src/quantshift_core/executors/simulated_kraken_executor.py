@@ -455,6 +455,28 @@ class SimulatedKrakenExecutor:
         """
         return True
     
+    def recover_positions_on_startup(self) -> Dict[str, Any]:
+        """
+        Recover positions on startup (no-op for simulation).
+        
+        Returns:
+            Empty recovery stats
+        """
+        logger.info("[SIMULATED] Position recovery not needed - simulation mode")
+        return {
+            'orphaned_positions': 0,
+            'ghost_positions': 0,
+            'recovered_positions': []
+        }
+    
+    def run_strategy_cycle(self):
+        """
+        Run strategy cycle (delegated to orchestrator).
+        
+        This is a no-op - the bot framework handles strategy execution.
+        """
+        pass
+    
     def get_simulation_stats(self) -> Dict[str, Any]:
         """
         Get simulation statistics.

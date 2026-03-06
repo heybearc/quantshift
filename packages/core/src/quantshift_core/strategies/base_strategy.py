@@ -59,8 +59,10 @@ class Account:
     equity: float
     cash: float
     buying_power: float
-    portfolio_value: float
+    portfolio_value: float = 0.0
     positions_count: int = 0
+    margin_used: float = 0.0  # For margin trading
+    maintenance_margin: float = 0.0  # For margin trading
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -68,7 +70,9 @@ class Account:
             'cash': self.cash,
             'buying_power': self.buying_power,
             'portfolio_value': self.portfolio_value,
-            'positions_count': self.positions_count
+            'positions_count': self.positions_count,
+            'margin_used': self.margin_used,
+            'maintenance_margin': self.maintenance_margin
         }
 
 
