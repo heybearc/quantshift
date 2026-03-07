@@ -42,6 +42,10 @@ import structlog
 from quantshift_core.strategies.bollinger_bounce import BollingerBounce
 from quantshift_core.strategies.rsi_mean_reversion import RSIMeanReversion
 from quantshift_core.strategies.breakout_momentum import BreakoutMomentum
+from quantshift_core.strategies.keltner_channel import KeltnerChannelStrategy
+from quantshift_core.strategies.vwap_reversion import VWAPReversionStrategy
+from quantshift_core.strategies.ma_crossover import MACrossoverStrategy
+from quantshift_core.strategies.donchian_breakout import DonchianBreakoutStrategy
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
@@ -152,22 +156,28 @@ class QuantShiftUnifiedBot:
         
         self.strategies = []
         
+        # Strategy registry for dynamic loading
+        STRATEGY_MAP = {
+            'BollingerBounce': BollingerBounce,
+            'RSIMeanReversion': RSIMeanReversion,
+            'BreakoutMomentum': BreakoutMomentum,
+            'KeltnerChannelStrategy': KeltnerChannelStrategy,
+            'VWAPReversionStrategy': VWAPReversionStrategy,
+            'MACrossoverStrategy': MACrossoverStrategy,
+            'DonchianBreakoutStrategy': DonchianBreakoutStrategy,
+        }
+        
         for strat_config in strategy_configs:
             strategy_type = strat_config.get('type')
             strategy_params = strat_config.get('params', {})
             
-            if strategy_type == 'BollingerBounce':
-                strategy = BollingerBounce(config=strategy_params)
-            elif strategy_type == 'RSIMeanReversion':
-                strategy = RSIMeanReversion(config=strategy_params)
-            elif strategy_type == 'BreakoutMomentum':
-                strategy = BreakoutMomentum(config=strategy_params)
+            if strategy_type in STRATEGY_MAP:
+                strategy = STRATEGY_MAP[strategy_type](config=strategy_params)
+                self.strategies.append(strategy)
+                logger.info("strategy_loaded", type=strategy_type, name=strategy.name)
             else:
-                logger.warning("unknown_strategy_type", type=strategy_type)
+                logger.warning("unknown_strategy_type", type=strategy_type, available=list(STRATEGY_MAP.keys()))
                 continue
-            
-            self.strategies.append(strategy)
-            logger.info("strategy_loaded", type=strategy_type, name=strategy.name)
         
         # Create orchestrator
         orchestrator_config = self.config.get('orchestrator', {})
