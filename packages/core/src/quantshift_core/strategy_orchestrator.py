@@ -121,16 +121,15 @@ class StrategyOrchestrator:
             self.sentiment_analyzer = None
             
         # Ensure all strategies have capital allocation
-        for strategy in strategies:
-            if strategy.name not in self.capital_allocation:
-                self.logger.warning(
-                    "strategy_missing_allocation",
-                    strategy=strategy.name,
-                    using_equal_allocation=True
-                )
-                # Fallback to equal allocation for missing strategies
-                self.capital_allocation = self._equal_allocation()
-                break
+        missing_strategies = [s.name for s in strategies if s.name not in self.capital_allocation]
+        if missing_strategies:
+            self.logger.warning(
+                "strategies_missing_allocation",
+                missing=missing_strategies,
+                using_equal_allocation=True
+            )
+            # Fallback to equal allocation for missing strategies
+            self.capital_allocation = self._equal_allocation()
         
         # Validate allocation sums to 1.0
         total_allocation = sum(self.capital_allocation.values())
