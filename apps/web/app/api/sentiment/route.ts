@@ -53,6 +53,10 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.json({ sentiment });
+    } catch (error) {
+      await redisClient.quit();
+      throw error;
+    }
   } catch (error) {
     console.error('Sentiment API error:', error);
     return NextResponse.json(
