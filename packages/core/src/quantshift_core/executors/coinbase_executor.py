@@ -392,21 +392,14 @@ class CoinbaseExecutor:
                 
                 if violation:
                     logger.warning(
-                        "position_limit_violation",
-                        symbol=signal.symbol,
-                        limit_type=violation.limit_type,
-                        current_value=violation.current_value,
-                        limit_value=violation.limit_value,
-                        message=violation.message,
-                        severity=violation.severity
+                        f"position_limit_violation: {signal.symbol} - {violation.limit_type}: "
+                        f"{violation.current_value} > {violation.limit_value} ({violation.severity})"
                     )
                     
                     # Reject trade if critical violation
                     if violation.severity == 'critical':
                         logger.critical(
-                            "trade_rejected_limit_violation",
-                            symbol=signal.symbol,
-                            violation=violation.message
+                            f"trade_rejected_limit_violation: {signal.symbol} - {violation.message}"
                         )
                         return None
             
@@ -469,13 +462,10 @@ class CoinbaseExecutor:
                     sl_success = True
                     logger.info(
                         "bracket_stop_loss_placed",
-                        symbol=signal.symbol,
-                        qty=signal.position_size,
-                        stop_price=stop_loss_price,
-                        order_id=sl_order.get('order_id')
+                        extra={"symbol": signal.symbol, "qty": signal.position_size, "stop_price": stop_loss_price, "order_id": sl_order.get('order_id')}
                     )
                 except Exception as e:
-                    logger.error("bracket_stop_loss_failed", symbol=signal.symbol, error=str(e), exc_info=True)
+                    logger.error("bracket_stop_loss_failed for %s: %s", signal.symbol, e, exc_info=True)
                 
                 try:
                     tp_order = self._place_take_profit_order(
@@ -492,17 +482,17 @@ class CoinbaseExecutor:
                         order_id=tp_order.get('order_id')
                     )
                 except Exception as e:
-                    logger.error("bracket_take_profit_failed", symbol=signal.symbol, error=str(e), exc_info=True)
+                    logger.error(f"bracket_take_profit_failed for {signal.symbol}: {e}", exc_info=True)
                 
                 # Log bracket order completion status
                 if sl_success and tp_success:
-                    logger.info("bracket_order_complete", symbol=signal.symbol, status="fully_protected")
+                    logger.info(f"bracket_order_complete for {signal.symbol}: fully_protected")
                 elif sl_success:
-                    logger.warning("bracket_order_partial", symbol=signal.symbol, status="stop_loss_only")
+                    logger.warning(f"bracket_order_partial for {signal.symbol}: stop_loss_only")
                 elif tp_success:
-                    logger.warning("bracket_order_partial", symbol=signal.symbol, status="take_profit_only")
+                    logger.warning(f"bracket_order_partial for {signal.symbol}: take_profit_only")
                 else:
-                    logger.critical("bracket_order_failed", symbol=signal.symbol, status="unprotected")
+                    logger.critical(f"bracket_order_failed for {signal.symbol}: unprotected")
                 
             else:
                 # Non-bracket order (SELL signals or missing SL/TP)
