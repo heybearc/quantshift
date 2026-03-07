@@ -375,10 +375,13 @@ class StrategyOrchestrator:
                 if self.metrics:
                     self.metrics.record_strategy_failure(strategy.name)
                 
+                import traceback
                 self.logger.error(
                     "strategy_error",
                     strategy=strategy.name,
                     error=str(e),
+                    error_type=type(e).__name__,
+                    traceback=traceback.format_exc(),
                     consecutive_failures=self.strategy_failures[strategy.name],
                     max_failures=self.max_consecutive_failures
                 )
