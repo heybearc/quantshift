@@ -179,9 +179,21 @@ class QuantShiftUnifiedBot:
                 logger.warning("unknown_strategy_type", type=strategy_type, available=list(STRATEGY_MAP.keys()))
                 continue
         
+        logger.info(
+            "strategies_loaded",
+            count=len(self.strategies),
+            strategy_names=[s.name for s in self.strategies]
+        )
+        
         # Create orchestrator
         orchestrator_config = self.config.get('orchestrator', {})
         capital_allocation = orchestrator_config.get('capital_allocation')
+        
+        logger.info(
+            "capital_allocation_config",
+            allocation=capital_allocation,
+            has_allocation=capital_allocation is not None
+        )
         use_regime_detection = orchestrator_config.get('use_regime_detection', True)
         use_ml_regime = orchestrator_config.get('use_ml_regime', False)
         use_risk_management = orchestrator_config.get('use_risk_management', True)
