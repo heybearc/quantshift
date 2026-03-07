@@ -223,20 +223,25 @@ class BollingerBounce(BaseStrategy):
         """
         if atr is None or atr == 0:
             self.logger.warning("atr_not_available", using_default=True)
-            # Fallback: use 1% of account as position value
+            # Fallback: use risk_per_trade % of account as position value
             position_value = account.equity * self.risk_per_trade
-            return int(position_value / signal.price)
+            position_size = int(position_value / signal.price)
+        else:
+            # Calculate risk amount (dollar amount we're willing to lose)
+            risk_amount = account.equity * self.risk_per_trade
+            
+            # Position size based on ATR (risk per share = ATR * multiplier)
+            risk_per_share = atr * self.atr_sl_multiplier
+            position_size = int(risk_amount / risk_per_share)
         
-        # Calculate risk amount
-        risk_amount = account.equity * self.risk_per_trade
+        # Cap position size to not exceed buying power
+        max_size_by_capital = int(account.buying_power / signal.price)
+        position_size = min(position_size, max_size_by_capital)
         
-        # Position size based on ATR (risk per share = ATR * multiplier)
-        risk_per_share = atr * self.atr_sl_multiplier
-        position_size = int(risk_amount / risk_per_share)
-        
-        # Ensure we don't exceed buying power
-        max_size = int(account.buying_power / signal.price)
-        position_size = min(position_size, max_size)
+        # Cap position value to reasonable % of account (safety check)
+        max_position_value = account.equity * 0.15  # Max 15% per position
+        max_size_by_value = int(max_position_value / signal.price)
+        position_size = min(position_size, max_size_by_value)
         
         # Ensure minimum position size
         position_size = max(position_size, 1)
@@ -245,8 +250,9 @@ class BollingerBounce(BaseStrategy):
             "position_size_calculated",
             symbol=signal.symbol,
             size=position_size,
-            risk_amount=risk_amount,
-            atr=atr
+            risk_amount=risk_amount if atr else position_value,
+            atr=atr,
+            position_value_pct=round((position_size * signal.price) / account.equity * 100, 2)
         )
         
         return position_size
