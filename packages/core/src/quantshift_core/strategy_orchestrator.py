@@ -115,7 +115,7 @@ class StrategyOrchestrator:
         
         # Initialize sentiment analyzer if needed
         if use_sentiment_analysis:
-            self.sentiment_analyzer = sentiment_analyzer or SentimentAnalyzer()
+            self.sentiment_analyzer = sentiment_analyzer or SentimentAnalyzer(redis_client=redis_client)
             self.logger.info("Using sentiment analysis for signal filtering")
         else:
             self.sentiment_analyzer = None

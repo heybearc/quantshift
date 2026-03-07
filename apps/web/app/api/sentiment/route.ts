@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from 'redis';
 
 /**
  * GET /api/sentiment
@@ -11,20 +12,47 @@ export async function GET(request: NextRequest) {
     // TODO: Add authentication when needed
     // For now, this is internal-only and behind the dashboard auth
 
-    // For now, return mock sentiment data
-    // TODO: Connect to Redis to get real sentiment from bots
-    const mockSentiment = {
-      'SPY': { score: 0.65, label: 'Positive', confidence: 0.82, articles: 12, updated: new Date().toISOString() },
-      'QQQ': { score: 0.45, label: 'Positive', confidence: 0.75, articles: 8, updated: new Date().toISOString() },
-      'AAPL': { score: 0.32, label: 'Positive', confidence: 0.68, articles: 15, updated: new Date().toISOString() },
-      'MSFT': { score: 0.58, label: 'Positive', confidence: 0.79, articles: 10, updated: new Date().toISOString() },
-      'GOOGL': { score: -0.15, label: 'Negative', confidence: 0.62, articles: 7, updated: new Date().toISOString() },
-      'BTC-USD': { score: 0.72, label: 'Positive', confidence: 0.85, articles: 20, updated: new Date().toISOString() },
-      'ETH-USD': { score: 0.55, label: 'Positive', confidence: 0.78, articles: 14, updated: new Date().toISOString() },
-      'XBTUSD': { score: 0.68, label: 'Positive', confidence: 0.83, articles: 18, updated: new Date().toISOString() },
-    };
+    // Connect to Redis
+    const redisClient = createClient({
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
+    });
 
-    return NextResponse.json({ sentiment: mockSentiment });
+    await redisClient.connect();
+
+    try {
+      // Get all sentiment keys
+      const keys = await redisClient.keys('sentiment:*');
+      
+      const sentiment: Record<string, any> = {};
+      
+      // Fetch each sentiment value
+      for (const key of keys) {
+        const symbol = key.replace('sentiment:', '');
+        const data = await redisClient.get(key);
+        
+        if (data) {
+          try {
+            sentiment[symbol] = JSON.parse(data);
+          } catch (e) {
+            console.error(`Failed to parse sentiment for ${symbol}:`, e);
+          }
+        }
+      }
+
+      await redisClient.quit();
+
+      // If no sentiment data in Redis, return empty object
+      if (Object.keys(sentiment).length === 0) {
+        return NextResponse.json({ 
+          sentiment: {},
+          message: 'No sentiment data available yet. Bots will populate data as they analyze news.'
+        });
+      }
+
+      return NextResponse.json({ sentiment });
   } catch (error) {
     console.error('Sentiment API error:', error);
     return NextResponse.json(

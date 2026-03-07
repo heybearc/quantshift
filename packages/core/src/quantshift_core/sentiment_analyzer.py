@@ -27,7 +27,7 @@ class SentimentAnalyzer:
     Can be used to filter signals or adjust position sizes.
     """
     
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, config: Optional[Dict] = None, redis_client=None):
         """
         Initialize sentiment analyzer.
         
@@ -37,12 +37,14 @@ class SentimentAnalyzer:
                 - cache_duration_minutes: How long to cache sentiment (default: 15)
                 - finnhub_api_key: Finnhub API key (or use FINNHUB_API_KEY env var)
                 - news_provider: 'finnhub' or 'mock' (default: 'finnhub')
+            redis_client: Redis client for publishing sentiment data
         """
         self.config = config or {}
         self.use_finbert = self.config.get('use_finbert', True)
         self.cache_duration = timedelta(minutes=self.config.get('cache_duration_minutes', 15))
         self.sentiment_cache = {}
         self.news_provider = self.config.get('news_provider', 'finnhub')
+        self.redis_client = redis_client
         
         # Initialize Finnhub client if using Finnhub
         self.finnhub_client = None
@@ -163,6 +165,24 @@ class SentimentAnalyzer:
             'count': len(articles),
             'articles': analyzed_articles
         }
+        
+        # Publish to Redis for dashboard access
+        if self.redis_client:
+            try:
+                sentiment_data = {
+                    'score': avg_sentiment,
+                    'label': 'Positive' if avg_sentiment > 0.3 else 'Negative' if avg_sentiment < -0.3 else 'Neutral',
+                    'confidence': abs(avg_sentiment),  # Use absolute score as confidence
+                    'articles': len(articles),
+                    'updated': datetime.utcnow().isoformat()
+                }
+                self.redis_client.setex(
+                    f'sentiment:{symbol}',
+                    900,  # 15 minute TTL
+                    json.dumps(sentiment_data)
+                )
+            except Exception as e:
+                logger.warning("redis_publish_failed", symbol=symbol, error=str(e))
         
         logger.info(
             "sentiment_analyzed",
