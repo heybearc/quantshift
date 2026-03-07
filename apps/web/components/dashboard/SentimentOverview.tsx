@@ -24,7 +24,7 @@ export function SentimentOverview() {
       const response = await fetch('/api/sentiment');
       if (!response.ok) throw new Error('Failed to fetch sentiment');
       const data = await response.json();
-      setSentiment(data.sentiment);
+      setSentiment(data.sentiment || {});
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -51,7 +51,7 @@ export function SentimentOverview() {
     );
   }
 
-  if (error || !sentiment) {
+  if (error) {
     return (
       <div className="rounded-xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
         <div className="flex items-center gap-2 mb-4">
@@ -59,6 +59,21 @@ export function SentimentOverview() {
           <h3 className="text-lg font-semibold text-white">Market Sentiment</h3>
         </div>
         <div className="text-sm text-red-400">Failed to load sentiment data</div>
+      </div>
+    );
+  }
+
+  if (!sentiment || Object.keys(sentiment).length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Brain className="h-5 w-5 text-purple-400" />
+          <h3 className="text-lg font-semibold text-white">Market Sentiment</h3>
+          <span className="text-xs text-slate-400 ml-2">FinBERT AI Analysis</span>
+        </div>
+        <div className="text-sm text-slate-400">
+          No sentiment data available yet. Sentiment analysis will appear when bots generate trading signals.
+        </div>
       </div>
     );
   }
