@@ -150,7 +150,7 @@ orchestrator:
 risk_management:
   # SAFE PAPER TRADING LIMITS (No Leverage)
   max_leverage: 1.0  # NO LEVERAGE - cash only
-  max_position_size: 0.70  # Max 70% per position (TEMPORARY - position sizing needs fix)
+  max_position_size: 0.20  # Max 20% per position (strategies have 15% internal cap)
   max_positions: 8  # Max 8 concurrent positions
   max_capital_deployed: 0.80  # Max 80% of capital deployed (crypto is 24/7)
   
