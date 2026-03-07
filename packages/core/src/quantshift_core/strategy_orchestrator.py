@@ -203,8 +203,22 @@ class StrategyOrchestrator:
             # Update allocation if regime changed
             if regime != self.current_regime:
                 self.current_regime = regime
-                self.capital_allocation = allocation_dict
                 self.regime_risk_multiplier = risk_multiplier
+                
+                # Merge regime allocation with current allocation
+                # Ensure all loaded strategies have allocation
+                for strategy in self.strategies:
+                    if strategy.name not in allocation_dict:
+                        # Strategy not in regime allocation, use equal share of remaining
+                        allocation_dict[strategy.name] = 0.0
+                
+                # Normalize to ensure sum is 1.0
+                total = sum(allocation_dict.values())
+                if total > 0:
+                    self.capital_allocation = {k: v/total for k, v in allocation_dict.items()}
+                else:
+                    # Fallback to equal allocation if regime dict is empty
+                    self.capital_allocation = self._equal_allocation()
                 
                 self.logger.info(
                     "regime_allocation_updated",
