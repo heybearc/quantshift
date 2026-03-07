@@ -61,8 +61,13 @@ class CoinbaseExecutor:
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
         
-        # Initialize hard position limits
-        self.position_limits = PositionLimits()
+        # Initialize position limits with config values
+        self.position_limits = PositionLimits(
+            max_position_pct=self.risk_config.get('max_position_size', 0.10),
+            max_positions=self.risk_config.get('max_positions', 5),
+            max_daily_loss_pct=self.risk_config.get('daily_loss_limit', 0.03),
+            max_total_risk_pct=self.risk_config.get('max_portfolio_heat', 0.15)
+        )
         
         # Initialize circuit breaker tracking
         self._daily_trades = 0

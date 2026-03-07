@@ -25,27 +25,30 @@ class PositionLimitViolation:
 
 class PositionLimits:
     """
-    Hard-coded position limits for risk management.
+    Configurable position limits for risk management.
     
-    These limits are CODE-ENFORCED and cannot be changed via configuration.
-    To change these limits, you must modify this source code and deploy.
-    
-    This is intentional - it prevents accidental or malicious configuration
-    changes from exposing the account to excessive risk.
+    These are safety limits to prevent catastrophic losses.
     """
     
-    # HARD LIMITS - DO NOT CHANGE WITHOUT CAREFUL CONSIDERATION
-    MAX_POSITION_PCT = 0.10  # 10% max per position
-    MAX_POSITIONS = 5  # Max 5 positions total
-    MAX_DAILY_LOSS_PCT = 0.03  # 3% daily loss limit
-    MAX_TOTAL_RISK_PCT = 0.15  # 15% total portfolio risk
-    MIN_POSITION_VALUE = 100.0  # Minimum $100 per position
-    MAX_POSITION_VALUE = 50000.0  # Maximum $50,000 per position
-    
-    def __init__(self):
-        """Initialize position limits tracker."""
+    def __init__(
+        self,
+        max_position_pct: float = 0.10,
+        max_positions: int = 5,
+        max_daily_loss_pct: float = 0.03,
+        max_total_risk_pct: float = 0.15,
+        min_position_value: float = 100.0,
+        max_position_value: float = 50000.0
+    ):
+        """Initialize position limits tracker with configurable limits."""
+        self.MAX_POSITION_PCT = max_position_pct
+        self.MAX_POSITIONS = max_positions
+        self.MAX_DAILY_LOSS_PCT = max_daily_loss_pct
+        self.MAX_TOTAL_RISK_PCT = max_total_risk_pct
+        self.MIN_POSITION_VALUE = min_position_value
+        self.MAX_POSITION_VALUE = max_position_value
+        
         self._daily_loss = 0.0
-        self._last_reset_date = date.today()
+        self._last_reset_date = datetime.now().date()
         self._circuit_breaker_open = False
         
         logger.info(
@@ -55,7 +58,8 @@ class PositionLimits:
             max_daily_loss_pct=self.MAX_DAILY_LOSS_PCT,
             max_total_risk_pct=self.MAX_TOTAL_RISK_PCT,
             min_position_value=self.MIN_POSITION_VALUE,
-            max_position_value=self.MAX_POSITION_VALUE
+            max_position_value=self.MAX_POSITION_VALUE,
+            daily_loss_reset_date=self._last_reset_date.isoformat()
         )
     
     def reset_daily_limits(self) -> None:
