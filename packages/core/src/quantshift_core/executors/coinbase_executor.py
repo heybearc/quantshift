@@ -581,7 +581,7 @@ class CoinbaseExecutor:
             }
             
         except Exception as e:
-            logger.error(f"Error executing signal for {signal.symbol}: {e}", exc_info=True)
+            logger.error("signal_execution_failed", symbol=signal.symbol, error=str(e), exc_info=True)
             return None
     
     def _place_stop_loss_order(self, symbol: str, quantity: float, stop_price: float) -> dict:
