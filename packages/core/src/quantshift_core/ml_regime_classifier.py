@@ -160,14 +160,23 @@ class MLRegimeClassifier:
         market_data: pd.DataFrame
     ) -> Tuple[str, float]:
         """
-        Predict current market regime.
+        Predict market regime using ML model.
         
         Args:
-            market_data: Recent OHLCV data (needs at least 200 bars)
+            market_data: DataFrame with OHLCV data (or dict that will be converted)
             
         Returns:
             Tuple of (regime_name, confidence)
         """
+        # Handle case where market_data is a dict instead of DataFrame
+        if isinstance(market_data, dict):
+            logger.debug("Converting dict market_data to DataFrame")
+            try:
+                market_data = pd.DataFrame(market_data)
+            except Exception as e:
+                logger.error(f"Failed to convert market_data dict to DataFrame: {e}")
+                return self._rule_based_fallback(None)
+        
         if self.model is None:
             logger.warning("Model not trained, falling back to rule-based detection")
             return self._rule_based_fallback(market_data)
