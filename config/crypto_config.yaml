@@ -24,7 +24,7 @@ strategies:
       rsi_entry_threshold: 50
       atr_period: 14
       atr_sl_multiplier: 2.0
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade (reduced from 2%)
   
   - type: "RSIMeanReversion"
     params:
@@ -34,7 +34,7 @@ strategies:
       atr_period: 14
       atr_sl_multiplier: 2.5
       atr_tp_multiplier: 4.0
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade (reduced from 2%)
   
   - type: "KeltnerChannelStrategy"
     params:
@@ -44,7 +44,7 @@ strategies:
       rsi_period: 14
       rsi_buy_threshold: 40
       rsi_sell_threshold: 60
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade
       volume_confirmation: true
   
   - type: "VWAPReversionStrategy"
@@ -54,7 +54,7 @@ strategies:
       atr_period: 14
       atr_sl_multiplier: 2.5
       atr_tp_multiplier: 4.0
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade
   
   # Trend Following Strategies (3)
   - type: "BreakoutMomentum"
@@ -64,14 +64,14 @@ strategies:
       atr_period: 14
       atr_trail_multiplier: 2.0
       breakdown_period: 10
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade
   
   - type: "MACrossoverStrategy"
     params:
       short_window: 10  # Faster for crypto
       long_window: 30
       atr_period: 14
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade
       volume_confirmation: true
       trend_confirmation: false  # Too slow for crypto
       support_resistance_filter: true
@@ -83,7 +83,7 @@ strategies:
       atr_period: 14
       atr_sl_multiplier: 2.5
       atr_trail_multiplier: 3.0
-      risk_per_trade: 0.02
+      risk_per_trade: 0.01  # 1% risk per trade
       volume_confirmation: true
       min_atr_filter: 0.0
 
