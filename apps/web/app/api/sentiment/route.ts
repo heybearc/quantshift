@@ -13,12 +13,18 @@ export async function GET(request: NextRequest) {
     // For now, this is internal-only and behind the dashboard auth
 
     // Connect to Redis
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = parseInt(process.env.REDIS_PORT || '6379');
+    const redisPassword = process.env.REDIS_PASSWORD;
+    
+    console.log('Connecting to Redis:', { host: redisHost, port: redisPort, hasPassword: !!redisPassword });
+    
     const redisClient = createClient({
       socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
+        host: redisHost,
+        port: redisPort,
       },
-      password: process.env.REDIS_PASSWORD,
+      password: redisPassword,
     });
 
     await redisClient.connect();
