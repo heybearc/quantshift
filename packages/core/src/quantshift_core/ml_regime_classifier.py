@@ -188,8 +188,24 @@ class MLRegimeClassifier:
             logger.warning("Could not extract features, using fallback")
             return self._rule_based_fallback(market_data)
         
-        # Scale features
-        features_scaled = self.scaler.transform([features])
+        # Ensure all feature values are numeric (not dicts or other objects)
+        try:
+            # Convert features dict to list of numeric values
+            if isinstance(features, dict):
+                # Check if any values are dicts themselves
+                numeric_features = []
+                for key, value in features.items():
+                    if isinstance(value, dict):
+                        logger.warning(f"Feature '{key}' is a dict, skipping ML regime detection")
+                        return self._rule_based_fallback(market_data)
+                    numeric_features.append(float(value))
+                features = numeric_features
+            
+            # Scale features
+            features_scaled = self.scaler.transform([features])
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to convert features to numeric: {e}")
+            return self._rule_based_fallback(market_data)
         
         # Predict
         regime_idx = self.model.predict(features_scaled)[0]
