@@ -207,10 +207,12 @@ class StrategyOrchestrator:
                 
                 # Merge regime allocation with current allocation
                 # Ensure all loaded strategies have allocation
-                for strategy in self.strategies:
-                    if strategy.name not in allocation_dict:
-                        # Strategy not in regime allocation, use equal share of remaining
-                        allocation_dict[strategy.name] = 0.0
+                missing_strategies = [s.name for s in self.strategies if s.name not in allocation_dict]
+                if missing_strategies:
+                    # Give missing strategies equal share of remaining allocation
+                    equal_share = 1.0 / len(self.strategies)
+                    for strategy_name in missing_strategies:
+                        allocation_dict[strategy_name] = equal_share
                 
                 # Normalize to ensure sum is 1.0
                 total = sum(allocation_dict.values())
