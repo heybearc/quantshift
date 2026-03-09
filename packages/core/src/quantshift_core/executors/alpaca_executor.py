@@ -568,6 +568,14 @@ class AlpacaExecutor:
             max_positions = self.risk_config.get('limits', {}).get('max_positions', 5)
             at_max_positions = len(positions) >= max_positions
             
+            if at_max_positions:
+                logger.warning(
+                    "max_positions_limit_active",
+                    current_positions=len(positions),
+                    max_positions=max_positions,
+                    message=f"At max positions ({len(positions)}/{max_positions}) - will block all BUY signals"
+                )
+            
             logger.info(
                 f"Strategy cycle started - Account: ${account.equity:.2f}, "
                 f"Positions: {len(positions)}, Symbols: {len(self.symbols)}"
@@ -604,7 +612,13 @@ class AlpacaExecutor:
 
                         # Skip BUY signals if at max positions
                         if signal.signal_type == SignalType.BUY and at_max_positions:
-                            logger.info(f"Skipping BUY {signal.symbol} — at max positions ({max_positions})")
+                            logger.warning(
+                                "buy_signal_blocked_max_positions",
+                                symbol=signal.symbol,
+                                current_positions=len(positions),
+                                max_positions=max_positions,
+                                reason=signal.reason
+                            )
                             continue
 
                         # Execute the signal

@@ -275,6 +275,14 @@ class CoinbaseExecutor:
             start_time = int((datetime.utcnow() - timedelta(days=14)).timestamp())
             
             # Fetch candles from Coinbase
+            logger.debug(
+                "fetching_candles",
+                symbol=symbol,
+                start_time=start_time,
+                end_time=end_time,
+                granularity=granularity
+            )
+            
             candles = self.coinbase_client.get_candles(
                 product_id=symbol,
                 start=start_time,
@@ -286,6 +294,12 @@ class CoinbaseExecutor:
             # Coinbase SDK returns a response object with 'candles' attribute
             # Each candle is an object with: start, low, high, open, close, volume
             candles_list = candles.candles if hasattr(candles, 'candles') else []
+            
+            logger.debug(
+                "candles_received",
+                symbol=symbol,
+                candle_count=len(candles_list)
+            )
             
             # Convert candle objects to list of dicts
             data = []
@@ -308,7 +322,14 @@ class CoinbaseExecutor:
             df = pd.DataFrame(data)
             
             if len(df) == 0:
-                logger.warning(f"No candle data returned for {symbol}")
+                logger.warning(
+                    "market_data_empty",
+                    symbol=symbol,
+                    start_time=start_time,
+                    end_time=end_time,
+                    granularity=granularity,
+                    message=f"Coinbase returned 0 candles for {symbol}"
+                )
                 return pd.DataFrame()
             
             # Convert timestamp to datetime
@@ -808,9 +829,32 @@ class CoinbaseExecutor:
                 logger.debug("No signals generated")
                 return []
             
+            # Check max positions limit
+            max_positions = self.risk_config.get('limits', {}).get('max_positions', 8)
+            at_max_positions = len(positions) >= max_positions
+            
+            if at_max_positions:
+                logger.warning(
+                    "max_positions_limit_active",
+                    current_positions=len(positions),
+                    max_positions=max_positions,
+                    message=f"At max positions ({len(positions)}/{max_positions}) - will block all BUY signals"
+                )
+            
             # 4. Execute signals
             executed_orders = []
             for signal in signals:
+                # Skip BUY signals if at max positions
+                if signal.signal_type == SignalType.BUY and at_max_positions:
+                    logger.warning(
+                        "buy_signal_blocked_max_positions",
+                        symbol=signal.symbol,
+                        current_positions=len(positions),
+                        max_positions=max_positions,
+                        reason=signal.reason
+                    )
+                    continue
+                
                 order = self.execute_signal(signal)
                 if order:
                     executed_orders.append(order)
