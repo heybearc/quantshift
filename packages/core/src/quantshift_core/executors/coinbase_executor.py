@@ -114,9 +114,17 @@ class CoinbaseExecutor:
         Uses simulated capital if configured.
         """
         try:
+            # DEBUG: Log simulated_capital value
+            logger.info(
+                "get_account_called",
+                simulated_capital=self.simulated_capital,
+                has_simulated=self.simulated_capital is not None,
+                is_positive=self.simulated_capital > 0 if self.simulated_capital else False
+            )
+            
             # Use simulated capital if configured (paper trading mode)
             if self.simulated_capital and self.simulated_capital > 0:
-                logger.debug(
+                logger.info(
                     "using_simulated_capital",
                     capital=self.simulated_capital
                 )
@@ -129,6 +137,7 @@ class CoinbaseExecutor:
                 )
             
             # Get all accounts from Coinbase (live trading mode)
+            logger.info("fetching_real_coinbase_balance")
             accounts_response = self.coinbase_client.get_accounts()
             
             # Find USD/USDC balance for spot trading
