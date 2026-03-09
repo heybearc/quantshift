@@ -477,8 +477,17 @@ class StrategyOrchestrator:
         Returns:
             Account with allocated capital
         """
+        allocated_equity = account.equity * allocation
+        
+        self.logger.debug(
+            "allocated_account_created",
+            original_equity=account.equity,
+            allocation_pct=allocation,
+            allocated_equity=allocated_equity
+        )
+        
         return Account(
-            equity=account.equity * allocation,
+            equity=allocated_equity,
             buying_power=account.buying_power * allocation,
             cash=account.cash * allocation,
             portfolio_value=account.portfolio_value * allocation
