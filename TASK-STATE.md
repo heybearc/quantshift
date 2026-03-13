@@ -1,35 +1,55 @@
 # QuantShift Task State
 
-**Last updated:** 2026-03-06 (9:00am)  
+**Last updated:** 2026-03-09 (4:52pm)  
 **Current branch:** main  
-**Working on:** Phase 5.2 Monitoring Dashboard - ✅ COMPLETE
+**Working on:** Bot Safeguard Fixes - ✅ COMPLETE
 
 ---
 
 ## Current Task
-**Phase 5.2: Real-Time Monitoring Dashboard** - ✅ COMPLETE
+**Bot Safeguard Fixes** - ✅ COMPLETE
 
 ### What I just completed
-Fixed 404 error on production URL (`https://quantshift.io/monitoring`) by deploying directly to GREEN (the actual LIVE server).
+Fixed three critical bot safeguard issues that were preventing proper paper trading validation:
 
-**Resolution:**
-- Identified GREEN (10.92.3.30) as actual LIVE server via HAProxy status
-- Deployed monitoring dashboard directly to GREEN via SSH
-- Rebuilt Next.js application on GREEN
-- Restarted PM2 process
-- Verified monitoring page accessible with HTTP 200
+**Issues Fixed:**
+1. **Position limit enforcement** - Equity bot exceeded max 10 positions
+2. **Crypto bot zero signals** - Not generating any trading signals
+3. **Capital allocation bug** - Regime detection giving 0% allocation to most strategies
 
-**MCP Tool Issue (D-QS-015):**
-- MCP `deploy_to_standby` tool always deploys to BLUE regardless of actual LIVE/STANDBY status
-- Tool doesn't check HAProxy routing before deploying
-- Workaround: Manually verify HAProxy status and deploy to correct server via SSH
+**Root Causes:**
+1. Position limits were checked but not enforced with hard blocks on BUY signals
+2. Crypto bot had market data (336 rows) but allocated_capital was 0.0
+3. ML regime classifier excluded strategies from allocation_dict, causing them to get 0% instead of equal share
+
+**Solutions Deployed:**
+1. Added pre-execution hard checks in both Alpaca and Coinbase executors to block BUY signals when at max_positions
+2. Fixed regime allocation logic to give missing strategies equal share (1/num_strategies) instead of 0.0
+3. Added comprehensive logging for position limits and capital allocation
+
+**Current Status:**
+- ✅ All 3 bots running (equity, crypto, Kraken)
+- ✅ Crypto bot generating signals with proper capital allocation ($833/strategy)
+- ✅ Position limits will block new positions beyond max
+- ✅ Equity bot has 11 positions (from broker recovery, will close naturally)
 
 ### Exact Next Step
-1. Update deployment documentation with MCP tool workaround
-2. Continue with next priority: Dashboard P&L display fix
-3. Monitor Phase 1.5.9 paper trading validation
+1. Monitor bots for 24-48 hours to verify all safeguards working
+2. Continue Phase 1.5.9 paper trading validation (2-4 weeks)
+3. Address any new issues that arise during monitoring
 
 ### Recent Accomplishments
+
+**2026-03-09:**
+- ✅ **Bot Safeguard Fixes** (COMPLETE)
+  - Fixed position limit enforcement - added hard BUY signal blocks when at max_positions
+  - Fixed crypto bot zero signals - regime allocation was giving 0% to most strategies
+  - Fixed capital allocation bug - missing strategies now get equal share instead of 0.0
+  - Added comprehensive logging for debugging (position limits, capital allocation)
+  - Deployed fixes to production (commits: 896a7d5, e065b50)
+  - Verified all 3 bots running with proper safeguards
+  - Crypto bot now generating signals: allocated_capital=$833/strategy, 1 signal validated
+  - Position limits active: will block new BUY signals when at max
 
 **2026-03-06:**
 - ✅ **Phase 5.2: Monitoring Dashboard Deployment** (COMPLETE)
@@ -661,10 +681,8 @@ Fixed 404 error on production URL (`https://quantshift.io/monitoring`) by deploy
 ---
 
 ## Known Issues
-- ~~**Dashboard P&L display**~~ - ✅ RESOLVED (bots syncing correctly: $102,974 portfolio, -$679 P&L, real-time data)
+- **Equity bot has 11 positions** (max 10) - From broker position recovery, will close naturally when exit signals trigger
 - **Coinbase API unreliable** - `get_products()` hangs, using curated list workaround (tracked in IMPLEMENTATION-PLAN.md)
-- **ML models not yet trained** - Training scripts ready, need to run (Phase 0.4)
-- **Primary bot (CT100) not updated with AI/ML code yet** - Standby has full ML platform
 
 ---
 
@@ -673,26 +691,21 @@ Fixed 404 error on production URL (`https://quantshift.io/monitoring`) by deploy
 See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ### Immediate Next Steps (Next Session)
-1. **Verify Production Release** (First priority)
-   - Check https://quantshift.io shows v1.5.1
-   - Verify release notes page displays correctly
-   - Test registration page shows "Coming Soon" banner
-   - Confirm both environments healthy
-2. **Dashboard P&L Fix** (Backlog item from testing)
-   - Wire up positions/trades/performance data to dashboard
-   - Fix $0 P&L display
-   - Add unrealized gains/losses display
-   - Ensure metrics update in real-time
-3. **Monitor Phase 1 Trading** (Ongoing)
-   - Watch equity bot when market opens (9:30 AM EST)
-   - Monitor crypto bot 5-min cycles
-   - Check logs for signal generation
-   - Verify conservative parameters are working
-4. **Continue IMPLEMENTATION-PLAN.md** (Phase 0: Monitoring & Automated Failover)
-   - Redis configuration & capacity planning
-   - Prometheus metrics integration
-   - Grafana dashboards
-   - Automated failover system
+1. **Monitor Bot Safeguards** (First priority - 24-48 hours)
+   - Verify position limits blocking BUY signals when at max
+   - Verify crypto bot continues generating signals
+   - Check capital allocation remains non-zero for all strategies
+   - Monitor for any new issues or edge cases
+   - Check logs for position limit warnings and signal generation
+2. **Continue Phase 1.5.9 Paper Trading Validation** (2-4 weeks)
+   - Monitor daily for stuck positions (MUST PASS)
+   - Monitor for limit violations (MUST PASS)
+   - Verify bracket orders execute correctly (MUST PASS)
+   - Track crypto bot trading activity (need 5+ positions)
+   - Document any issues for fixes
+3. **Address Remaining Items**
+   - Equity bot excess positions will close naturally
+   - No immediate action required unless new issues arise
 
 ### Next Priorities
 1. [x] ✅ v1.5.1 production release (COMPLETE)
@@ -715,16 +728,28 @@ See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ## Exact Next Command
 
-**Next Session Priority: Verify v1.5.1 production release**
+**Next Session Priority: Monitor bot safeguards for 24-48 hours**
 
 **Status:**
-- ✅ v1.5.1 released to production (commit 074ab7f)
-- ✅ All 81/81 tests passing
-- ✅ Traffic switched to BLUE (10.92.3.29)
-- ✅ STANDBY synced with v1.5.1
-- ✅ Zero-downtime deployment complete
+- ✅ Position limit enforcement deployed and active
+- ✅ Capital allocation bug fixed (missing strategies get equal share)
+- ✅ All 3 bots running (equity, crypto, Kraken)
+- ✅ Crypto bot generating signals with $833/strategy allocation
+- ⚠️ Equity bot has 11 positions (max 10) - will close naturally
 
 **First command next session:**
+```bash
+# Check bot status and recent logs
+ssh root@10.92.3.27 "systemctl status quantshift-equity quantshift-crypto quantshift-kraken --no-pager | grep Active"
+
+# Check for position limit warnings
+ssh root@10.92.3.27 "tail -200 /opt/quantshift/logs/equity-bot.log | grep -E 'max_positions|buy_signal_blocked'"
+
+# Check crypto bot capital allocation
+ssh root@10.92.3.27 "tail -200 /opt/quantshift/logs/crypto-bot.log | grep -E 'allocated_capital|signals_generated' | tail -10"
+
+# Check current position counts
+ssh root@10.92.3.21 "sudo -u postgres psql -d quantshift -c 'SELECT bot_name, COUNT(*) FROM positions WHERE quantity > 0 GROUP BY bot_name;'"
 ```bash
 # Verify production release
 curl -s https://quantshift.io | grep -o "Version.*1\.[0-9]\.[0-9]" | head -1
