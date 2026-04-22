@@ -1,0 +1,1 @@
+../../.cloudy-work/.windsurf/rules/credentials-in-git-forbidden.md
