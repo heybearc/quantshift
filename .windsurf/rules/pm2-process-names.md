@@ -1,1 +1,0 @@
-../../.cloudy-work/.windsurf/rules/pm2-process-names.md

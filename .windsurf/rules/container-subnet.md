@@ -1,1 +1,0 @@
-../../.cloudy-work/.windsurf/rules/container-subnet.md

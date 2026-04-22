@@ -1,1 +1,0 @@
-../../.cloudy-work/.windsurf/rules/no-heredoc.md
