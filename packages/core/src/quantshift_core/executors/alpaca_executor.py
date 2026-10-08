@@ -565,7 +565,12 @@ class AlpacaExecutor:
                 return results
 
             # Max positions cap — close the excess, then skip new BUY signals
-            max_positions = self.risk_config.get('limits', {}).get('max_positions', 5)
+            max_positions = int(
+                self.risk_config.get(
+                    'max_positions',
+                    self.risk_config.get('limits', {}).get('max_positions', 10),
+                )
+            )
             if len(positions) > max_positions:
                 excess = sorted(positions, key=lambda pos: abs(pos.market_value))
                 for pos in excess[:len(positions) - max_positions]:

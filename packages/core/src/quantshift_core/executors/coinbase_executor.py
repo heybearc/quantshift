@@ -606,6 +606,9 @@ class CoinbaseExecutor:
                 'signal_reason': signal.reason
             }
             
+        except RuntimeError as e:
+            logger.error("signal execution failed for %s: %s", signal.symbol, e)
+            return None
         except Exception as e:
             logger.error("signal execution failed for %s: %s", signal.symbol, e, exc_info=True)
             return None
@@ -828,7 +831,12 @@ class CoinbaseExecutor:
                 return []
             
             # Check max positions limit
-            max_positions = self.risk_config.get('limits', {}).get('max_positions', 8)
+            max_positions = int(
+                self.risk_config.get(
+                    'max_positions',
+                    self.risk_config.get('limits', {}).get('max_positions', 8),
+                )
+            )
             at_max_positions = len(positions) >= max_positions
             
             if at_max_positions:
