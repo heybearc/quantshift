@@ -22,6 +22,31 @@ from quantshift_core.risk import PositionLimits
 logger = logging.getLogger(__name__)
 
 
+def _client_order_id(prefix: str, symbol: str) -> str:
+    safe = "".join(ch for ch in symbol if ch.isalnum()) or "order"
+    return f"{prefix}_{safe}_{int(time.time() * 1000)}"
+
+
+def _order_attr(response: Any, key: str, default=None):
+    """Read a field from a Coinbase SDK response or a plain dict."""
+    if response is None:
+        return default
+    if isinstance(response, dict):
+        if key in response:
+            return response.get(key, default)
+        nested = response.get("order") or {}
+        return nested.get(key, default)
+    value = getattr(response, key, None)
+    if value is not None:
+        return value
+    success = getattr(response, "success_response", None)
+    if success is not None:
+        nested = success.get(key) if isinstance(success, dict) else getattr(success, key, None)
+        if nested is not None:
+            return nested
+    return default
+
+
 class CoinbaseExecutor:
     """
     Coinbase-specific strategy executor.
@@ -116,18 +141,13 @@ class CoinbaseExecutor:
         try:
             # DEBUG: Log simulated_capital value
             logger.info(
-                "get_account_called",
-                simulated_capital=self.simulated_capital,
-                has_simulated=self.simulated_capital is not None,
-                is_positive=self.simulated_capital > 0 if self.simulated_capital else False
+                "get_account called simulated_capital=%s",
+                self.simulated_capital,
             )
             
             # Use simulated capital if configured (paper trading mode)
             if self.simulated_capital and self.simulated_capital > 0:
-                logger.info(
-                    "using_simulated_capital",
-                    capital=self.simulated_capital
-                )
+                logger.info("using simulated capital: %s", self.simulated_capital)
                 return Account(
                     equity=self.simulated_capital,
                     cash=self.simulated_capital,
@@ -149,16 +169,12 @@ class CoinbaseExecutor:
                             available = float(account.available_balance.value)
                             total_balance += available
                             logger.debug(
-                                "account_balance_found",
-                                currency=account.currency,
-                                balance=available
+                                "account balance %s=%s",
+                                account.currency,
+                                available,
                             )
             
-            logger.info(
-                "account_fetched",
-                total_balance=total_balance,
-                buying_power=total_balance
-            )
+            logger.info("account fetched balance=%s", total_balance)
             
             return Account(
                 equity=total_balance,
@@ -241,16 +257,13 @@ class CoinbaseExecutor:
                     ))
                     
                     logger.debug(
-                        "position_found",
-                        symbol=symbol,
-                        quantity=quantity,
-                        value=market_value
+                        "position %s qty=%s value=%s",
+                        symbol,
+                        quantity,
+                        market_value,
                     )
             
-            logger.info(
-                "positions_fetched",
-                count=len(positions)
-            )
+            logger.info("positions fetched count=%s", len(positions))
             return positions
             
         except Exception as e:
@@ -285,11 +298,11 @@ class CoinbaseExecutor:
             
             # Fetch candles from Coinbase
             logger.debug(
-                "fetching_candles",
-                symbol=symbol,
-                start_time=start_time,
-                end_time=end_time,
-                granularity=granularity
+                "fetching candles %s start=%s end=%s granularity=%s",
+                symbol,
+                start_time,
+                end_time,
+                granularity,
             )
             
             candles = self.coinbase_client.get_candles(
@@ -304,11 +317,7 @@ class CoinbaseExecutor:
             # Each candle is an object with: start, low, high, open, close, volume
             candles_list = candles.candles if hasattr(candles, 'candles') else []
             
-            logger.debug(
-                "candles_received",
-                symbol=symbol,
-                candle_count=len(candles_list)
-            )
+            logger.debug("candles received %s count=%s", symbol, len(candles_list))
             
             # Convert candle objects to list of dicts
             data = []
@@ -331,14 +340,7 @@ class CoinbaseExecutor:
             df = pd.DataFrame(data)
             
             if len(df) == 0:
-                logger.warning(
-                    "market_data_empty",
-                    symbol=symbol,
-                    start_time=start_time,
-                    end_time=end_time,
-                    granularity=granularity,
-                    message=f"Coinbase returned 0 candles for {symbol}"
-                )
+                logger.warning("Coinbase returned 0 candles for %s", symbol)
                 return pd.DataFrame()
             
             # Convert timestamp to datetime
@@ -367,13 +369,27 @@ class CoinbaseExecutor:
         while time.time() < deadline:
             try:
                 order = self.coinbase_client.get_order(order_id)
-                status = order.get('order', {}).get('status', '').upper()
-                if status in ('FILLED', 'PARTIALLY_FILLED'):
-                    return order.get('order')
+                inner = getattr(order, "order", None) or order
+                status = str(getattr(inner, "status", "") or "").upper()
+                if status in ("FILLED", "PARTIALLY_FILLED"):
+                    return inner
             except Exception:
                 pass
             time.sleep(1)
         return None
+
+    def _submit_market_order(self, symbol: str, side: str, base_size: str):
+        """Submit a Coinbase market IOC order. SDK requires client_order_id."""
+        response = self.coinbase_client.market_order(
+            client_order_id=_client_order_id("mkt", symbol),
+            product_id=symbol,
+            side=side,
+            base_size=str(base_size),
+        )
+        if getattr(response, "success", True) is False:
+            reason = getattr(response, "error_response", None) or getattr(response, "failure_reason", None)
+            raise RuntimeError(f"Coinbase rejected {side} {symbol}: {reason}")
+        return response
 
     def execute_signal(self, signal: Signal) -> Optional[Dict[str, Any]]:
         """
@@ -387,11 +403,11 @@ class CoinbaseExecutor:
         """
         try:
             logger.info(
-                "execute_signal_called",
-                symbol=signal.symbol,
-                signal_type=signal.signal_type.value,
-                position_size=signal.position_size,
-                price=signal.price
+                "execute_signal %s %s size=%s price=%s",
+                signal.symbol,
+                signal.signal_type.value,
+                signal.position_size,
+                signal.price,
             )
             
             if signal.signal_type == SignalType.HOLD:
@@ -453,20 +469,12 @@ class CoinbaseExecutor:
                 reward_pct = ((take_profit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
                 reward_risk_ratio = (reward_pct / risk_pct) if risk_pct > 0 else 0
                 
-                # Submit entry order
-                order_config = {
-                    'product_id': signal.symbol,
-                    'side': 'BUY',
-                    'order_configuration': {
-                        'market_market_ioc': {
-                            'base_size': str(signal.position_size or 1)
-                        }
-                    }
-                }
-                
-                response = self.coinbase_client.market_order(**order_config)
-                order = response.get('order', {})
-                order_id = order.get('order_id')
+                response = self._submit_market_order(
+                    signal.symbol, "BUY", signal.position_size or 1
+                )
+                order_id = _order_attr(response, "order_id")
+                order_status = _order_attr(response, "status", "UNKNOWN")
+                order_created = _order_attr(response, "created_time")
                 
                 logger.info(
                     f"Bracket order entry submitted: BUY {signal.position_size} {signal.symbol} @ market | "
@@ -479,10 +487,9 @@ class CoinbaseExecutor:
                 
                 # Wait for fill to get actual fill price
                 filled_order = self._wait_for_fill(order_id, timeout=15)
-                if filled_order:
-                    fills = filled_order.get('fills', [])
-                    if fills:
-                        fill_price = float(fills[0].get('price', signal.price))
+                filled_price = _order_attr(filled_order, "average_filled_price")
+                if filled_price:
+                    fill_price = float(filled_price)
                 
                 # Immediately place stop-loss and take-profit (bracket pattern)
                 sl_success = False
@@ -496,8 +503,11 @@ class CoinbaseExecutor:
                     )
                     sl_success = True
                     logger.info(
-                        "bracket_stop_loss_placed",
-                        extra={"symbol": signal.symbol, "qty": signal.position_size, "stop_price": stop_loss_price, "order_id": sl_order.get('order_id')}
+                        "bracket stop loss placed %s qty=%s stop=%s order=%s",
+                        signal.symbol,
+                        signal.position_size,
+                        stop_loss_price,
+                        _order_attr(sl_order, "order_id"),
                     )
                 except Exception as e:
                     logger.error("bracket_stop_loss_failed for %s: %s", signal.symbol, e, exc_info=True)
@@ -510,11 +520,11 @@ class CoinbaseExecutor:
                     )
                     tp_success = True
                     logger.info(
-                        "bracket_take_profit_placed",
-                        symbol=signal.symbol,
-                        qty=signal.position_size,
-                        limit_price=take_profit_price,
-                        order_id=tp_order.get('order_id')
+                        "bracket take profit placed %s qty=%s limit=%s order=%s",
+                        signal.symbol,
+                        signal.position_size,
+                        take_profit_price,
+                        _order_attr(tp_order, "order_id"),
                     )
                 except Exception as e:
                     logger.error(f"bracket_take_profit_failed for {signal.symbol}: {e}", exc_info=True)
@@ -530,20 +540,12 @@ class CoinbaseExecutor:
                     logger.critical(f"bracket_order_failed for {signal.symbol}: unprotected")
                 
             else:
-                # Non-bracket order (SELL signals or missing SL/TP)
-                order_config = {
-                    'product_id': signal.symbol,
-                    'side': side,
-                    'order_configuration': {
-                        'market_market_ioc': {
-                            'base_size': str(signal.position_size or 1)
-                        }
-                    }
-                }
-                
-                response = self.coinbase_client.market_order(**order_config)
-                order = response.get('order', {})
-                order_id = order.get('order_id')
+                response = self._submit_market_order(
+                    signal.symbol, side, signal.position_size or 1
+                )
+                order_id = _order_attr(response, "order_id")
+                order_status = _order_attr(response, "status", "UNKNOWN")
+                order_created = _order_attr(response, "created_time")
                 
                 logger.info(
                     f"Order submitted: {side} {signal.position_size} {signal.symbol} @ market"
@@ -554,10 +556,9 @@ class CoinbaseExecutor:
                 # For BUY signals without bracket: place SL/TP separately (legacy behavior)
                 if signal.signal_type == SignalType.BUY:
                     filled_order = self._wait_for_fill(order_id, timeout=15)
-                    if filled_order:
-                        fills = filled_order.get('fills', [])
-                        if fills:
-                            fill_price = float(fills[0].get('price', signal.price))
+                    filled_price = _order_attr(filled_order, "average_filled_price")
+                    if filled_price:
+                        fill_price = float(filled_price)
                     
                     if signal.stop_loss:
                         try:
@@ -567,14 +568,14 @@ class CoinbaseExecutor:
                                 signal.stop_loss
                             )
                             logger.info(
-                                "stop_loss_placed",
-                                symbol=signal.symbol,
-                                qty=signal.position_size,
-                                stop_price=signal.stop_loss,
-                                order_id=sl_order.get('order_id')
+                                "stop loss placed %s qty=%s stop=%s order=%s",
+                                signal.symbol,
+                                signal.position_size,
+                                signal.stop_loss,
+                                _order_attr(sl_order, "order_id"),
                             )
                         except Exception as e:
-                            logger.error("stop_loss_placement_failed", error=str(e))
+                            logger.error("stop loss placement failed for %s: %s", signal.symbol, e)
                     
                     if signal.take_profit:
                         try:
@@ -584,14 +585,14 @@ class CoinbaseExecutor:
                                 signal.take_profit
                             )
                             logger.info(
-                                "take_profit_placed",
-                                symbol=signal.symbol,
-                                qty=signal.position_size,
-                                limit_price=signal.take_profit,
-                                order_id=tp_order.get('order_id')
+                                "take profit placed %s qty=%s limit=%s order=%s",
+                                signal.symbol,
+                                signal.position_size,
+                                signal.take_profit,
+                                _order_attr(tp_order, "order_id"),
                             )
                         except Exception as e:
-                            logger.error("take_profit_placement_failed", error=str(e))
+                            logger.error("take profit placement failed for %s: %s", signal.symbol, e)
             
             return {
                 'id': order_id,
@@ -599,14 +600,14 @@ class CoinbaseExecutor:
                 'qty': signal.position_size or 1,
                 'side': side,
                 'type': 'market',
-                'status': order.get('status', 'UNKNOWN'),
+                'status': order_status,
                 'fill_price': fill_price,
-                'submitted_at': order.get('created_time'),
+                'submitted_at': order_created,
                 'signal_reason': signal.reason
             }
             
         except Exception as e:
-            logger.error("signal_execution_failed", symbol=signal.symbol, error=str(e), exc_info=True)
+            logger.error("signal execution failed for %s: %s", signal.symbol, e, exc_info=True)
             return None
     
     def _place_stop_loss_order(self, symbol: str, quantity: float, stop_price: float) -> dict:
@@ -653,31 +654,19 @@ class CoinbaseExecutor:
             Order details if successful, None otherwise
         """
         try:
-            # Submit market sell order to close position
-            order_config = {
-                'product_id': symbol,
-                'side': 'SELL',
-                'order_configuration': {
-                    'market_market_ioc': {
-                        'base_size': str(abs(quantity))
-                    }
-                }
-            }
-            
-            response = self.coinbase_client.market_order(**order_config)
-            order = response.get('order', {})
+            response = self._submit_market_order(symbol, "SELL", abs(quantity))
             
             logger.info(
                 f"Position closed: SELL {quantity} {symbol} @ market - {reason}"
             )
             
             return {
-                'id': order.get('order_id'),
+                'id': _order_attr(response, "order_id"),
                 'symbol': symbol,
                 'qty': quantity,
                 'side': 'SELL',
                 'type': 'market',
-                'status': order.get('status', 'UNKNOWN'),
+                'status': _order_attr(response, "status", "UNKNOWN"),
                 'reason': reason
             }
             
@@ -715,7 +704,7 @@ class CoinbaseExecutor:
             }
             
             response = self.coinbase_client.create_order(**order_config)
-            order_id = response.get('order_id') or response.get('success_response', {}).get('order_id')
+            order_id = _order_attr(response, "order_id")
             
             logger.info(
                 f"Stop order placed: {symbol} qty={quantity} stop=${stop_price:.2f} order_id={order_id}"
@@ -844,10 +833,9 @@ class CoinbaseExecutor:
             
             if at_max_positions:
                 logger.warning(
-                    "max_positions_limit_active",
-                    current_positions=len(positions),
-                    max_positions=max_positions,
-                    message=f"At max positions ({len(positions)}/{max_positions}) - will block all BUY signals"
+                    "At max positions (%s/%s) - blocking BUY signals",
+                    len(positions),
+                    max_positions,
                 )
             
             # 4. Execute signals
@@ -856,11 +844,11 @@ class CoinbaseExecutor:
                 # Skip BUY signals if at max positions
                 if signal.signal_type == SignalType.BUY and at_max_positions:
                     logger.warning(
-                        "buy_signal_blocked_max_positions",
-                        symbol=signal.symbol,
-                        current_positions=len(positions),
-                        max_positions=max_positions,
-                        reason=signal.reason
+                        "BUY blocked at max positions for %s (%s/%s): %s",
+                        signal.symbol,
+                        len(positions),
+                        max_positions,
+                        signal.reason,
                     )
                     continue
                 

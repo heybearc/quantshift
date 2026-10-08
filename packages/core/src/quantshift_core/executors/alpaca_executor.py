@@ -292,21 +292,21 @@ class AlpacaExecutor:
                 
                 if violation:
                     logger.warning(
-                        "position_limit_violation",
-                        symbol=signal.symbol,
-                        limit_type=violation.limit_type,
-                        current_value=violation.current_value,
-                        limit_value=violation.limit_value,
-                        message=violation.message,
-                        severity=violation.severity
+                        "position limit violation %s %s: %s > %s (%s) %s",
+                        signal.symbol,
+                        violation.limit_type,
+                        violation.current_value,
+                        violation.limit_value,
+                        violation.severity,
+                        violation.message,
                     )
                     
                     # Reject trade if critical violation
                     if violation.severity == 'critical':
                         logger.critical(
-                            "trade_rejected_limit_violation",
-                            symbol=signal.symbol,
-                            violation=violation.message
+                            "trade rejected for %s: %s",
+                            signal.symbol,
+                            violation.message,
                         )
                         return None
             
@@ -564,16 +564,31 @@ class AlpacaExecutor:
                 results['errors'].append(f"Circuit breaker: {halt_reason}")
                 return results
 
-            # Max positions cap — skip BUY signals if at limit
+            # Max positions cap — close the excess, then skip new BUY signals
             max_positions = self.risk_config.get('limits', {}).get('max_positions', 5)
+            if len(positions) > max_positions:
+                excess = sorted(positions, key=lambda pos: abs(pos.market_value))
+                for pos in excess[:len(positions) - max_positions]:
+                    logger.warning(
+                        "Closing excess position %s qty=%s to enforce max %s",
+                        pos.symbol,
+                        pos.quantity,
+                        max_positions,
+                    )
+                    self.close_position(
+                        pos.symbol,
+                        pos.quantity,
+                        reason=f"max_positions trim ({len(positions)}>{max_positions})",
+                    )
+                positions = self.get_positions()
+                account.positions_count = len(positions)
             at_max_positions = len(positions) >= max_positions
             
             if at_max_positions:
                 logger.warning(
-                    "max_positions_limit_active",
-                    current_positions=len(positions),
-                    max_positions=max_positions,
-                    message=f"At max positions ({len(positions)}/{max_positions}) - will block all BUY signals"
+                    "At max positions (%s/%s) - blocking BUY signals",
+                    len(positions),
+                    max_positions,
                 )
             
             logger.info(
@@ -613,11 +628,11 @@ class AlpacaExecutor:
                         # Skip BUY signals if at max positions
                         if signal.signal_type == SignalType.BUY and at_max_positions:
                             logger.warning(
-                                "buy_signal_blocked_max_positions",
-                                symbol=signal.symbol,
-                                current_positions=len(positions),
-                                max_positions=max_positions,
-                                reason=signal.reason
+                                "BUY blocked at max positions for %s (%s/%s): %s",
+                                signal.symbol,
+                                len(positions),
+                                max_positions,
+                                signal.reason,
                             )
                             continue
 
