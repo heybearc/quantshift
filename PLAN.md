@@ -502,7 +502,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
     - Crypto bot capital allocation (regime detection bug fixed)
     - Added comprehensive logging for debugging
   
-- [ ] **Monitor daily for 2-4 weeks** (Started March 9, 2026)
+- [ ] **Monitor daily for 2-4 weeks** (Restarted 2026-10-09 after archive; crypto paper fills are local as of `170831b`)
   - Zero stuck positions (MUST PASS) - ⏳ Monitoring
   - Zero limit violations (MUST PASS) - ✅ Enforcement active
   - All bracket orders execute correctly (MUST PASS) - ⏳ Monitoring

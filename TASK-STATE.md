@@ -1,13 +1,13 @@
 # QuantShift Task State
 
-**Last updated:** 2026-03-09 (4:52pm)  
+**Last updated:** 2026-10-09  
 **Current branch:** main  
-**Working on:** Bot Safeguard Fixes - ✅ COMPLETE
+**Working on:** Phase 1.5.9 paper validation — crypto paper fills local
 
 ---
 
 ## Current Task
-**Bot Safeguard Fixes** - ✅ COMPLETE
+**Phase 1.5.9 paper validation** — resumed 2026-10-08 after Level B archive. Crypto paper orders no longer hit live Coinbase (`170831b` on CT100).
 
 ### What I just completed
 Fixed three critical bot safeguard issues that were preventing proper paper trading validation:
@@ -34,9 +34,9 @@ Fixed three critical bot safeguard issues that were preventing proper paper trad
 - ✅ Equity bot has 11 positions (from broker recovery, will close naturally)
 
 ### Exact Next Step
-1. Monitor bots for 24-48 hours to verify all safeguards working
-2. Continue Phase 1.5.9 paper trading validation (2-4 weeks)
-3. Address any new issues that arise during monitoring
+1. Watch the new crypto paper book (simulated cash, not live Coinbase) through the next cycles
+2. Restart the 2–4 week Phase 1.5.9 clock from 2026-10-09
+3. Do not `deploy_to_standby` until MCP LIVE/STANDBY matches HAProxy (green is LIVE)
 
 ### Recent Accomplishments
 
@@ -681,8 +681,9 @@ Fixed three critical bot safeguard issues that were preventing proper paper trad
 ---
 
 ## Known Issues
-- **Equity bot has 11 positions** (max 10) - From broker position recovery, will close naturally when exit signals trigger
-- **Coinbase API unreliable** - `get_products()` hangs, using curated list workaround (tracked in IMPLEMENTATION-PLAN.md)
+- **undeployed work on branch main** (`170831b`) — bot primary has the commit; web STANDBY deploy skipped because MCP reports blue LIVE and HAProxy sends `quantshift.io` to green
+- **Equity book was trimmed to 5** on 2026-10-08 when the cap was read as 5; configured cap is 10 (`66f8474`)
+- **Coinbase API unreliable** - `get_products()` hangs, using curated list workaround (tracked in PLAN.md)
 
 ---
 
@@ -691,21 +692,9 @@ Fixed three critical bot safeguard issues that were preventing proper paper trad
 See `IMPLEMENTATION-PLAN.md` for comprehensive work tracking (D-022 standard).
 
 ### Immediate Next Steps (Next Session)
-1. **Monitor Bot Safeguards** (First priority - 24-48 hours)
-   - Verify position limits blocking BUY signals when at max
-   - Verify crypto bot continues generating signals
-   - Check capital allocation remains non-zero for all strategies
-   - Monitor for any new issues or edge cases
-   - Check logs for position limit warnings and signal generation
-2. **Continue Phase 1.5.9 Paper Trading Validation** (2-4 weeks)
-   - Monitor daily for stuck positions (MUST PASS)
-   - Monitor for limit violations (MUST PASS)
-   - Verify bracket orders execute correctly (MUST PASS)
-   - Track crypto bot trading activity (need 5+ positions)
-   - Document any issues for fixes
-3. **Address Remaining Items**
-   - Equity bot excess positions will close naturally
-   - No immediate action required unless new issues arise
+1. Confirm crypto cycles keep filling on the simulated book (no `INSUFFICIENT_FUND`)
+2. Continue Phase 1.5.9 from 2026-10-09 (2–4 weeks, paper only)
+3. Reconcile MCP LIVE/STANDBY with HAProxy before any web deploy
 
 ### Next Priorities
 1. [x] ✅ v1.5.1 production release (COMPLETE)
