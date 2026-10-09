@@ -240,19 +240,20 @@ class SymbolUniverse:
         This is a curated list of top cryptocurrencies.
         Phase 2 will replace this with dynamic ranking.
         """
-        # Top 50 cryptos verified on Coinbase (March 2026)
-        # Removed: USDT, USDC (stablecoins), BNB (not on Coinbase), MATIC, ENJ, GALA, FTM, TRX (delisted)
+        # Top 50 cryptos verified on Coinbase (October 2026)
+        # Removed: USDT, USDC (stablecoins), BNB (not on Coinbase),
+        # MATIC, ENJ, GALA, FTM, TRX, MKR, EOS, RNDR, LRC (delisted)
         return [
             'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'ADA-USD',
             'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD', 'UNI-USD',
             'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD', 'BCH-USD',
-            'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD', 'SNX-USD',
+            'FIL-USD', 'AAVE-USD', 'SUI-USD', 'COMP-USD', 'SNX-USD',
             'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD', 'ZRX-USD',
             'MANA-USD', 'SAND-USD', 'AXS-USD', 'SHIB-USD', 'CHZ-USD',
             'BAT-USD', 'ZEC-USD', 'DASH-USD', 'ETC-USD', 'XTZ-USD',
-            'EOS-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
-            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RNDR-USD',
-            'INJ-USD', 'STX-USD', 'GRT-USD', 'LRC-USD', 'SKL-USD'
+            'APT-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
+            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RENDER-USD',
+            'INJ-USD', 'STX-USD', 'GRT-USD', 'TIA-USD', 'SKL-USD'
         ]
     
     def _get_fallback_equity_symbols(self) -> List[str]:
@@ -267,19 +268,19 @@ class SymbolUniverse:
         """
         self.logger.warning("using_fallback_crypto_symbols")
         
-        # Top 50 cryptos by market cap (verified on Coinbase as of March 2026)
-        # Removed delisted/invalid symbols: MATIC, ENJ, GALA, FTM, TRX
+        # Top 50 cryptos by market cap (verified on Coinbase as of October 2026)
+        # Removed delisted/invalid symbols: MATIC, ENJ, GALA, FTM, TRX, MKR, EOS, RNDR, LRC
         top_50 = [
             'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'ADA-USD',
             'AVAX-USD', 'DOT-USD', 'DOGE-USD', 'LINK-USD', 'UNI-USD',
             'ATOM-USD', 'LTC-USD', 'XLM-USD', 'ALGO-USD', 'BCH-USD',
-            'FIL-USD', 'AAVE-USD', 'MKR-USD', 'COMP-USD', 'SNX-USD',
+            'FIL-USD', 'AAVE-USD', 'SUI-USD', 'COMP-USD', 'SNX-USD',
             'YFI-USD', 'SUSHI-USD', 'CRV-USD', 'BAL-USD', 'ZRX-USD',
             'MANA-USD', 'SAND-USD', 'AXS-USD', 'SHIB-USD', 'CHZ-USD',
             'BAT-USD', 'ZEC-USD', 'DASH-USD', 'ETC-USD', 'XTZ-USD',
-            'EOS-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
-            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RNDR-USD',
-            'INJ-USD', 'STX-USD', 'GRT-USD', 'LRC-USD', 'SKL-USD'
+            'APT-USD', 'NEAR-USD', 'HBAR-USD', 'ICP-USD', 'APE-USD',
+            'LDO-USD', 'ARB-USD', 'OP-USD', 'IMX-USD', 'RENDER-USD',
+            'INJ-USD', 'STX-USD', 'GRT-USD', 'TIA-USD', 'SKL-USD'
         ]
         
         return top_50[:self.max_symbols]
