@@ -85,6 +85,8 @@ class CoinbaseExecutor:
         self.use_dynamic_symbols = use_dynamic_symbols
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
+        self._sim_cash = float(simulated_capital) if simulated_capital else 0.0
+        self._sim_positions: Dict[str, Dict[str, float]] = {}
         
         # Initialize position limits with config values
         self.position_limits = PositionLimits(
@@ -116,7 +118,118 @@ class CoinbaseExecutor:
             f"CoinbaseExecutor initialized with {strategy.name} strategy for {symbol_info}"
         )
         if simulated_capital:
-            logger.info(f"Using simulated capital: ${simulated_capital:,.2f}")
+            logger.info(f"Using simulated capital: ${simulated_capital:,.2f} (orders stay off the live Coinbase account)")
+
+    def _is_paper(self) -> bool:
+        return bool(self.simulated_capital and self.simulated_capital > 0)
+
+    def _paper_account(self) -> Account:
+        market_value = sum(
+            pos["quantity"] * pos["current_price"] for pos in self._sim_positions.values()
+        )
+        equity = self._sim_cash + market_value
+        return Account(
+            equity=equity,
+            cash=self._sim_cash,
+            buying_power=self._sim_cash,
+            portfolio_value=equity,
+            positions_count=len(self._sim_positions),
+        )
+
+    def _paper_positions(self) -> List[Position]:
+        positions = []
+        for symbol, pos in self._sim_positions.items():
+            qty = pos["quantity"]
+            entry = pos["entry_price"]
+            price = pos["current_price"]
+            unrealized = (price - entry) * qty
+            positions.append(Position(
+                symbol=symbol,
+                quantity=qty,
+                entry_price=entry,
+                current_price=price,
+                market_value=qty * price,
+                unrealized_pl=unrealized,
+                unrealized_plpc=(unrealized / (entry * qty)) if entry and qty else 0.0,
+                side="long",
+            ))
+        return positions
+
+    def _simulate_order(
+        self,
+        symbol: str,
+        side: str,
+        quantity: float,
+        price: float,
+        reason: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """Fill a paper order against simulated cash. Never calls Coinbase."""
+        qty = abs(float(quantity or 0))
+        price = float(price or 0)
+        side = side.upper()
+        if qty <= 0 or price <= 0:
+            logger.error("simulated order missing size or price for %s", symbol)
+            return None
+
+        if side == "BUY":
+            cost = qty * price
+            if cost > self._sim_cash:
+                logger.warning(
+                    "simulated BUY rejected %s cost=%.2f cash=%.2f",
+                    symbol,
+                    cost,
+                    self._sim_cash,
+                )
+                return None
+            existing = self._sim_positions.get(symbol)
+            if existing:
+                new_qty = existing["quantity"] + qty
+                existing["entry_price"] = (
+                    (existing["entry_price"] * existing["quantity"]) + (price * qty)
+                ) / new_qty
+                existing["quantity"] = new_qty
+                existing["current_price"] = price
+            else:
+                self._sim_positions[symbol] = {
+                    "quantity": qty,
+                    "entry_price": price,
+                    "current_price": price,
+                }
+            self._sim_cash -= cost
+        else:
+            existing = self._sim_positions.get(symbol)
+            if not existing or existing["quantity"] <= 0:
+                logger.warning("simulated SELL rejected %s: no position", symbol)
+                return None
+            sell_qty = min(qty, existing["quantity"])
+            self._sim_cash += sell_qty * price
+            existing["quantity"] -= sell_qty
+            existing["current_price"] = price
+            if existing["quantity"] <= 1e-12:
+                del self._sim_positions[symbol]
+            qty = sell_qty
+
+        order_id = _client_order_id("sim", symbol)
+        logger.info(
+            "[SIMULATED] %s %s %s @ %.4f cash=%.2f reason=%s",
+            side,
+            qty,
+            symbol,
+            price,
+            self._sim_cash,
+            reason,
+        )
+        return {
+            "id": order_id,
+            "symbol": symbol,
+            "qty": qty,
+            "side": side,
+            "type": "market",
+            "status": "SIMULATED",
+            "fill_price": price,
+            "submitted_at": datetime.utcnow().isoformat(),
+            "signal_reason": reason,
+        }
     
     def _ensure_symbols_loaded(self) -> None:
         """Lazy load symbols on first use if using dynamic symbols."""
@@ -145,16 +258,15 @@ class CoinbaseExecutor:
                 self.simulated_capital,
             )
             
-            # Use simulated capital if configured (paper trading mode)
-            if self.simulated_capital and self.simulated_capital > 0:
-                logger.info("using simulated capital: %s", self.simulated_capital)
-                return Account(
-                    equity=self.simulated_capital,
-                    cash=self.simulated_capital,
-                    buying_power=self.simulated_capital,
-                    portfolio_value=self.simulated_capital,
-                    positions_count=0
+            if self._is_paper():
+                account = self._paper_account()
+                logger.info(
+                    "using simulated capital cash=%.2f equity=%.2f positions=%s",
+                    account.cash,
+                    account.equity,
+                    account.positions_count,
                 )
+                return account
             
             # Get all accounts from Coinbase (live trading mode)
             logger.info("fetching_real_coinbase_balance")
@@ -202,6 +314,11 @@ class CoinbaseExecutor:
         Fetch positions from Coinbase and convert to broker-agnostic format.
         For spot trading, positions are crypto holdings with non-zero balance.
         """
+        if self._is_paper():
+            positions = self._paper_positions()
+            logger.info("simulated positions count=%s", len(positions))
+            return positions
+
         try:
             # Get all accounts (spot holdings)
             accounts_response = self.coinbase_client.get_accounts()
@@ -380,6 +497,8 @@ class CoinbaseExecutor:
 
     def _submit_market_order(self, symbol: str, side: str, base_size: str):
         """Submit a Coinbase market IOC order. SDK requires client_order_id."""
+        if self._is_paper():
+            raise RuntimeError(f"refusing live Coinbase order for paper bot: {side} {symbol}")
         response = self.coinbase_client.market_order(
             client_order_id=_client_order_id("mkt", symbol),
             product_id=symbol,
@@ -456,6 +575,15 @@ class CoinbaseExecutor:
             
             # Determine order side
             side = 'BUY' if signal.signal_type == SignalType.BUY else 'SELL'
+
+            if self._is_paper():
+                return self._simulate_order(
+                    signal.symbol,
+                    side,
+                    signal.position_size or 1,
+                    signal.price or 0,
+                    signal.reason or "",
+                )
             
             # For BUY signals with stop_loss and take_profit: use bracket order pattern
             if signal.signal_type == SignalType.BUY and signal.stop_loss and signal.take_profit:
@@ -657,6 +785,10 @@ class CoinbaseExecutor:
             Order details if successful, None otherwise
         """
         try:
+            if self._is_paper():
+                pos = self._sim_positions.get(symbol)
+                price = pos["current_price"] if pos else 0
+                return self._simulate_order(symbol, "SELL", quantity, price, reason)
             response = self._submit_market_order(symbol, "SELL", abs(quantity))
             
             logger.info(
@@ -690,6 +822,10 @@ class CoinbaseExecutor:
             Order ID if successful, None otherwise
         """
         try:
+            if self._is_paper():
+                order_id = _client_order_id("simsl", symbol)
+                logger.info("[SIMULATED] stop recorded %s qty=%s stop=%s", symbol, quantity, stop_price)
+                return order_id
             import time
             
             order_config = {
