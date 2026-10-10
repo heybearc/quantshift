@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+
+function num(value: unknown): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,76 +18,51 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const botName = searchParams.get('bot') || searchParams.get('botName') || 'quantshift-equity';
 
-    // Fetch regime data from database (primary source)
-    let current = null;
-    
+    let row: Record<string, unknown> | null = null;
     try {
-      const { Pool } = require('pg');
-      const pool = new Pool({
-        host: process.env.DATABASE_HOST || '10.92.3.21',
-        port: parseInt(process.env.DATABASE_PORT || '5432'),
-        database: process.env.DATABASE_NAME || 'quantshift',
-        user: process.env.DATABASE_USER || 'quantshift',
-        password: process.env.DATABASE_PASSWORD,
-      });
-
-      // Get most recent regime data for current state
-      const currentResult = await pool.query(
-        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp,
-                trend_slope, volatility, market_breadth, vix
-         FROM regime_history 
-         WHERE bot_name = $1
-           AND timestamp > NOW() - INTERVAL '3 days'
-         ORDER BY timestamp DESC 
-         LIMIT 1`,
-        [botName]
-      ).catch(() => pool.query(
-        `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp
-         FROM regime_history 
-         WHERE bot_name = $1
-           AND timestamp > NOW() - INTERVAL '3 days'
-         ORDER BY timestamp DESC 
-         LIMIT 1`,
-        [botName]
-      ));
-
-      if (currentResult.rows.length > 0) {
-        const row = currentResult.rows[0];
-        current = {
-          regime: row.regime,
-          method: row.method,
-          confidence: row.confidence,
-          risk_multiplier: row.risk_multiplier,
-          allocation: typeof row.allocation === 'string' ? JSON.parse(row.allocation) : row.allocation,
-          timestamp: row.timestamp,
-          trend: row.trend_slope ?? null,
-          volatility: row.volatility ?? null,
-          marketBreadth: row.market_breadth ?? null,
-          vix: row.vix ?? null,
-        };
-      }
-
-      await pool.end();
-    } catch (dbError) {
-      console.error('Database error fetching regime data:', dbError);
+      const rows = await prisma.$queryRaw<Record<string, unknown>[]>`
+        SELECT regime, method, confidence, risk_multiplier, allocation, timestamp,
+               trend_slope, volatility, market_breadth, vix
+        FROM regime_history
+        WHERE bot_name = ${botName}
+          AND timestamp > NOW() - INTERVAL '3 days'
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
+      row = rows[0] ?? null;
+    } catch (columnError) {
+      console.error('Regime query fell back to the original columns:', columnError);
+      const rows = await prisma.$queryRaw<Record<string, unknown>[]>`
+        SELECT regime, method, confidence, risk_multiplier, allocation, timestamp
+        FROM regime_history
+        WHERE bot_name = ${botName}
+          AND timestamp > NOW() - INTERVAL '3 days'
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
+      row = rows[0] ?? null;
     }
 
-    if (!current) {
+    if (!row) {
       return NextResponse.json({ regime: null });
     }
 
+    const allocation = typeof row.allocation === 'string'
+      ? JSON.parse(row.allocation)
+      : row.allocation;
+
     return NextResponse.json({
-      regime: current.regime,
-      confidence: current.confidence,
-      trend: current.trend ?? null,
-      volatility: current.volatility ?? null,
-      marketBreadth: current.marketBreadth ?? null,
-      vix: current.vix ?? null,
-      method: current.method,
-      riskMultiplier: current.risk_multiplier || 1.0,
-      risk_multiplier: current.risk_multiplier || 1.0,
-      allocation: current.allocation,
-      timestamp: current.timestamp,
+      regime: row.regime,
+      confidence: num(row.confidence),
+      trend: num(row.trend_slope),
+      volatility: num(row.volatility),
+      marketBreadth: num(row.market_breadth),
+      vix: num(row.vix),
+      method: row.method,
+      riskMultiplier: num(row.risk_multiplier) ?? 1,
+      risk_multiplier: num(row.risk_multiplier) ?? 1,
+      allocation,
+      timestamp: row.timestamp,
     });
   } catch (error) {
     console.error('Error fetching regime data:', error);
@@ -90,4 +72,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
