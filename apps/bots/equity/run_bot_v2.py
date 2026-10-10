@@ -52,6 +52,7 @@ class QuantShiftEquityBotV2:
     
     def __init__(self, config_path: str = '/opt/quantshift/config/equity_strategy.yaml'):
         """Initialize the bot with configuration."""
+        # equity_strategy.yaml was removed. The live bot is run_bot_v3.py with config/equity_config.yaml.
         self.bot_name = "equity-bot"
         self.state_manager = StateManager(bot_name=self.bot_name)
         self.running = True

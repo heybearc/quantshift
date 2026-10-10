@@ -33,6 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STRATEGY_NAME = "CRYPTO_MA_RSI_MACD"
+# crypto_strategy.yaml was removed. The live bot is run_bot_v3.py with config/crypto_config.yaml.
 CONFIG_PATH = '/opt/quantshift/config/crypto_strategy.yaml'
 
 

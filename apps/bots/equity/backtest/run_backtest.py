@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
-# Config — mirrors equity_strategy.yaml
+# Config — mirrors config/equity_config.yaml
 # ---------------------------------------------------------------------------
 DEFAULT_SYMBOLS   = ["SPY", "QQQ", "AAPL", "MSFT", "GOOGL"]
 SHORT_WINDOW      = 5
