@@ -21,6 +21,22 @@ export async function GET(request: NextRequest) {
       orderBy: { enteredAt: 'desc' },
     });
 
+    const openTrades = await prisma.trade.findMany({
+      where: {
+        status: 'OPEN',
+        ...(botName ? { botName } : {}),
+      },
+      orderBy: { enteredAt: 'desc' },
+      select: { botName: true, symbol: true, strategy: true, entryReason: true },
+    });
+    const decisionByPosition = new Map<string, { strategy: string; entryReason: string | null }>();
+    for (const trade of openTrades) {
+      const key = `${trade.botName}:${trade.symbol}`;
+      if (!decisionByPosition.has(key)) {
+        decisionByPosition.set(key, { strategy: trade.strategy, entryReason: trade.entryReason });
+      }
+    }
+
     return NextResponse.json({
       positions: positions.map(position => ({
         id: position.id,
@@ -36,6 +52,7 @@ export async function GET(request: NextRequest) {
         stopLoss: position.stopLoss,
         takeProfit: position.takeProfit,
         strategy: position.strategy,
+        decision: decisionByPosition.get(`${position.botName}:${position.symbol}`)?.entryReason || null,
         enteredAt: position.enteredAt.toISOString(),
       })),
     });

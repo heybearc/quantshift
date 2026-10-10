@@ -21,6 +21,7 @@ interface Position {
   stopLoss?: number;
   takeProfit?: number;
   strategy: string;
+  decision?: string | null;
   enteredAt: string;
 }
 
@@ -185,7 +186,10 @@ export default function PositionsPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{position.strategy}</td>
+                              <td className="px-6 py-4 text-sm text-slate-400">
+                                <div>{position.strategy}</div>
+                                {position.decision && <div className="text-xs text-slate-500 mt-1 max-w-xs">{position.decision}</div>}
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{position.quantity < 1 ? position.quantity.toFixed(6) : position.quantity.toFixed(4)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.entryPrice)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.currentPrice)}</td>

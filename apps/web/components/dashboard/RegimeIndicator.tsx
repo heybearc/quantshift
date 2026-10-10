@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Activity, Zap, AlertTriangle } from "lucide-react";
 
 interface RegimeData {
-  regime: string;
-  method: 'ml' | 'rule_based';
+  regime: string | null;
+  method?: 'ml' | 'rule_based';
   confidence?: number;
-  allocation: {
-    BollingerBounce: number;
-    RSIMeanReversion: number;
-    BreakoutMomentum?: number;
-  };
-  risk_multiplier: number;
-  timestamp: string;
+  trend?: number | null;
+  volatility?: number | null;
+  marketBreadth?: number | null;
+  vix?: number | null;
+  allocation?: Record<string, number>;
+  risk_multiplier?: number;
+  timestamp?: string;
 }
 
 export function RegimeIndicator({ botName }: { botName: string }) {
@@ -47,7 +47,7 @@ export function RegimeIndicator({ botName }: { botName: string }) {
     );
   }
 
-  if (!regimeData) {
+  if (!regimeData || !regimeData.regime) {
     return (
       <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
         <p className="text-slate-400 text-sm">No regime data available</p>
@@ -117,6 +117,11 @@ export function RegimeIndicator({ botName }: { botName: string }) {
   };
 
   const config = getRegimeConfig(regimeData.regime);
+  const trend = regimeData.trend;
+  const trendLabel = trend == null ? "—" : trend > 0.001 ? "Rising" : trend < -0.001 ? "Falling" : "Flat";
+  const volatilityLabel = regimeData.volatility == null ? "—" : `${regimeData.volatility.toFixed(2)}× average`;
+  const breadthLabel = regimeData.marketBreadth == null ? "—" : `${Math.round(regimeData.marketBreadth * 100)}% above average`;
+  const vixLabel = regimeData.vix == null ? "—" : regimeData.vix.toFixed(1);
 
   return (
     <div className={`bg-gradient-to-br ${config.bgGradient} rounded-xl p-5 border ${config.borderColor}`}>
@@ -145,8 +150,27 @@ export function RegimeIndicator({ botName }: { botName: string }) {
             )}
           </div>
           <p className="text-slate-500 text-xs">
-            Risk: {(regimeData.risk_multiplier * 100).toFixed(0)}%
+            Risk: {((regimeData.risk_multiplier || 1) * 100).toFixed(0)}%
           </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div>
+          <p className="text-slate-500 text-xs">Trend</p>
+          <p className="text-white text-sm font-medium">{trendLabel}</p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs">Volatility</p>
+          <p className="text-white text-sm font-medium">{volatilityLabel}</p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs">Breadth</p>
+          <p className="text-white text-sm font-medium">{breadthLabel}</p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs">VIX</p>
+          <p className="text-white text-sm font-medium">{vixLabel}</p>
         </div>
       </div>
 

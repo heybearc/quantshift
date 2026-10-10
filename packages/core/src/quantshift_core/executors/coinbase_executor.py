@@ -722,6 +722,8 @@ class CoinbaseExecutor:
                         except Exception as e:
                             logger.error("take profit placement failed for %s: %s", signal.symbol, e)
             
+            from quantshift_core.decision_log import decision_reason, decision_snapshot
+            decision = decision_snapshot(signal)
             return {
                 'id': order_id,
                 'symbol': signal.symbol,
@@ -731,7 +733,12 @@ class CoinbaseExecutor:
                 'status': order_status,
                 'fill_price': fill_price,
                 'submitted_at': order_created,
-                'signal_reason': signal.reason
+                'signal_reason': signal.reason,
+                'strategy': decision['strategy'],
+                'entry_reason': decision_reason(signal),
+                'regime': decision['regime'],
+                'regime_confidence': decision['regime_confidence'],
+                'sentiment_score': decision['sentiment_score'],
             }
             
         except RuntimeError as e:

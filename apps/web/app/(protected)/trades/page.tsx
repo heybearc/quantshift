@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Search, Calendar, BarChart2, Bitcoin } from "lucide-react";
 
-type BotFilter = 'all' | 'equity-bot' | 'crypto-bot';
+type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
 
 interface Trade {
   id: string;
@@ -69,8 +69,9 @@ export default function TradesPage() {
     t.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const equityCount = trades.filter(t => t.botName === 'equity-bot').length;
-  const cryptoCount = trades.filter(t => t.botName === 'crypto-bot').length;
+  const equityCount = trades.filter(t => t.botName.includes('equity')).length;
+  const cryptoCount = trades.filter(t => t.botName.includes('crypto')).length;
+  const krakenCount = trades.filter(t => t.botName.includes('kraken')).length;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -108,8 +109,9 @@ export default function TradesPage() {
             <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-700 w-fit">
               {([
                 { id: 'all' as BotFilter, label: `All Bots (${trades.length})`, icon: null },
-                { id: 'equity-bot' as BotFilter, label: `Equity Bot (${equityCount})`, icon: <BarChart2 className="h-3.5 w-3.5" /> },
-                { id: 'crypto-bot' as BotFilter, label: `Crypto Bot (${cryptoCount})`, icon: <Bitcoin className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-equity' as BotFilter, label: `Equity Bot (${equityCount})`, icon: <BarChart2 className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-crypto' as BotFilter, label: `Crypto Bot (${cryptoCount})`, icon: <Bitcoin className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-kraken' as BotFilter, label: `Kraken Bot (${krakenCount})`, icon: null },
               ]).map(({ id, label, icon }) => (
                 <button
                   key={id}
@@ -149,6 +151,7 @@ export default function TradesPage() {
                         <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Exit</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">P&L</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Why</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Exit Reason</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Entered (ET)</th>
                       </tr>
@@ -157,7 +160,7 @@ export default function TradesPage() {
                       {filteredTrades.map((trade) => (
                         <tr key={trade.id} className="hover:bg-slate-700/30 transition-colors">
                           <td className="px-4 py-3 whitespace-nowrap">
-                            {trade.botName === 'equity-bot'
+                            {trade.botName.includes('equity')
                               ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"><BarChart2 className="h-3 w-3" />Equity</span>
                               : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-900/40 text-orange-300"><Bitcoin className="h-3 w-3" />Crypto</span>
                             }
@@ -191,6 +194,9 @@ export default function TradesPage() {
                             }`}>
                               {trade.status}
                             </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-300 max-w-xs">
+                            {trade.entryReason || <span className="text-slate-600">—</span>}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-400">
                             {trade.exitReason

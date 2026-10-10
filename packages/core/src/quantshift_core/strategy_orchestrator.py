@@ -77,6 +77,7 @@ class StrategyOrchestrator:
         self.bot_name = bot_name
         self.db_manager = db_manager
         self.logger = logger.bind(orchestrator="StrategyOrchestrator")
+        self.latest_indicators: Dict[str, Any] = {}
         
         # Initialize regime detector if needed
         if use_regime_detection:
@@ -158,6 +159,48 @@ class StrategyOrchestrator:
         allocation_pct = 1.0 / len(self.strategies)
         return {strategy.name: allocation_pct for strategy in self.strategies}
     
+    def _market_breadth(self, market_data: Dict[str, Any]) -> Optional[float]:
+        """Share of symbols in this cycle trading above their 20-day average."""
+        above = 0
+        total = 0
+        for frame in market_data.values():
+            if frame is None or not hasattr(frame, "columns"):
+                continue
+            close_col = "close" if "close" in frame.columns else ("Close" if "Close" in frame.columns else None)
+            if close_col is None or len(frame) < 20:
+                continue
+            close = frame[close_col]
+            average = close.rolling(20).mean().iloc[-1]
+            price = close.iloc[-1]
+            if pd.isna(average) or average == 0 or pd.isna(price):
+                continue
+            total += 1
+            if price > average:
+                above += 1
+        if total == 0:
+            return None
+        return above / total
+
+    def _stamp_decision(self, signal: Signal) -> None:
+        """Copy the current regime and sentiment onto the signal. Does not change size or side."""
+        if signal.metadata is None:
+            signal.metadata = {}
+        info = self.latest_indicators or {}
+        regime = self.current_regime
+        signal.metadata["regime"] = regime.value if hasattr(regime, "value") else (str(regime) if regime else None)
+        signal.metadata["regime_confidence"] = info.get("ml_confidence", info.get("confidence"))
+        signal.metadata["trend_slope"] = info.get("trend_slope")
+        signal.metadata["volatility"] = info.get("volatility", info.get("vol_ratio"))
+        signal.metadata["market_breadth"] = info.get("market_breadth")
+        signal.metadata["vix"] = info.get("vix")
+        if self.sentiment_analyzer:
+            try:
+                score, count, _articles = self.sentiment_analyzer.get_sentiment(signal.symbol)
+                signal.metadata["sentiment_score"] = score
+                signal.metadata["sentiment_articles"] = count
+            except Exception as exc:
+                self.logger.debug("sentiment_snapshot_failed", symbol=signal.symbol, error=str(exc))
+
     def generate_signals(
         self,
         market_data: Dict[str, Any],
@@ -199,6 +242,16 @@ class StrategyOrchestrator:
                 regime, indicators = self.regime_detector.detect_regime(regime_data)
                 allocation_dict = self.regime_detector.get_regime_allocation(regime)
                 risk_multiplier = self.regime_detector.get_risk_multiplier(regime)
+
+            if self.use_ml_regime and self.ml_regime_classifier:
+                features = self.ml_regime_classifier._extract_features(regime_data)
+                if isinstance(features, dict):
+                    indicators['trend_slope'] = features.get('sma_50_slope', indicators.get('trend_slope'))
+                    indicators['volatility'] = features.get('atr_ratio', indicators.get('volatility'))
+            indicators['volatility'] = indicators.get('volatility', indicators.get('vol_ratio'))
+            indicators['market_breadth'] = self._market_breadth(market_data)
+            indicators['vix'] = indicators.get('vix')
+            self.latest_indicators = indicators
             
             # Update allocation if regime changed
             if regime != self.current_regime:
@@ -237,20 +290,39 @@ class StrategyOrchestrator:
                     with self.db_manager.session() as session:
                         from datetime import datetime
                         import json
+                        from sqlalchemy import text
+                        session.execute(text("""
+                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS trend_slope DOUBLE PRECISION
+                        """))
+                        session.execute(text("""
+                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS volatility DOUBLE PRECISION
+                        """))
+                        session.execute(text("""
+                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS market_breadth DOUBLE PRECISION
+                        """))
+                        session.execute(text("""
+                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS vix DOUBLE PRECISION
+                        """))
                         session.execute(
-                            """
+                            text("""
                             INSERT INTO regime_history 
-                            (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp)
-                            VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp)
-                            """,
+                            (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp,
+                             trend_slope, volatility, market_breadth, vix)
+                            VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp,
+                                    :trend_slope, :volatility, :market_breadth, :vix)
+                            """),
                             {
                                 'bot_name': self.bot_name,
                                 'regime': regime.value if hasattr(regime, 'value') else regime,
                                 'method': 'ml' if self.use_ml_regime else 'rule_based',
-                                'confidence': indicators.get('ml_confidence', 1.0),
+                                'confidence': indicators.get('ml_confidence', indicators.get('confidence', 1.0)),
                                 'risk_multiplier': self.regime_risk_multiplier,
                                 'allocation': json.dumps(self.capital_allocation),
-                                'timestamp': datetime.utcnow()
+                                'timestamp': datetime.utcnow(),
+                                'trend_slope': indicators.get('trend_slope'),
+                                'volatility': indicators.get('volatility', indicators.get('vol_ratio')),
+                                'market_breadth': indicators.get('market_breadth'),
+                                'vix': indicators.get('vix'),
                             }
                         )
                 except Exception as e:
@@ -331,6 +403,7 @@ class StrategyOrchestrator:
                             signal.metadata = {}
                         signal.metadata['strategy'] = strategy.name
                         signal.metadata['capital_allocation'] = self.capital_allocation[strategy.name]
+                        self._stamp_decision(signal)
                         
                         # Apply regime risk multiplier to position size
                         if self.use_regime_detection and signal.position_size:

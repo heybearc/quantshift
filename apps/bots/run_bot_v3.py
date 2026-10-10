@@ -21,6 +21,7 @@ import sys
 import time
 import signal
 import argparse
+import uuid
 import yaml
 import json
 import pandas as pd
@@ -976,6 +977,73 @@ class QuantShiftUnifiedBot:
                     pass
                 self.db_conn = None
     
+    def _record_trade_decisions(self, orders: List[Any]) -> None:
+        """Store why each filled order happened. Does not place or change orders."""
+        if not orders or not self.db_conn:
+            return
+        try:
+            cursor = self.db_conn.cursor()
+            for order in orders:
+                if not isinstance(order, dict) or not order.get('symbol'):
+                    continue
+                cursor.execute("""
+                    INSERT INTO trades (
+                        id, bot_name, symbol, side, quantity, entry_price,
+                        status, strategy, signal_type, entry_reason,
+                        entered_at, created_at, updated_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, 'OPEN', %s, %s, %s, NOW(), NOW(), NOW())
+                """, (
+                    str(uuid.uuid4()),
+                    self.bot_name,
+                    order.get('symbol'),
+                    str(order.get('side') or '').upper(),
+                    float(order.get('qty') or 0),
+                    float(order.get('fill_price') or 0),
+                    order.get('strategy') or 'unknown',
+                    str(order.get('side') or '').lower(),
+                    order.get('entry_reason') or order.get('signal_reason'),
+                ))
+            self.db_conn.commit()
+            logger.info("trade_decisions_recorded", count=len(orders))
+        except Exception as e:
+            logger.error("trade_decision_record_failed", error=str(e), exc_info=True)
+            try:
+                self.db_conn.rollback()
+            except Exception:
+                pass
+
+    def _store_vix_on_latest_regime(self) -> None:
+        """Read the VIX level for the dashboard. Equity data only, after the cycle."""
+        if 'equity' not in (self.bot_name or '') or not self.db_conn:
+            return
+        if not hasattr(self.executor, 'get_market_data'):
+            return
+        try:
+            frame = self.executor.get_market_data('VIX', days=5)
+            close_col = 'close' if 'close' in frame.columns else ('Close' if 'Close' in frame.columns else None)
+            if close_col is None or frame.empty:
+                return
+            vix = float(frame[close_col].iloc[-1])
+            cursor = self.db_conn.cursor()
+            cursor.execute("""
+                UPDATE regime_history
+                SET vix = %s
+                WHERE id = (
+                    SELECT id FROM regime_history
+                    WHERE bot_name = %s
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                )
+            """, (vix, self.bot_name))
+            self.db_conn.commit()
+        except Exception as e:
+            logger.debug("vix_lookup_failed", error=str(e))
+            try:
+                self.db_conn.rollback()
+            except Exception:
+                pass
+
     def _sync_positions_to_db(self, positions: List[Any]) -> None:
         """Sync current positions to database for web dashboard."""
         try:
@@ -1245,7 +1313,14 @@ class QuantShiftUnifiedBot:
                         
                         try:
                             # Run strategy cycle via executor
-                            executed_orders = self.executor.run_strategy_cycle()
+                            cycle_result = self.executor.run_strategy_cycle()
+                            executed_orders = (
+                                cycle_result.get('orders_executed', [])
+                                if isinstance(cycle_result, dict)
+                                else cycle_result
+                            )
+                            self._record_trade_decisions(executed_orders or [])
+                            self._store_vix_on_latest_regime()
                             
                             # Update state after cycle
                             self.update_state()

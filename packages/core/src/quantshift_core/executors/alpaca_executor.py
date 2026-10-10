@@ -406,6 +406,8 @@ class AlpacaExecutor:
                         except Exception as e:
                             logger.warning(f"Failed to place take profit for {signal.symbol}: {e}")
 
+            from quantshift_core.decision_log import decision_reason, decision_snapshot
+            decision = decision_snapshot(signal)
             return {
                 'id': str(order.id),
                 'symbol': order.symbol,
@@ -415,7 +417,12 @@ class AlpacaExecutor:
                 'status': order.status.value,
                 'fill_price': fill_price,
                 'submitted_at': order.submitted_at.isoformat() if order.submitted_at else None,
-                'signal_reason': signal.reason
+                'signal_reason': signal.reason,
+                'strategy': decision['strategy'],
+                'entry_reason': decision_reason(signal),
+                'regime': decision['regime'],
+                'regime_confidence': decision['regime_confidence'],
+                'sentiment_score': decision['sentiment_score'],
             }
             
         except Exception as e:
