@@ -19,6 +19,16 @@ from .sentiment_analyzer import SentimentAnalyzer
 logger = structlog.get_logger()
 
 
+def _db_float(value: Any) -> Optional[float]:
+    """NumPy scalars must be plain floats or Postgres sees np.float64 as SQL."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 class StrategyOrchestrator:
     """
     Orchestrates multiple trading strategies with capital allocation.
@@ -296,21 +306,21 @@ class StrategyOrchestrator:
                             INSERT INTO regime_history 
                             (bot_name, regime, method, confidence, risk_multiplier, allocation, timestamp,
                              trend_slope, volatility, market_breadth, vix)
-                            VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, :allocation, :timestamp,
+                            VALUES (:bot_name, :regime, :method, :confidence, :risk_multiplier, CAST(:allocation AS jsonb), :timestamp,
                                     :trend_slope, :volatility, :market_breadth, :vix)
                             """),
                             {
                                 'bot_name': self.bot_name,
-                                'regime': regime.value if hasattr(regime, 'value') else regime,
+                                'regime': regime.value if hasattr(regime, 'value') else str(regime),
                                 'method': 'ml' if self.use_ml_regime else 'rule_based',
-                                'confidence': indicators.get('ml_confidence', indicators.get('confidence', 1.0)),
-                                'risk_multiplier': self.regime_risk_multiplier,
+                                'confidence': _db_float(indicators.get('ml_confidence', indicators.get('confidence', 1.0))),
+                                'risk_multiplier': _db_float(self.regime_risk_multiplier),
                                 'allocation': json.dumps(self.capital_allocation),
                                 'timestamp': datetime.utcnow(),
-                                'trend_slope': indicators.get('trend_slope'),
-                                'volatility': indicators.get('volatility', indicators.get('vol_ratio')),
-                                'market_breadth': indicators.get('market_breadth'),
-                                'vix': indicators.get('vix'),
+                                'trend_slope': _db_float(indicators.get('trend_slope')),
+                                'volatility': _db_float(indicators.get('volatility', indicators.get('vol_ratio'))),
+                                'market_breadth': _db_float(indicators.get('market_breadth')),
+                                'vix': _db_float(indicators.get('vix')),
                             }
                         )
                 except Exception as e:
