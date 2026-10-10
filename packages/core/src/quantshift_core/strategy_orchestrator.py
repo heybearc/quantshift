@@ -291,18 +291,6 @@ class StrategyOrchestrator:
                         from datetime import datetime
                         import json
                         from sqlalchemy import text
-                        session.execute(text("""
-                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS trend_slope DOUBLE PRECISION
-                        """))
-                        session.execute(text("""
-                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS volatility DOUBLE PRECISION
-                        """))
-                        session.execute(text("""
-                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS market_breadth DOUBLE PRECISION
-                        """))
-                        session.execute(text("""
-                            ALTER TABLE regime_history ADD COLUMN IF NOT EXISTS vix DOUBLE PRECISION
-                        """))
                         session.execute(
                             text("""
                             INSERT INTO regime_history 

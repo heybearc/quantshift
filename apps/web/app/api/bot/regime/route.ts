@@ -29,14 +29,16 @@ export async function GET(request: NextRequest) {
         `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp,
                 trend_slope, volatility, market_breadth, vix
          FROM regime_history 
-         WHERE bot_name = $1 
+         WHERE bot_name = $1
+           AND timestamp > NOW() - INTERVAL '3 days'
          ORDER BY timestamp DESC 
          LIMIT 1`,
         [botName]
       ).catch(() => pool.query(
         `SELECT regime, method, confidence, risk_multiplier, allocation, timestamp
          FROM regime_history 
-         WHERE bot_name = $1 
+         WHERE bot_name = $1
+           AND timestamp > NOW() - INTERVAL '3 days'
          ORDER BY timestamp DESC 
          LIMIT 1`,
         [botName]
