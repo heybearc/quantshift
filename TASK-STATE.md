@@ -7,7 +7,7 @@
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — clock restarted 2026-10-09. Web v1.12.0 is live on blue (CT137). Green (CT138) is standby on the same commit. Crypto paper orders stay local. Equity buys stay blocked while leverage is above 1.0.
+**Phase 1.5.9 paper validation** — clock restarted 2026-10-09. Web v1.12.1 is live on green (CT138). Blue (CT137) is standby on the same commit. Crypto paper orders stay local. Equity buys stay blocked while leverage is above 1.0.
 
 ### What I just completed
 Fixed three critical bot safeguard issues that were preventing proper paper trading validation:
@@ -37,7 +37,7 @@ Fixed three critical bot safeguard issues that were preventing proper paper trad
 1. Watch the paper books through the 4-week window that started 2026-10-09
 2. Do not close the equity positions to clear the leverage block
 3. Do not start Phase 1.5.10 live capital until that window passes
-4. HAProxy is the source of truth: blue is LIVE, green is STANDBY, as of v1.12.0
+4. HAProxy is the source of truth: green is LIVE, blue is STANDBY, as of v1.12.1
 
 ### Recent Accomplishments
 
