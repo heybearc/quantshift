@@ -69,8 +69,13 @@ class AlpacaExecutor:
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
         
-        # Initialize hard position limits
-        self.position_limits = PositionLimits()
+        # Honor risk_management from config. The class default of 5 trimmed the equity book.
+        self.position_limits = PositionLimits(
+            max_position_pct=self.risk_config.get('max_position_size', 0.10),
+            max_positions=self.risk_config.get('max_positions', 10),
+            max_daily_loss_pct=self.risk_config.get('daily_loss_limit', 0.03),
+            max_total_risk_pct=self.risk_config.get('max_portfolio_heat', 0.15),
+        )
         
         # Initialize symbol universe
         if use_dynamic_symbols:

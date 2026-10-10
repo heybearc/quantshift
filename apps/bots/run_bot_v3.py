@@ -167,9 +167,12 @@ class QuantShiftUnifiedBot:
             'DonchianBreakoutStrategy': DonchianBreakoutStrategy,
         }
         
+        portfolio_max_positions = self.config.get('risk_management', {}).get('max_positions', 10)
+
         for strat_config in strategy_configs:
             strategy_type = strat_config.get('type')
-            strategy_params = strat_config.get('params', {})
+            strategy_params = dict(strat_config.get('params', {}))
+            strategy_params.setdefault('max_positions', portfolio_max_positions)
             
             if strategy_type in STRATEGY_MAP:
                 strategy = STRATEGY_MAP[strategy_type](config=strategy_params)
