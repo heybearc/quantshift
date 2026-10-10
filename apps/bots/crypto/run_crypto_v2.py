@@ -563,5 +563,8 @@ class CryptoBotV2:
 
 
 if __name__ == '__main__':
-    bot = CryptoBotV2()
-    bot.run()
+    print(
+        "run_crypto_v2.py is retired. The live bot is apps/bots/run_bot_v3.py with config/crypto_config.yaml.",
+        file=sys.stderr,
+    )
+    sys.exit(1)

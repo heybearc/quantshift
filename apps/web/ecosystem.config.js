@@ -6,8 +6,8 @@ module.exports = {
     cwd: "/opt/quantshift/apps/web",
     env: {
       NODE_ENV: "production",
-      DATABASE_URL: "postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift",
-      JWT_SECRET: "quantshift-production-secret-key-2024-change-this-in-production",
+      DATABASE_URL: process.env.DATABASE_URL,
+      JWT_SECRET: process.env.JWT_SECRET,
       NEXTAUTH_URL: "http://10.92.3.29:3001"
     },
     instances: 1,

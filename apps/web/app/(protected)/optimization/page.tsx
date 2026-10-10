@@ -17,12 +17,13 @@ interface OptimizationRecord {
 }
 
 interface RegimeAccuracy {
+  available?: boolean;
   total_predictions: number;
-  ml_accuracy: number;
-  rule_accuracy: number;
-  ml_better: boolean;
-  accuracy_difference: number;
-  high_confidence_accuracy: number;
+  ml_accuracy?: number;
+  rule_accuracy?: number;
+  ml_better?: boolean;
+  accuracy_difference?: number;
+  high_confidence_accuracy?: number;
 }
 
 interface StrategyStatus {
@@ -32,7 +33,7 @@ interface StrategyStatus {
   disabled_at?: string;
   performance_metrics?: {
     win_rate: number;
-    sharpe: number;
+    sharpe: number | null;
     trades: number;
   };
 }
@@ -104,7 +105,7 @@ function OptimizationContent() {
       </div>
 
       {/* Regime Accuracy Comparison */}
-      {regimeAccuracy && (
+      {regimeAccuracy?.available && regimeAccuracy.ml_accuracy != null && regimeAccuracy.rule_accuracy != null && regimeAccuracy.accuracy_difference != null ? (
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-10 w-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
@@ -138,13 +139,18 @@ function OptimizationContent() {
             </div>
           </div>
 
-          {regimeAccuracy.high_confidence_accuracy > 0 && (
+          {(regimeAccuracy.high_confidence_accuracy ?? 0) > 0 && (
             <div className="mt-4 bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
               <p className="text-sm text-blue-300">
-                High confidence predictions ({'>'}80%): {regimeAccuracy.high_confidence_accuracy.toFixed(1)}% accuracy
+                High confidence predictions ({'>'}80%): {(regimeAccuracy.high_confidence_accuracy ?? 0).toFixed(1)}% accuracy
               </p>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-white">ML vs Rule-Based Regime Detection</h2>
+          <p className="text-sm text-slate-400 mt-2">No measured accuracy yet. A reading is counted only after it can be checked against later prices.</p>
         </div>
       )}
 
@@ -185,7 +191,7 @@ function OptimizationContent() {
                     {strategy.performance_metrics && (
                       <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                         <span>WR: {(strategy.performance_metrics.win_rate * 100).toFixed(1)}%</span>
-                        <span>Sharpe: {strategy.performance_metrics.sharpe.toFixed(2)}</span>
+                        <span>Sharpe: {strategy.performance_metrics.sharpe == null ? '—' : strategy.performance_metrics.sharpe.toFixed(2)}</span>
                         <span>{strategy.performance_metrics.trades} trades</span>
                       </div>
                     )}

@@ -56,11 +56,9 @@ class SentimentAnalyzer:
                     self.finnhub_client = finnhub.Client(api_key=api_key)
                     logger.info("finnhub_client_initialized")
                 else:
-                    logger.warning("finnhub_api_key_not_found", fallback="mock")
-                    self.news_provider = 'mock'
+                    logger.warning("finnhub_api_key_not_found", fallback="no_news")
             except ImportError:
-                logger.warning("finnhub_library_not_installed", fallback="mock")
-                self.news_provider = 'mock'
+                logger.warning("finnhub_library_not_installed", fallback="no_news")
         
         # Sentiment cache: {symbol: {timestamp, score, articles}}
         self.sentiment_cache: Dict[str, Dict] = {}
@@ -197,12 +195,12 @@ class SentimentAnalyzer:
         """
         Fetch recent news for a symbol.
         
-        Uses Finnhub API in production, falls back to mock data if unavailable.
+        Uses Finnhub when it is configured. Missing news does not invent headlines.
         """
-        if self.news_provider == 'finnhub' and self.finnhub_client:
+        if self.finnhub_client:
             return self._fetch_news_finnhub(symbol, max_articles)
-        else:
-            return self._fetch_news_mock(symbol, max_articles)
+        logger.debug("news_unavailable", symbol=symbol)
+        return []
     
     def _fetch_news_finnhub(self, symbol: str, max_articles: int = 10) -> List[Dict]:
         """
@@ -245,43 +243,12 @@ class SentimentAnalyzer:
             return articles
             
         except Exception as e:
-            logger.error(
-                "finnhub_fetch_failed",
-                symbol=symbol,
-                error=str(e),
-                fallback="mock"
-            )
-            return self._fetch_news_mock(symbol, max_articles)
+            logger.warning("finnhub_fetch_failed_no_news", symbol=symbol, error=str(e))
+            return []
     
     def _fetch_news_mock(self, symbol: str, max_articles: int = 10) -> List[Dict]:
-        """
-        Return mock news data for testing.
-        """
-        mock_news = [
-            {
-                'title': f'{symbol} shows strong performance in Q4 earnings',
-                'description': 'Company beats analyst expectations with robust revenue growth',
-                'source': 'Financial Times',
-                'publishedAt': datetime.utcnow().isoformat(),
-                'url': 'https://example.com/news1'
-            },
-            {
-                'title': f'Analysts upgrade {symbol} to buy rating',
-                'description': 'Multiple analysts raise price targets citing strong fundamentals',
-                'source': 'Bloomberg',
-                'publishedAt': (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-                'url': 'https://example.com/news2'
-            },
-            {
-                'title': f'{symbol} faces headwinds from regulatory concerns',
-                'description': 'New regulations may impact profitability in coming quarters',
-                'source': 'Reuters',
-                'publishedAt': (datetime.utcnow() - timedelta(hours=5)).isoformat(),
-                'url': 'https://example.com/news3'
-            }
-        ]
-        
-        return mock_news[:max_articles]
+        """Kept so older callers do not crash. Sample headlines are never returned."""
+        return []
     
     def _analyze_with_finbert(self, text: str) -> float:
         """

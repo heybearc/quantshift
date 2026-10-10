@@ -23,8 +23,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: PostgresDsn = Field(
-        default="postgresql://quantshift_bot:Cloudy_92!@10.92.3.21:5432/quantshift",
-        description="PostgreSQL connection string",
+        description="PostgreSQL connection string from DATABASE_URL",
     )
 
     # Redis

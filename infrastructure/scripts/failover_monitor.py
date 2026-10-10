@@ -45,13 +45,10 @@ class FailoverMonitor:
     """
     
     def __init__(self):
-        self.db_url = os.getenv(
-            'DATABASE_URL',
-            'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift'
-        )
+        self.db_url = os.environ['DATABASE_URL']
         self.redis_host = os.getenv('REDIS_HOST', 'localhost')
         self.redis_port = int(os.getenv('REDIS_PORT', '6379'))
-        self.redis_password = os.getenv('REDIS_PASSWORD', 'Cloudy_92!')
+        self.redis_password = os.getenv('REDIS_PASSWORD')
         
         self.check_interval = 10  # Check every 10 seconds
         self.heartbeat_timeout = 60  # Failover if no heartbeat for 60 seconds

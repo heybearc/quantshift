@@ -1102,8 +1102,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [ ] Email when a circuit breaker trips
 - [ ] Turn Kelly sizing on after 20 trades (`use_kelly_sizing` is false)
 - [ ] Sentiment charts, news feed, and per-position badges (scoring is already on)
-- [ ] Invitation email verification (`apps/web/app/api/invitations/accept/route.ts`)
-- [ ] When news fetch fails, sentiment scores sample headlines. Changing that changes position size, so it stays for this window.
+- [x] Invitation verification email is sent on accept
+- [x] A failed news fetch no longer scores sample headlines
 - [ ] Coinbase product list can hang, so crypto uses a fixed symbol list
 - [ ] WebSocket quotes, dashboard sparklines, and daily email reports
 - [ ] Price-direction models, including LSTM. Not during this paper window.

@@ -68,6 +68,13 @@ structlog.configure(
 logger = structlog.get_logger()
 
 
+def require_database_url() -> str:
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise RuntimeError("DATABASE_URL is not set")
+    return url
+
+
 class QuantShiftUnifiedBot:
     """
     Unified trading bot that works with any asset class.
@@ -764,7 +771,7 @@ class QuantShiftUnifiedBot:
                 try:
                     # Ensure database connection exists
                     if not self.db_conn:
-                        db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
+                        db_url = require_database_url()
                         self.db_conn = psycopg2.connect(db_url)
                         logger.info("emergency_stop_db_connection_established")
                     
@@ -891,7 +898,7 @@ class QuantShiftUnifiedBot:
             logger.debug("db_heartbeat_starting", bot_name=self.bot_name)
             if not self.db_conn:
                 # Get database URL from environment
-                db_url = os.getenv('DATABASE_URL', 'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift')
+                db_url = require_database_url()
                 self.db_conn = psycopg2.connect(db_url)
                 logger.debug("db_connection_established")
                 

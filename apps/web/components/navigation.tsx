@@ -68,10 +68,11 @@ export function Navigation() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 right-4 z-50">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-md bg-white shadow-lg text-gray-600 hover:text-gray-900"
+          className="p-2 rounded-md bg-slate-800 border border-slate-700 text-white"
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? (
             <X className="h-6 w-6" />

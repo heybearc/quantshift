@@ -19,10 +19,9 @@ class CryptoDatabaseWriter:
 
     def __init__(self, bot_name: str = 'crypto-bot', db_url: str = None):
         self.bot_name = bot_name
-        self.db_url = db_url or os.getenv(
-            'DATABASE_URL',
-            'postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift'
-        )
+        self.db_url = db_url or os.getenv('DATABASE_URL')
+        if not self.db_url:
+            raise RuntimeError('DATABASE_URL is not set')
         self.conn = None
 
     def connect(self):

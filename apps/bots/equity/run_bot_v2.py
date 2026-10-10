@@ -519,5 +519,8 @@ class QuantShiftEquityBotV2:
 
 
 if __name__ == '__main__':
-    bot = QuantShiftEquityBotV2()
-    bot.run()
+    print(
+        "run_bot_v2.py is retired. The live bot is apps/bots/run_bot_v3.py with config/equity_config.yaml.",
+        file=sys.stderr,
+    )
+    sys.exit(1)

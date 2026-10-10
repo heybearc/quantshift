@@ -6,7 +6,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const REDIS_HOST = process.env.REDIS_HOST || '10.92.3.27';
-const REDIS_PASSWORD = process.env.REDIS_PASSWORD || 'Cloudy_92!';
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '';
 
 async function setRedisKey(key: string, value: string): Promise<void> {
   const cmd = `redis-cli -h ${REDIS_HOST} -a '${REDIS_PASSWORD}' SET ${key} ${value}`;

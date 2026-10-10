@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,12 +96,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send email verification email
-    // await sendVerificationEmail(user.email, user.fullName || user.username, emailVerificationToken);
+    const emailResult = await sendVerificationEmail(
+      user.email,
+      user.fullName || user.username,
+      emailVerificationToken
+    );
+    if (!emailResult.success) {
+      console.error('Failed to send invitation verification email:', emailResult.error);
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Account created successfully. Please check your email to verify your account.',
+      message: emailResult.success
+        ? 'Account created. Check your email to verify it. An administrator still has to approve the account.'
+        : 'Account created. The verification email could not be sent. An administrator still has to approve the account.',
       user: {
         id: user.id,
         email: user.email,

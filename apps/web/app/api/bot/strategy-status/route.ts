@@ -1,50 +1,39 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+function botLabel(botName: string): string {
+  if (botName.includes('equity')) return 'equity';
+  if (botName.includes('crypto')) return 'crypto';
+  if (botName.includes('kraken')) return 'kraken';
+  return botName;
+}
+
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const botName = searchParams.get('botName') || 'quantshift-equity';
+    const botName = new URL(request.url).searchParams.get('botName');
+    const rows = await prisma.strategyPerformance.findMany({
+      where: botName ? { botName } : {},
+      orderBy: [{ botName: 'asc' }, { strategyName: 'asc' }],
+    });
 
-    // Mock data for now - will be replaced with actual data from strategy_automation_manager
-    const mockStatus = [
-      {
-        strategy_name: 'BollingerBounce',
+    return NextResponse.json(rows.map((row) => {
+      const winRate = row.winRate > 1 ? row.winRate / 100 : row.winRate;
+      return {
+        strategy_name: `${row.strategyName} · ${botLabel(row.botName)}`,
         enabled: true,
         performance_metrics: {
-          win_rate: 0.552,
-          sharpe: 1.45,
-          trades: 45,
+          win_rate: winRate,
+          sharpe: row.sharpeRatio,
+          trades: row.totalTrades,
         },
-      },
-      {
-        strategy_name: 'RSIMeanReversion',
-        enabled: true,
-        performance_metrics: {
-          win_rate: 0.487,
-          sharpe: 1.12,
-          trades: 38,
-        },
-      },
-      {
-        strategy_name: 'BreakoutMomentum',
-        enabled: false,
-        disabled_reason: 'Win rate too low: 32% < 40%',
-        disabled_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        performance_metrics: {
-          win_rate: 0.32,
-          sharpe: 0.35,
-          trades: 25,
-        },
-      },
-    ];
-
-    return NextResponse.json(mockStatus);
+      };
+    }));
   } catch (error) {
     console.error('Error fetching strategy status:', error);
     return NextResponse.json(
