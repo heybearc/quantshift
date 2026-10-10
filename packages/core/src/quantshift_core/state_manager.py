@@ -255,6 +255,8 @@ class StateManager:
             unrealized_pl_pct = 0.0
             if entry_price and entry_price > 0:
                 unrealized_pl_pct = ((current_price - entry_price) / entry_price) * 100
+            market_value = quantity * current_price
+            cost_basis = quantity * entry_price
             
             if result:
                 # Update existing position
@@ -264,6 +266,8 @@ class StateManager:
                         SET quantity = :quantity,
                             entry_price = :entry_price,
                             current_price = :current_price,
+                            market_value = :market_value,
+                            cost_basis = :cost_basis,
                             unrealized_pl = :unrealized_pl,
                             unrealized_pl_pct = :unrealized_pl_pct,
                             strategy = :strategy_name,
@@ -278,6 +282,8 @@ class StateManager:
                         "current_price": current_price,
                         "unrealized_pl": unrealized_pl,
                         "unrealized_pl_pct": unrealized_pl_pct,
+                        "market_value": market_value,
+                        "cost_basis": cost_basis,
                         "strategy_name": strategy_name
                     }
                 )
@@ -287,11 +293,13 @@ class StateManager:
                 session.execute(
                     text("""
                         INSERT INTO positions 
-                        (bot_name, symbol, quantity, entry_price, current_price, 
-                         unrealized_pl, unrealized_pl_pct, strategy, created_at, updated_at)
+                        (id, bot_name, symbol, quantity, entry_price, current_price,
+                         market_value, cost_basis, unrealized_pl, unrealized_pl_pct,
+                         strategy, entered_at, created_at, updated_at)
                         VALUES 
-                        (:bot_name, :symbol, :quantity, :entry_price, :current_price,
-                         :unrealized_pl, :unrealized_pl_pct, :strategy_name, NOW(), NOW())
+                        (gen_random_uuid(), :bot_name, :symbol, :quantity, :entry_price, :current_price,
+                         :market_value, :cost_basis, :unrealized_pl, :unrealized_pl_pct,
+                         :strategy_name, NOW(), NOW(), NOW())
                     """),
                     {
                         "bot_name": bot_name,
@@ -301,6 +309,8 @@ class StateManager:
                         "current_price": current_price,
                         "unrealized_pl": unrealized_pl,
                         "unrealized_pl_pct": unrealized_pl_pct,
+                        "market_value": market_value,
+                        "cost_basis": cost_basis,
                         "strategy_name": strategy_name
                     }
                 )
@@ -338,7 +348,7 @@ class StateManager:
             result = session.execute(
                 text("""
                     SELECT symbol, quantity, entry_price, current_price, 
-                           unrealized_pl, strategy_name, created_at, updated_at
+                           unrealized_pl, strategy AS strategy_name, created_at, updated_at
                     FROM positions
                     WHERE bot_name = :bot_name
                 """),

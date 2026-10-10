@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Get all closed trades to calculate metrics
     const closedTrades = await prisma.trade.findMany({
       where: {
@@ -70,6 +74,19 @@ export async function GET() {
     // Calculate strategy success rate (same as win rate for now)
     const strategySuccessRate = winRate;
 
+    const openPositions = await prisma.position.groupBy({
+      by: ['botName'],
+      where: { quantity: { gt: 0 } },
+      _sum: { unrealizedPl: true },
+    });
+    const openUnrealizedByBot: Record<string, number> = {};
+    let openUnrealizedPl = 0;
+    for (const row of openPositions) {
+      const value = row._sum.unrealizedPl || 0;
+      openUnrealizedByBot[row.botName] = value;
+      openUnrealizedPl += value;
+    }
+
     return NextResponse.json({
       winRate: Math.round(winRate * 100) / 100,
       totalWins: winningTrades,
@@ -80,7 +97,9 @@ export async function GET() {
       avgTradesPerDay: Math.round(avgTradesPerDay * 100) / 100,
       lastTradeTime,
       currentStrategy,
-      strategySuccessRate: Math.round(strategySuccessRate * 100) / 100
+      strategySuccessRate: Math.round(strategySuccessRate * 100) / 100,
+      openUnrealizedPl: Math.round(openUnrealizedPl * 100) / 100,
+      openUnrealizedByBot,
     });
   } catch (error) {
     console.error('Error fetching bot metrics:', error);

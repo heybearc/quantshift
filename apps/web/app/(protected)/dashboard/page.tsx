@@ -47,6 +47,8 @@ interface BotMetrics {
   lastTradeTime: string | null;
   currentStrategy: string;
   strategySuccessRate: number;
+  openUnrealizedPl?: number;
+  openUnrealizedByBot?: Record<string, number>;
 }
 
 interface AdminStats {
@@ -112,6 +114,10 @@ export default function DashboardPage() {
   };
 
   const fmt = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(v);
+  const botUnrealized = (bot: BotStatus | undefined) => {
+    if (!bot) return 0;
+    return bot.unrealizedPl !== 0 ? bot.unrealizedPl : (botMetrics?.openUnrealizedByBot?.[bot.botName] || 0);
+  };
   const fmtHb = (ts: string | null) => ts
     ? new Date(ts).toLocaleString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
     : 'No heartbeat';
@@ -127,7 +133,9 @@ export default function DashboardPage() {
   const cryptoBot = allBotStatus.find(b => b.botName === 'quantshift-crypto');
   const krakenBot = allBotStatus.find(b => b.botName === 'quantshift-kraken');
   const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0) + (krakenBot?.portfolioValue || 0);
-  const totalPl = (equityBot?.realizedPl || 0) + (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0);
+  const statusUnrealized = (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0);
+  const openUnrealized = botMetrics?.openUnrealizedPl || 0;
+  const totalPl = (equityBot?.realizedPl || 0) + (statusUnrealized !== 0 ? statusUnrealized : openUnrealized);
   const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0) + (krakenBot?.positionsCount || 0);
   const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0) + (krakenBot?.tradesCount || 0);
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
@@ -149,10 +157,13 @@ export default function DashboardPage() {
     if (!bot) return <div className="text-center text-slate-500 py-16">No data available yet — bot may not have heartbeated.</div>;
     
     const botConfig = {
-      equity: { name: 'Equity Bot', desc: 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 5 },
-      crypto: { name: 'Crypto Bot', desc: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 3 },
-      kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 8 }
+      equity: { name: 'Equity Bot', desc: 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 10 },
+      crypto: { name: 'Crypto Bot', desc: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 8 },
+      kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 6 }
     }[botType];
+    const unrealized = bot.unrealizedPl !== 0
+      ? bot.unrealizedPl
+      : (botMetrics?.openUnrealizedByBot?.[bot.botName] || 0);
     
     return (
       <div className="space-y-4">
@@ -175,7 +186,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Unrealized P&L</p>
-            <p className={`text-xl font-bold ${bot.unrealizedPl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(bot.unrealizedPl)}</p>
+            <p className={`text-xl font-bold ${unrealized >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(unrealized)}</p>
             {botType === 'equity' && <p className="text-slate-500 text-xs mt-1">Realized: {fmt(bot.realizedPl)}</p>}
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
@@ -324,8 +335,8 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="text-slate-400 text-xs">P&L</p>
-                              <p className={`font-semibold text-sm ${((bot?.unrealizedPl || 0) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {fmt((bot?.unrealizedPl || 0) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0))}
+                              <p className={`font-semibold text-sm ${(botUnrealized(bot) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {fmt(botUnrealized(bot) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0))}
                               </p>
                             </div>
                             <div>

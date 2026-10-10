@@ -1035,14 +1035,39 @@ class CoinbaseExecutor:
         }
         
         try:
+            state_manager = StateManager(bot_name)
+
+            # Paper fills live in the database. Reload them into the simulator
+            # instead of treating the live Coinbase account as the book.
+            if self._is_paper():
+                db_positions = state_manager.get_positions_atomic(bot_name)
+                self._sim_positions = {
+                    pos["symbol"]: {
+                        "quantity": float(pos["quantity"]),
+                        "entry_price": float(pos["entry_price"]),
+                        "current_price": float(pos["current_price"]),
+                    }
+                    for pos in db_positions
+                }
+                recovery_stats['broker_positions'] = len(self._sim_positions)
+                recovery_stats['db_positions'] = len(db_positions)
+                logger.info(
+                    "paper position recovery loaded %s positions from the database",
+                    len(db_positions),
+                )
+                return recovery_stats
+
             # Get all positions from broker (Coinbase accounts)
             accounts_response = self.coinbase_client.get_accounts()
             broker_positions = []
+            quote_currencies = {"USD", "USDC", "USDT", "EUR", "GBP"}
             
             if hasattr(accounts_response, 'accounts'):
                 for account in accounts_response.accounts:
                     # Only include accounts with non-zero balance
                     if hasattr(account, 'available_balance') and float(account.available_balance.value) > 0:
+                        if account.currency in quote_currencies:
+                            continue
                         # Convert to position format (symbol is currency-USD)
                         symbol = f"{account.currency}-USD"
                         broker_positions.append({
@@ -1054,13 +1079,12 @@ class CoinbaseExecutor:
             recovery_stats['broker_positions'] = len(broker_positions)
             
             # Get all positions from database for this bot
-            state_manager = StateManager(db_session)
-            db_positions = state_manager.get_positions(bot_name)
+            db_positions = state_manager.get_positions_atomic(bot_name)
             recovery_stats['db_positions'] = len(db_positions)
             
             # Create sets of symbols for comparison
             broker_symbols = {pos['symbol'] for pos in broker_positions}
-            db_symbols = {pos.symbol for pos in db_positions}
+            db_symbols = {pos["symbol"] for pos in db_positions}
             
             # Find orphaned positions (in broker but not in DB)
             orphaned_symbols = broker_symbols - db_symbols
@@ -1077,7 +1101,7 @@ class CoinbaseExecutor:
                     current_price = 0.0
                 
                 # Add to database (we don't know entry price, use current price as estimate)
-                state_manager.update_position(
+                state_manager.update_position_atomic(
                     bot_name=bot_name,
                     symbol=symbol,
                     quantity=broker_pos['quantity'],
@@ -1092,13 +1116,21 @@ class CoinbaseExecutor:
                     f"(qty={broker_pos['quantity']}, price=${current_price:.2f})"
                 )
             
-            # Find ghost positions (in DB but not in broker)
-            ghost_symbols = db_symbols - broker_symbols
+            # An empty broker read must not wipe the paper or live book.
+            ghost_symbols = set()
+            if broker_positions:
+                ghost_symbols = db_symbols - broker_symbols
+            elif db_positions:
+                logger.warning(
+                    "Position recovery skipped ghost removal: broker returned no positions "
+                    "while the database has %s",
+                    len(db_positions),
+                )
             recovery_stats['symbols_ghost'] = list(ghost_symbols)
             
             for symbol in ghost_symbols:
                 # Remove from database
-                state_manager.delete_position(bot_name, symbol)
+                state_manager.delete_position_atomic(bot_name, symbol)
                 recovery_stats['ghosts_removed'] += 1
                 logger.warning(
                     f"Position recovery: Removed ghost position {symbol} "

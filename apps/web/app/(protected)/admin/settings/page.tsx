@@ -11,8 +11,11 @@ interface GeneralSettings {
   platformName: string;
   platformDescription: string;
   maintenanceMode: boolean;
+  maintenanceMessage: string;
   allowRegistration: boolean;
   requireEmailVerification: boolean;
+  sessionTimeout: number;
+  maxLoginAttempts: number;
 }
 
 export default function AdminSettingsPage() {
@@ -22,8 +25,11 @@ export default function AdminSettingsPage() {
     platformName: "QuantShift",
     platformDescription: "Quantum Trading Intelligence Platform",
     maintenanceMode: false,
+    maintenanceMessage: "System is currently under maintenance. Please check back soon.",
     allowRegistration: true,
     requireEmailVerification: false,
+    sessionTimeout: 86400,
+    maxLoginAttempts: 5,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,11 +53,16 @@ export default function AdminSettingsPage() {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      // For now, just use default settings
-      // In the future, fetch from API
-      setLoading(false);
+      const response = await fetch("/api/admin/settings/general");
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || "Failed to load settings");
+      }
+      setSettings(json.data);
     } catch (error) {
       console.error("Error loading settings:", error);
+      setMessage({ type: "error", text: "Failed to load settings" });
+    } finally {
       setLoading(false);
     }
   };
@@ -60,10 +71,15 @@ export default function AdminSettingsPage() {
     try {
       setSaving(true);
       setMessage(null);
-      
-      // For now, just simulate save
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const response = await fetch("/api/admin/settings/general", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || "Failed to save settings");
+      }
       setMessage({ type: "success", text: "Settings saved successfully!" });
     } catch (error) {
       setMessage({ type: "error", text: "Failed to save settings" });

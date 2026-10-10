@@ -742,13 +742,13 @@ class AlpacaExecutor:
             recovery_stats['broker_positions'] = len(broker_positions)
             
             # Get all positions from database for this bot
-            state_manager = StateManager(db_session)
-            db_positions = state_manager.get_positions(bot_name)
+            state_manager = StateManager(bot_name)
+            db_positions = state_manager.get_positions_atomic(bot_name)
             recovery_stats['db_positions'] = len(db_positions)
             
             # Create sets of symbols for comparison
             broker_symbols = {pos.symbol for pos in broker_positions}
-            db_symbols = {pos.symbol for pos in db_positions}
+            db_symbols = {pos["symbol"] for pos in db_positions}
             
             # Find orphaned positions (in broker but not in DB)
             orphaned_symbols = broker_symbols - db_symbols
@@ -758,7 +758,7 @@ class AlpacaExecutor:
                 broker_pos = next(p for p in broker_positions if p.symbol == symbol)
                 
                 # Add to database
-                state_manager.update_position(
+                state_manager.update_position_atomic(
                     bot_name=bot_name,
                     symbol=symbol,
                     quantity=float(broker_pos.qty),
@@ -773,13 +773,22 @@ class AlpacaExecutor:
                     f"(qty={broker_pos.qty}, entry=${broker_pos.avg_entry_price:.2f})"
                 )
             
-            # Find ghost positions (in DB but not in broker)
-            ghost_symbols = db_symbols - broker_symbols
+            # Find ghost positions (in DB but not in broker).
+            # An empty broker read must not wipe the book.
+            ghost_symbols = set()
+            if broker_positions:
+                ghost_symbols = db_symbols - broker_symbols
+            elif db_positions:
+                logger.warning(
+                    "Position recovery skipped ghost removal: broker returned no positions "
+                    "while the database has %s",
+                    len(db_positions),
+                )
             recovery_stats['symbols_ghost'] = list(ghost_symbols)
             
             for symbol in ghost_symbols:
                 # Remove from database
-                state_manager.delete_position(bot_name, symbol)
+                state_manager.delete_position_atomic(bot_name, symbol)
                 recovery_stats['ghosts_removed'] += 1
                 logger.warning(
                     f"Position recovery: Removed ghost position {symbol} "

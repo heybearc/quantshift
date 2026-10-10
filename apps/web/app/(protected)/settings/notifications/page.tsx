@@ -11,6 +11,7 @@ export default function NotificationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     emailNotifications: true,
     tradeAlerts: true,
@@ -24,10 +25,33 @@ export default function NotificationsPage() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/settings/notifications")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setSettings(data);
+      })
+      .catch(() => setMessage("Could not load saved preferences"));
+  }, [user]);
+
   const handleSave = async () => {
     setSaving(true);
-    // TODO: Implement save functionality
-    setTimeout(() => setSaving(false), 1000);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/settings/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) throw new Error("save failed");
+      setSettings(await res.json());
+      setMessage("Preferences saved");
+    } catch {
+      setMessage("Could not save preferences");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -134,6 +158,7 @@ export default function NotificationsPage() {
               </div>
 
               <div className="mt-6 pt-6 border-t border-slate-700">
+                {message && <p className="text-sm text-slate-300 mb-3">{message}</p>}
                 <button
                   onClick={handleSave}
                   disabled={saving}

@@ -60,7 +60,13 @@ export async function GET(request: NextRequest) {
       const strategyCount = activeStrategies[0]?.count || 7; // Default to 7 strategies
 
       // Get current regime (from Redis or database)
-      const currentRegime = 'BULL'; // TODO: Fetch from Redis or regime_history table
+      const regimeRows = await prisma.$queryRaw<any[]>`
+        SELECT regime FROM regime_history
+        WHERE bot_name = ${bot.bot_name}
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
+      const currentRegime = regimeRows[0]?.regime || 'UNKNOWN';
 
       // Calculate portfolio heat (risk as % of portfolio)
       const portfolioHeat = bot.portfolio_value > 0

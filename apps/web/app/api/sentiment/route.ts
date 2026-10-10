@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from 'redis';
+import { getCurrentUser } from '@/lib/auth';
 
 /**
  * GET /api/sentiment
@@ -9,8 +10,10 @@ import { createClient } from 'redis';
  */
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Add authentication when needed
-    // For now, this is internal-only and behind the dashboard auth
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Connect to Redis
     const redisHost = process.env.REDIS_HOST || 'localhost';

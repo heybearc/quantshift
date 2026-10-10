@@ -37,11 +37,20 @@ export async function GET(request: NextRequest) {
     // Calculate metrics
     const portfolioHeat = portfolioValue > 0 ? Math.abs(unrealizedPl) / portfolioValue : 0;
     const maxPortfolioHeat = 0.10; // 10% max
-    const maxDrawdown = 0.0; // TODO: Calculate from trade history
+    const latestPerformance = await prisma.performanceMetrics.findFirst({
+      where: { botName },
+      orderBy: { date: 'desc' },
+    });
+    const maxDrawdown = Number(latestPerformance?.maxDrawdown || 0) / 100;
     const maxDrawdownLimit = 0.15; // 15% max
     const dailyPnl = Number(botStatus[0]?.realized_pl || 0);
     const dailyLossLimit = portfolioValue * 0.03; // 3% daily loss limit
-    const maxPositions = 5;
+    const positionCaps: Record<string, number> = {
+      'quantshift-equity': 10,
+      'quantshift-crypto': 8,
+      'quantshift-kraken': 6,
+    };
+    const maxPositions = positionCaps[botName] ?? 10;
 
     const metrics = {
       portfolioHeat,
