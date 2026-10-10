@@ -5,6 +5,9 @@ import os from 'os';
 
 const execAsync = promisify(exec);
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function queryHAProxyConfig(): Promise<'BLUE' | 'GREEN' | null> {
   try {
     console.log('[server-info] Querying HAProxy config...');
