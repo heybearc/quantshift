@@ -133,15 +133,6 @@ export async function GET() {
 
     const systemStatus = recentActivity > 0 || currentSessions > 0 ? 'healthy' : 'degraded';
 
-    // Mock API response time (would be calculated from actual metrics in production)
-    const apiResponseTime = Math.floor(Math.random() * 50) + 20; // 20-70ms
-
-    // Get database connection count (mock for now)
-    const databaseConnections = currentSessions + 5; // Active sessions + background jobs
-
-    // Calculate uptime (mock - would come from system metrics)
-    const uptime = Math.floor(Date.now() / 1000); // Seconds since epoch (placeholder)
-
     return NextResponse.json({
       users: {
         total: totalUsers,
@@ -161,9 +152,7 @@ export async function GET() {
       },
       systemHealth: {
         status: systemStatus,
-        apiResponseTime,
-        databaseConnections,
-        uptime
+        uptime: Math.floor(process.uptime())
       }
     });
   } catch (error) {

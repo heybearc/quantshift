@@ -1,13 +1,13 @@
 # QuantShift Task State
 
-**Last updated:** 2026-10-09  
+**Last updated:** 2026-10-10  
 **Current branch:** main  
-**Working on:** Phase 1.5.9 paper validation — crypto paper fills local
+**Working on:** Phase 1.5.9 paper validation — day 2
 
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — resumed 2026-10-08 after Level B archive. Crypto paper orders no longer hit live Coinbase (`170831b` on CT100).
+**Phase 1.5.9 paper validation** — clock restarted 2026-10-09. Web v1.12.0 is live on blue (CT137). Green (CT138) is standby on the same commit. Crypto paper orders stay local. Equity buys stay blocked while leverage is above 1.0.
 
 ### What I just completed
 Fixed three critical bot safeguard issues that were preventing proper paper trading validation:
@@ -34,9 +34,10 @@ Fixed three critical bot safeguard issues that were preventing proper paper trad
 - ✅ Equity bot has 11 positions (from broker recovery, will close naturally)
 
 ### Exact Next Step
-1. Watch the new crypto paper book (simulated cash, not live Coinbase) through the next cycles
-2. Restart the 2–4 week Phase 1.5.9 clock from 2026-10-09
-3. Do not `deploy_to_standby` until MCP LIVE/STANDBY matches HAProxy (green is LIVE)
+1. Watch the paper books through the 4-week window that started 2026-10-09
+2. Do not close the equity positions to clear the leverage block
+3. Do not start Phase 1.5.10 live capital until that window passes
+4. HAProxy is the source of truth: blue is LIVE, green is STANDBY, as of v1.12.0
 
 ### Recent Accomplishments
 

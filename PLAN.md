@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-03-09
-**Current Status:** Phase 1.5.9 paper trading validation in progress - all safeguards deployed and active
+**Last Updated:** 2026-10-10
+**Current Status:** Phase 1.5.9 paper validation, day 2. Clock restarted 2026-10-09. Web is v1.12.0. No live money.
 
 ---
 
@@ -502,18 +502,19 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
     - Crypto bot capital allocation (regime detection bug fixed)
     - Added comprehensive logging for debugging
   
-- [ ] **Monitor daily for 2-4 weeks** (Restarted 2026-10-09 after archive; crypto paper fills are local as of `170831b`)
-  - Zero stuck positions (MUST PASS) - ⏳ Monitoring
-  - Zero limit violations (MUST PASS) - ✅ Enforcement active
-  - All bracket orders execute correctly (MUST PASS) - ⏳ Monitoring
-  - Bot recovers from all crashes (MUST PASS) - ⏳ Monitoring
-  - Performance tracking accurate ±1% (MUST PASS) - ⏳ Monitoring
-  - Crypto bot trading (at least 5 positions) (MUST PASS) - ⏳ Signals generating
-  
+- [ ] **Monitor daily for 4 clean weeks** (clock restarted 2026-10-09; crypto paper fills stay local)
+  - Zero stuck positions (MUST PASS) - monitoring
+  - Zero limit violations (MUST PASS) - enforcement is on
+  - All bracket orders execute correctly (MUST PASS) - monitoring
+  - Bot recovers from crashes (MUST PASS) - monitoring
+  - Performance tracking accurate within 1% (MUST PASS) - monitoring
+  - Crypto holds at least 5 positions (MUST PASS) - met on 2026-10-10 (8 positions)
+  - Equity new buys stay blocked while leverage is above 1.0. Do not close those positions to clear the block.
+
 - [ ] **Success criteria**
-  - If ANY criteria fail → fix and restart 4-week validation
-  - Only proceed to live trading after 4 consecutive weeks of success
-  - **Current status:** Week 1 started March 9, 2026
+  - If any must-pass item fails, fix it and restart the 4-week clock
+  - Live money (1.5.10) starts only after 4 consecutive clean weeks
+  - **Current status:** day 2 of the window that started 2026-10-09
 
 #### 1.5.10 Gradual Live Deployment (6-8 weeks) - AFTER PAPER VALIDATION
 - [ ] **Week 1-2: $200 live** ($100 equity, $100 crypto)
@@ -1088,142 +1089,31 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 
 ---
 
-## 📋 Current Backlog (Deferred)
+## 📋 Current backlog
 
-### 🔴 Critical — Bot Production Path
+Only items that are still open. Completed phases above stay as history. Duplicate lists that described multi-strategy, regime detection, and the Coinbase bot as unbuilt were removed on 2026-10-10.
 
-#### Phase 0: Paper Trading Reset (Do First)
-- [x] SSH to bot container and check process status — DONE (effort: S)
-- [x] Fix positions duplicate key bug — DONE (effort: S)
-- [x] Wire trade recording to strategy cycle — DONE (effort: S)
-- [x] Find root cause of Feb 13 runaway SPY bug — legacy bot service (effort: S) — DONE 2026-02-21
-- [x] Stop legacy `alpaca-trader-million.service` (effort: S) — DONE 2026-02-21
-- [x] Reset Alpaca paper account (effort: S) — DONE 2026-02-21
-- [ ] Monitor for first real MA crossover signal + DB trade record (effort: S)
-- [ ] Go/no-go decision by Mar 21, 2026 (effort: S)
+### Open now — paper window
+- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-09
+- [ ] Leave the equity book alone while leverage is above 1.0
+- [ ] Score that window before any Phase 1.5.10 live capital
 
-#### Phase 1: Advanced Risk Management (Before Live Trading)
-- [ ] Portfolio heat tracking — max 10% total risk exposure (effort: M)
-- [ ] Kelly Criterion position sizing — fractional Kelly (0.25-0.5) (effort: M)
-- [ ] Advanced stop losses — trailing ATR, Chandelier, Parabolic SAR (effort: M)
-- [ ] Maximum drawdown circuit breakers — auto-halt trading (effort: M)
-- [ ] Daily loss limits — hard stop at configurable threshold (effort: S)
-- [ ] Position correlation monitoring — avoid correlated positions (effort: M)
-- [ ] Sector exposure limits (effort: S)
+### Open later — after the paper window
+- [ ] Email when a circuit breaker trips
+- [ ] Turn Kelly sizing on after 20 trades (`use_kelly_sizing` is false)
+- [ ] Sentiment charts, news feed, and per-position badges (scoring is already on)
+- [ ] Invitation email verification (`apps/web/app/api/invitations/accept/route.ts`)
+- [ ] When news fetch fails, sentiment scores sample headlines. Changing that changes position size, so it stays for this window.
+- [ ] Coinbase product list can hang, so crypto uses a fixed symbol list
+- [ ] WebSocket quotes, dashboard sparklines, and daily email reports
+- [ ] Price-direction models, including LSTM. Not during this paper window.
 
-#### Phase 2: Multi-Strategy Framework (Before Live Trading)
-- [ ] Strategy base class / interface (effort: M)
-- [ ] RSI Mean Reversion strategy (effort: M)
-- [ ] Bollinger Band bounce strategy (effort: M)
-- [ ] Breakout / momentum strategy (effort: M)
-- [ ] Strategy allocation system — capital per strategy (effort: L)
-- [ ] Strategy performance tracking per strategy (effort: M)
-- [ ] Auto-reallocation based on performance (effort: L)
-- [ ] Strategy correlation monitoring (effort: M)
-
-#### Phase 3: Live Trading Go-Live Checklist
-- [ ] Paper trading validation complete (30 days, 10+ trades, 45%+ win rate) (effort: N/A)
-- [ ] Phase 1 risk management implemented (effort: N/A)
-- [ ] Phase 2 multi-strategy framework implemented (effort: N/A)
-- [ ] Alpaca live trading API credentials configured (effort: S)
-- [ ] Hard position limits configured (effort: S)
-- [ ] Daily loss limit configured (effort: S)
-- [ ] Emergency kill switch tested (effort: S)
-- [ ] Monitoring and alerting active (effort: N/A)
-- [ ] Full audit trail logging active (effort: N/A)
-
-### 🟡 High Priority — Platform Enhancements
-
-#### Admin Platform — Trading Pages Integration
-- [ ] Connect Trades page to live bot data (effort: M)
-- [ ] Connect Positions page to live bot data (effort: M)
-- [ ] Connect Performance page to live bot data (effort: M)
-- [ ] Real-time bot monitoring dashboard (effort: L)
-- [ ] Bot start/stop controls from admin UI (effort: M)
-
-#### Dashboard Enhancements
-- [ ] Historical data tracking — 7-day snapshots of key metrics (effort: L)
-- [ ] Sparkline charts for 7-day trends on dashboard cards (effort: M)
-- [ ] API status monitoring — external API health and response times (effort: M)
-- [ ] Notification settings save functionality (effort: S) — currently a stub
-
-#### Phase 6: Real-Time Data Streaming
-- [ ] Alpaca WebSocket client — replace polling with streaming (effort: L)
-- [ ] Real-time quote processing (effort: M)
-- [ ] Sub-second latency monitoring (effort: M)
-- [ ] Event-driven architecture for bot (effort: L)
-- [ ] Real-time P&L tracking (effort: M)
-
-#### Monitoring & Alerting
-- [ ] Email reports — daily/weekly performance summary (effort: M)
-- [ ] Critical event alerts — drawdown breach, bot crash, API failure (effort: M)
-- [ ] Anomaly detection — unusual trade patterns (effort: L)
-- [ ] Performance degradation alerts (effort: M)
-
-### 🟢 Medium Priority
-
-#### Phase 4: Market Regime Detection
-- [ ] Regime classification — bull, bear, high vol, low vol, crisis (effort: L)
-- [ ] Strategy performance tracking by regime (effort: M)
-- [ ] Automatic strategy switching by regime (effort: L)
-- [ ] Position sizing adjustment by regime (effort: M)
-- [ ] Risk reduction in high volatility regimes (effort: M)
-
-#### Phase 5: Execution Optimization
-- [ ] TWAP order execution (effort: M)
-- [ ] VWAP order execution (effort: M)
-- [ ] Limit orders with price improvement (effort: M)
-- [ ] Pre-trade cost analysis (effort: M)
-- [ ] Slippage monitoring and reporting (effort: S)
-
-#### Phase 7: Crypto Bot — Coinbase Integration
-- [ ] Coinbase Advanced Trade API integration (effort: L)
-- [ ] Crypto-specific risk parameters — wider stops, higher vol (effort: M)
-- [ ] 24/7 trading support (effort: M)
-- [ ] Funding rate monitoring (effort: M)
-- [ ] BTC/equity correlation monitoring (effort: M)
-- [ ] Paper trading validation for crypto (effort: L)
-- [ ] Go/no-go decision for crypto live trading (effort: S)
-
-#### Phase 8: Backtesting & Optimization
-- [ ] Walk-forward analysis (effort: L)
-- [ ] Monte Carlo simulation (effort: L)
-- [ ] Out-of-sample testing (effort: M)
-- [ ] Realistic slippage and commission modeling (effort: M)
-- [ ] Parameter optimization — Bayesian / genetic algorithms (effort: XL)
-
-#### Phase 9: Bot Monitoring Infrastructure
-- [ ] Prometheus metrics collection for bot performance (effort: L)
-- [ ] Grafana dashboard for bot trades/P&L/drawdown (effort: L)
-- [ ] Sentry error tracking integration (effort: M)
-- [ ] Complete trade audit trail with justification logging (effort: M)
-- [ ] Pattern day trader monitoring (effort: S)
-
-### 🔵 Low Priority / Future
-
-#### Phase 3: Machine Learning Integration
-- [ ] Feature engineering — 50+ technical indicators (effort: XL)
-- [ ] Random Forest price direction classifier (effort: XL)
-- [ ] XGBoost gradient boosting model (effort: XL)
-- [ ] LSTM time series model (effort: XL)
-- [ ] Online learning — continuous model retraining (effort: XL)
-- [ ] A/B testing of ML models (effort: L)
-
-#### Advanced Features
-- [ ] Options strategies — covered calls, cash-secured puts, iron condors (effort: XL)
-- [ ] Alternative data — sentiment analysis, options flow, insider data (effort: XL)
-- [ ] Multi-exchange support (effort: XL)
-- [ ] Mobile app development (effort: XL)
-
-#### Platform Polish
-- [ ] Email verification for invited users (effort: M) — currently stubbed in invitations/accept
-- [ ] User activity analytics — track engagement and feature usage (effort: M)
-- [ ] Enhanced caching strategies — reduce database load (effort: M)
-- [ ] Performance optimizations — query performance for large datasets (effort: M)
-- [ ] Code quality improvements — TypeScript warnings, linting (effort: S)
-- [ ] Help documentation for new features (effort: S)
-
----
+### Already running
+- Equity, crypto, and Kraken bots
+- Seven strategies, regime detection, sentiment scoring, and trailing stops
+- Portfolio heat, correlation and sector limits, daily loss limit, and the drawdown breaker
+- Trades, positions, decision reasons, and the regime panel (v1.12.0)
+- Notification settings and admin settings save
 
 ## 🐛 Known Bugs
 
@@ -1260,71 +1150,36 @@ None currently identified.
 
 ## 🗺️ Roadmap (Strategic)
 
-### Q1 2026 (Jan-Mar) — Platform Foundation
-- [x] Release notes standardization - COMPLETE
-- [x] Blue-green deployment - COMPLETE
-- [x] LIVE/STANDBY indicator - COMPLETE
-- [x] Dashboard enhancements Phase 1-3 - COMPLETE
-- [x] Session management - COMPLETE
-- [x] /bump workflow integration - COMPLETE
-- [x] v1.4.0 deployed to production - COMPLETE (2026-02-19)
-- [x] D-025 PM2 naming compliance - COMPLETE (2026-02-19)
-- [ ] **Bot reactivation** - IN PROGRESS
-- [ ] Paper trading validation results review
-- [ ] Admin platform trading pages
+### Now — through the paper window
+- [ ] Phase 1.5.9 daily monitoring. Clock started 2026-10-09.
+- [ ] Leave equity buys blocked while the book is over the leverage cap.
 
-### Q2 2026 (Apr-Jun) — Bot Production Path
-- [ ] Phase 1: Advanced risk management (before live trading)
-- [ ] Phase 2: Multi-strategy framework (before live trading)
-- [ ] Live trading go/no-go decision
-- [ ] Real-time WebSocket data streaming
-- [ ] Historical data tracking and sparkline charts
-- [ ] Monitoring and alerting infrastructure
+### After four clean weeks
+- [ ] Phase 1.5.10 gradual live capital, starting at $200
+- [ ] Circuit-breaker email, Kelly after 20 trades, and sentiment charts
 
-### Q3 2026 (Jul-Sep) — Scale & Diversify
-- [ ] Phase 4: Market regime detection
-- [ ] Phase 5: Execution optimization
-- [ ] Phase 7: Crypto bot (Coinbase)
-- [ ] Phase 8: Backtesting & optimization
-- [ ] Phase 9: Prometheus/Grafana monitoring
-
-### Q4 2026 and Beyond — Intelligence Layer
-- [ ] Phase 3: Machine learning integration
-- [ ] Options strategies
-- [ ] Alternative data integration
-- [ ] Multi-exchange support
+### Later
+- [ ] Streaming quotes, sparklines, and email reports
+- [ ] Price-direction models
+- [ ] Options, extra data sources, and a mobile app
 
 ---
 
 ## 🚦 Production Trading Checklist (Live Money Gate)
 
-**ALL items must be checked before switching from paper to live trading:**
+Phase 1.5.10 does not start until the paper window passes.
 
-### Bot Validation
-- [ ] 30-day paper trading validation complete
-- [ ] Minimum 10 trades executed
-- [ ] Win rate ≥ 45%
-- [ ] Max drawdown < 20%
-- [ ] No critical bugs in 30-day period
+### Still required
+- [ ] 4 clean weeks from 2026-10-09, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
+- [ ] Emergency kill switch tested on purpose
+- [ ] Alpaca live credentials configured and tested
+- [ ] Circuit-breaker email in place
 
-### Risk Management
-- [ ] Portfolio heat tracking implemented (max 10% exposure)
-- [ ] Kelly Criterion position sizing implemented
-- [ ] Maximum drawdown circuit breaker implemented
-- [ ] Daily loss limit implemented and tested
-- [ ] Emergency kill switch tested
-
-### Infrastructure
-- [ ] Bot running on blue-green with hot-standby failover
-- [ ] Monitoring and alerting active
-- [ ] Full audit trail logging active
-- [ ] Alpaca live API credentials configured and tested
-- [ ] Database backup strategy confirmed
-
-### Platform
-- [ ] Admin trading pages connected to live data
-- [ ] Real-time bot status visible in dashboard
-- [ ] Bot start/stop controls working from admin UI
+### Already in place
+- [x] Portfolio heat, drawdown breaker, and daily loss limit
+- [x] Kelly sizer implemented and left off until 20 trades
+- [x] Trades, positions, and bot status on the dashboard
+- [x] Equity, crypto, and Kraken bots running in paper mode
 
 ---
 
@@ -1426,9 +1281,7 @@ None currently identified.
 - News feed with sentiment scores
 - Sentiment vs price correlation
 
-**Status:** Ready to implement - awaiting approval
-**Estimated Time:** 4-6 hours
-**Cost:** Free tier or $449/month for production
+**Status:** Scoring is live. Charts, the news feed, and per-position badges are not. Do not add them during the paper window if they change which trades are placed.
 
 #### 6.2 Streaming News Feed Integration (included in 6.1)
 - [ ] NewsAPI.org integration (recommended)
@@ -1528,10 +1381,7 @@ None currently identified.
 - Emergency stop functionality (already implemented)
 - Liquidation buffer: 30% safety margin
 
-**Status:** ✅ Development complete, ⏳ Awaiting account setup
-**Time Spent:** 1 hour (development)
-**Time Remaining:** 2-3 hours (account setup by user) + 1-2 days (testing) + 1 hour (deployment)
-**Priority:** High - enables shorting strategies
+**Status:** The Kraken bot is already in service with equity and crypto. The account-setup checklist below is obsolete. Live margin and shorting are not part of the paper window.
 
 **Files Created:**
 - `packages/core/src/quantshift_core/executors/kraken_executor.py` (450 lines)

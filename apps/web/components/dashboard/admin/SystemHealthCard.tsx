@@ -1,13 +1,21 @@
-import { Heart, Zap, Database, Clock } from "lucide-react";
+import { Heart, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface SystemHealthCardProps {
   status: 'healthy' | 'degraded' | 'down';
-  apiResponseTime: number;
-  databaseConnections: number;
+  uptime: number;
 }
 
-export function SystemHealthCard({ status, apiResponseTime, databaseConnections }: SystemHealthCardProps) {
+function formatUptime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+export function SystemHealthCard({ status, uptime }: SystemHealthCardProps) {
   const getStatusColor = () => {
     switch (status) {
       case 'healthy':
@@ -44,15 +52,9 @@ export function SystemHealthCard({ status, apiResponseTime, databaseConnections 
         <p className={`text-3xl font-bold mb-3 capitalize ${getStatusColor()}`}>
           {status}
         </p>
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1">
-            <Zap className="h-3 w-3 text-cyan-400" />
-            <span className="text-slate-400">{apiResponseTime}ms</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Database className="h-3 w-3 text-blue-400" />
-            <span className="text-slate-400">{databaseConnections} conn</span>
-          </div>
+        <div className="flex items-center gap-1 text-xs">
+          <Clock className="h-3 w-3 text-cyan-400" />
+          <span className="text-slate-400">Web up {formatUptime(uptime)}</span>
         </div>
       </div>
     </Link>

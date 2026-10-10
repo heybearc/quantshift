@@ -55,7 +55,7 @@ interface AdminStats {
   users: { total: number; active: number; pending: number; inactive: number };
   sessions: { current: number; peakToday: number; avgDuration: number };
   auditLogs: { last24h: number; critical: number; warnings: number };
-  systemHealth: { status: 'healthy' | 'degraded' | 'down'; apiResponseTime: number; databaseConnections: number; uptime: number };
+  systemHealth: { status: 'healthy' | 'degraded' | 'down'; uptime: number };
 }
 
 export default function DashboardPage() {
@@ -374,7 +374,7 @@ export default function DashboardPage() {
                       <UsersStatsCard total={adminStats.users.total} active={adminStats.users.active} pending={adminStats.users.pending} inactive={adminStats.users.inactive} />
                       <SessionsStatsCard current={adminStats.sessions.current} peakToday={adminStats.sessions.peakToday} avgDuration={adminStats.sessions.avgDuration} />
                       <AuditStatsCard last24h={adminStats.auditLogs.last24h} critical={adminStats.auditLogs.critical} warnings={adminStats.auditLogs.warnings} />
-                      <SystemHealthCard status={adminStats.systemHealth.status} apiResponseTime={adminStats.systemHealth.apiResponseTime} databaseConnections={adminStats.systemHealth.databaseConnections} />
+                      <SystemHealthCard status={adminStats.systemHealth.status} uptime={adminStats.systemHealth.uptime} />
                     </div>
                   </div>
                 )}
