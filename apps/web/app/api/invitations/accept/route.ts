@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     const emailResult = await sendVerificationEmail(
       user.email,
-      user.fullName || user.username,
+      user.fullName || user.username || user.email,
       emailVerificationToken
     );
     if (!emailResult.success) {
