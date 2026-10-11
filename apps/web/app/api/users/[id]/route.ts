@@ -123,6 +123,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
     }
 
+    // Audit rows keep the history and point at the user. Detach them so the delete can finish.
+    await prisma.auditLog.updateMany({
+      where: { userId: params.id },
+      data: { userId: null },
+    });
+
     await prisma.user.delete({
       where: { id: params.id },
     });

@@ -50,9 +50,12 @@ export default function PendingUsersPage() {
 
       if (data.success) {
         const pending = data.users.filter(
-          (u: any) => u.accountStatus === "PENDING_APPROVAL"
+          (u: PendingUser & { requiresApproval?: boolean }) =>
+            u.accountStatus === "PENDING_APPROVAL" || u.requiresApproval
         );
         setUsers(pending);
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to load pending users" });
       }
     } catch (error) {
       console.error("Error loading pending users:", error);
@@ -95,8 +98,8 @@ export default function PendingUsersPage() {
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "DELETE",
+      const response = await fetch(`/api/users/${userId}/reject`, {
+        method: "POST",
         credentials: "include",
       });
 

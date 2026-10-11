@@ -10,6 +10,24 @@ import {
   UserPlus, Loader2, Phone, Mail, AlertCircle, Key, Lock
 } from "lucide-react";
 
+function AccountStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, { label: string; className: string; icon: "ok" | "wait" | "no" }> = {
+    ACTIVE: { label: "Active", className: "bg-green-900/50 text-green-300", icon: "ok" },
+    PENDING_APPROVAL: { label: "Pending approval", className: "bg-yellow-900/50 text-yellow-300", icon: "wait" },
+    INACTIVE: { label: "Inactive", className: "bg-slate-700 text-slate-300", icon: "no" },
+    SUSPENDED: { label: "Suspended", className: "bg-red-900/50 text-red-300", icon: "no" },
+    LOCKED: { label: "Locked", className: "bg-red-900/50 text-red-300", icon: "no" },
+    ARCHIVED: { label: "Archived", className: "bg-slate-700 text-slate-300", icon: "no" },
+  };
+  const style = styles[status] || { label: status, className: "bg-slate-700 text-slate-300", icon: "no" as const };
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${style.className}`}>
+      {style.icon === "ok" ? <CheckCircle className="h-3 w-3" /> : style.icon === "wait" ? <UserCheck className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+      {style.label}
+    </span>
+  );
+}
+
 interface UserData {
   id: string;
   email: string;
@@ -227,6 +245,7 @@ export default function UsersPage() {
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: "DELETE",
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -376,17 +395,14 @@ export default function UsersPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              {u.isActive ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Active
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/50 text-red-300">
-                                  <XCircle className="h-3 w-3" />
-                                  Inactive
-                                </span>
-                              )}
+                              <div className="flex flex-col items-start gap-1">
+                                <AccountStatusBadge status={u.accountStatus} />
+                                {u.requiresApproval && u.accountStatus !== "PENDING_APPROVAL" && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-900/50 text-yellow-300">
+                                    Needs approval
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">

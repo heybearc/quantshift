@@ -28,7 +28,8 @@ export async function POST(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (!user.requiresApproval) {
+    const awaitingDecision = user.accountStatus === 'PENDING_APPROVAL' || user.requiresApproval;
+    if (!awaitingDecision) {
       return NextResponse.json(
         { error: 'User does not require approval' },
         { status: 400 }
@@ -42,10 +43,11 @@ export async function POST(
       );
     }
 
-    // Approve user
+    // Approve user. Clear both flags the pending page and the user list use.
     const updatedUser = await prisma.user.update({
       where: { id: params.id },
       data: {
+        accountStatus: 'ACTIVE',
         requiresApproval: false,
         isActive: true,
         approvedBy: payload.sub,
@@ -66,8 +68,11 @@ export async function POST(
       },
     });
 
-    // Send approval email
-    await sendAccountApprovedEmail(user.email, user.fullName || 'User');
+    try {
+      await sendAccountApprovedEmail(user.email, user.fullName || user.username || 'User');
+    } catch (emailError) {
+      console.error('Failed to send approval email:', emailError);
+    }
 
     // Log approval in audit log
     await prisma.auditLog.create({
@@ -83,7 +88,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ user: updatedUser });
+    return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error('Error approving user:', error);
     return NextResponse.json(
