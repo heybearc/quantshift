@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import { validatePassword } from '@/lib/password-validator';
 import { rateLimiter, RATE_LIMITS, getClientIp } from '@/lib/rate-limiter';
 import { sendVerificationEmail } from '@/lib/email';
+import { registrationDenialMessage } from '@/lib/registration-denial';
 
 export async function POST(request: NextRequest) {
   try {
@@ -110,6 +111,11 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    const denial = await registrationDenialMessage(email, username);
+    if (denial) {
+      return NextResponse.json({ error: denial }, { status: 403 });
     }
 
     // Check if user already exists (email or username)

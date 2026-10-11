@@ -106,7 +106,7 @@ export default function PendingUsersPage() {
       const data = await response.json();
 
       if (data.success) {
-        setMessage({ type: "success", text: "User rejected successfully" });
+        setMessage({ type: "success", text: "User rejected. They are off this queue and on the Rejected tab under Users." });
         loadPendingUsers();
       } else {
         setMessage({ type: "error", text: data.error || "Failed to reject user" });

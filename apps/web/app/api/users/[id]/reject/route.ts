@@ -37,6 +37,22 @@ export async function POST(
       );
     }
 
+    await prisma.registrationDenial.upsert({
+      where: { email: user.email.toLowerCase() },
+      create: {
+        email: user.email.toLowerCase(),
+        username: user.username?.toLowerCase() || null,
+        fullName: user.fullName,
+        rejectedByEmail: payload.email || null,
+      },
+      update: {
+        username: user.username?.toLowerCase() || null,
+        fullName: user.fullName,
+        rejectedByEmail: payload.email || null,
+        createdAt: new Date(),
+      },
+    });
+
     await prisma.user.update({
       where: { id: params.id },
       data: {

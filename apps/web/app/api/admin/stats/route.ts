@@ -23,16 +23,20 @@ export async function GET() {
       );
     }
 
-    // Get user statistics
-    const totalUsers = await prisma.user.count();
+    // Rejected registrations stay in the history table and off the user counts.
+    const denials = await prisma.registrationDenial.findMany({ select: { email: true } });
+    const deniedEmails = denials.map((denial) => denial.email);
+    const notDenied = deniedEmails.length > 0 ? { email: { notIn: deniedEmails } } : {};
+
+    const totalUsers = await prisma.user.count({ where: notDenied });
     const activeUsers = await prisma.user.count({
-      where: { accountStatus: 'ACTIVE' }
+      where: { accountStatus: 'ACTIVE', ...notDenied }
     });
     const pendingUsers = await prisma.user.count({
-      where: { accountStatus: 'PENDING_APPROVAL' }
+      where: { accountStatus: 'PENDING_APPROVAL', ...notDenied }
     });
     const inactiveUsers = await prisma.user.count({
-      where: { accountStatus: 'INACTIVE' }
+      where: { accountStatus: 'INACTIVE', ...notDenied }
     });
 
     // Get session statistics

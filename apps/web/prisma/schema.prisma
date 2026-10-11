@@ -269,6 +269,18 @@ model AuditLog {
   @@map("audit_log")
 }
 
+model RegistrationDenial {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  username        String?
+  fullName        String?  @map("full_name")
+  rejectedByEmail String?  @map("rejected_by_email")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([username])
+  @@map("registration_denials")
+}
+
 // ===== TRADING BOT MODELS (UNCHANGED) =====
 
 model BotConfig {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
+import { registrationDenialMessage } from '@/lib/registration-denial';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +45,11 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'This invitation has expired' },
         { status: 400 }
       );
+    }
+
+    const denial = await registrationDenialMessage(invitation.email, username);
+    if (denial) {
+      return NextResponse.json({ success: false, error: denial }, { status: 403 });
     }
 
     // Check if user already exists

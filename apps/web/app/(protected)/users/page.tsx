@@ -10,6 +10,15 @@ import {
   UserPlus, Loader2, Phone, Mail, AlertCircle, Key, Lock
 } from "lucide-react";
 
+interface RegistrationDenial {
+  id: string;
+  email: string;
+  username: string | null;
+  fullName: string | null;
+  rejectedByEmail: string | null;
+  createdAt: string;
+}
+
 function AccountStatusBadge({ status }: { status: string }) {
   const styles: Record<string, { label: string; className: string; icon: "ok" | "wait" | "no" }> = {
     ACTIVE: { label: "Active", className: "bg-green-900/50 text-green-300", icon: "ok" },
@@ -70,6 +79,8 @@ export default function UsersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<UserData[]>([]);
+  const [denials, setDenials] = useState<RegistrationDenial[]>([]);
+  const [section, setSection] = useState<"users" | "rejected">("users");
   const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
@@ -113,10 +124,17 @@ export default function UsersPage() {
 
   async function fetchUsers() {
     try {
-      const response = await fetch("/api/users");
-      if (response.ok) {
-        const data = await response.json();
+      const [usersResponse, denialsResponse] = await Promise.all([
+        fetch("/api/users", { credentials: "include" }),
+        fetch("/api/admin/registration-denials", { credentials: "include" }),
+      ]);
+      if (usersResponse.ok) {
+        const data = await usersResponse.json();
         setUsers(data.users || []);
+      }
+      if (denialsResponse.ok) {
+        const data = await denialsResponse.json();
+        setDenials(data.denials || []);
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -263,11 +281,19 @@ export default function UsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(
+  const deniedEmails = new Set(denials.map((denial) => denial.email.toLowerCase()));
+  const currentUsers = users.filter((u) => !deniedEmails.has(u.email.toLowerCase()));
+  const filteredUsers = currentUsers.filter(
     (u) =>
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredDenials = denials.filter(
+    (denial) =>
+      denial.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      denial.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      denial.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -297,7 +323,7 @@ export default function UsersPage() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-slate-400">
                   <Users className="h-5 w-5" />
-                  <span className="text-sm">{users.length} total users</span>
+                  <span className="text-sm">{section === "users" ? `${currentUsers.length} users` : `${denials.length} rejected`}</span>
                 </div>
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -321,6 +347,21 @@ export default function UsersPage() {
               </div>
             )}
 
+            <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-700 w-fit">
+              <button
+                onClick={() => setSection("users")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${section === "users" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-white"}`}
+              >
+                Users
+              </button>
+              <button
+                onClick={() => setSection("rejected")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${section === "rejected" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-white"}`}
+              >
+                Rejected
+              </button>
+            </div>
+
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -337,6 +378,41 @@ export default function UsersPage() {
             {dataLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+              </div>
+            ) : section === "rejected" ? (
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-700">
+                  <p className="text-sm text-slate-400">These addresses and usernames cannot register again.</p>
+                </div>
+                {filteredDenials.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400">No rejected registrations</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-900/50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">User</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Username</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Rejected</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Rejected by</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700">
+                        {filteredDenials.map((denial) => (
+                          <tr key={denial.id} className="hover:bg-slate-800/50">
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-white">{denial.fullName || "No name"}</div>
+                              <div className="text-sm text-slate-400">{denial.email}</div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-300">{denial.username || "—"}</td>
+                            <td className="px-6 py-4 text-sm text-slate-400">{new Date(denial.createdAt).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-sm text-slate-300">{denial.rejectedByEmail || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden">
