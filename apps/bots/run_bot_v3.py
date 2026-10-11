@@ -935,15 +935,18 @@ class QuantShiftUnifiedBot:
             bot_status = 'PRIMARY' if is_primary else 'STANDBY'
             logger.debug("db_heartbeat_status_check", is_primary=is_primary, bot_status=bot_status, bot_name=self.bot_name)
             
-            # Upsert bot_status table (INSERT or UPDATE)
+            # Upsert bot_status table (INSERT or UPDATE).
+            # trades_count follows the trades table so the dashboard matches the Trades page.
             cursor = self.db_conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM trades WHERE bot_name = %s", (self.bot_name,))
+            trades_count = int(cursor.fetchone()[0] or 0)
             cursor.execute("""
                 INSERT INTO bot_status (
                     id, bot_name, status, last_heartbeat, account_equity, account_cash,
                     buying_power, portfolio_value, unrealized_pl, realized_pl,
                     positions_count, trades_count, created_at, updated_at
                 )
-                VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, 0, NOW(), NOW())
+                VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                 ON CONFLICT (bot_name) DO UPDATE SET
                     status = EXCLUDED.status,
                     last_heartbeat = EXCLUDED.last_heartbeat,
@@ -954,6 +957,7 @@ class QuantShiftUnifiedBot:
                     unrealized_pl = EXCLUDED.unrealized_pl,
                     realized_pl = EXCLUDED.realized_pl,
                     positions_count = EXCLUDED.positions_count,
+                    trades_count = EXCLUDED.trades_count,
                     updated_at = NOW()
             """, (
                 self.bot_name,  # id (same as bot_name)
@@ -965,7 +969,8 @@ class QuantShiftUnifiedBot:
                 float(account.portfolio_value),
                 total_unrealized_pl,
                 float(account.realized_pl) if hasattr(account, 'realized_pl') else 0.0,
-                len(positions)
+                len(positions),
+                trades_count,
             ))
             rows_updated = cursor.rowcount
             self.db_conn.commit()

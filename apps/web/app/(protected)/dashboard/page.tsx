@@ -41,14 +41,15 @@ interface BotMetrics {
   totalWins: number;
   totalLosses: number;
   totalTrades: number;
-  maxDrawdown: number;
-  maxDrawdownAmount: number;
+  maxDrawdown: number | null;
+  maxDrawdownAmount: number | null;
   avgTradesPerDay: number;
   lastTradeTime: string | null;
   currentStrategy: string;
   strategySuccessRate: number;
   openUnrealizedPl?: number;
   openUnrealizedByBot?: Record<string, number>;
+  byBot?: Record<string, Omit<BotMetrics, 'byBot' | 'openUnrealizedPl' | 'openUnrealizedByBot' | 'lastTradeTime'> & { lastTradeTime?: string | null }>;
 }
 
 interface AdminStats {
@@ -197,7 +198,7 @@ export default function DashboardPage() {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Total Trades</p>
             <p className="text-white text-xl font-bold">{bot.tradesCount}</p>
-            <p className="text-slate-500 text-xs mt-1">All time</p>
+            <p className="text-slate-500 text-xs mt-1">Rows on Trades</p>
           </div>
         </div>
 
@@ -211,13 +212,26 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {botMetrics && (
+        {botMetrics && (() => {
+          const metrics = botMetrics.byBot?.[bot.botName] ?? {
+            winRate: 0,
+            totalWins: 0,
+            totalLosses: 0,
+            totalTrades: 0,
+            maxDrawdown: null,
+            maxDrawdownAmount: null,
+            avgTradesPerDay: 0,
+            currentStrategy: 'No recorded strategy',
+            strategySuccessRate: 0,
+          };
+          return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <WinRateCard winRate={botMetrics.winRate} totalWins={botMetrics.totalWins} totalLosses={botMetrics.totalLosses} totalTrades={botMetrics.totalTrades} />
-            <MaxDrawdownCard maxDrawdown={botMetrics.maxDrawdown} maxDrawdownAmount={botMetrics.maxDrawdownAmount} formatCurrency={fmt} />
-            <StrategyCard currentStrategy={botMetrics.currentStrategy} strategySuccessRate={botMetrics.strategySuccessRate} avgTradesPerDay={botMetrics.avgTradesPerDay} />
+            <WinRateCard winRate={metrics.winRate} totalWins={metrics.totalWins} totalLosses={metrics.totalLosses} totalTrades={metrics.totalTrades} />
+            <MaxDrawdownCard maxDrawdown={metrics.maxDrawdown} maxDrawdownAmount={metrics.maxDrawdownAmount} formatCurrency={fmt} />
+            <StrategyCard currentStrategy={metrics.currentStrategy} strategySuccessRate={metrics.strategySuccessRate} avgTradesPerDay={metrics.avgTradesPerDay} />
           </div>
-        )}
+          );
+        })()}
 
         {bot.errorMessage && (
           <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 flex items-start gap-3">
@@ -260,7 +274,7 @@ export default function DashboardPage() {
                   <div className="bg-gradient-to-br from-cyan-900/50 to-blue-900/50 rounded-xl p-5 border border-cyan-700/50">
                     <p className="text-cyan-300 text-xs font-medium mb-1">Total Portfolio</p>
                     <p className="text-white text-2xl font-bold">{fmt(totalEquity)}</p>
-                    <p className="text-cyan-400 text-xs mt-1">Both bots combined</p>
+                    <p className="text-cyan-400 text-xs mt-1">All bots combined</p>
                   </div>
                   <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-xl p-5 border border-purple-700/50">
                     <p className="text-purple-300 text-xs font-medium mb-1">Total P&L</p>
@@ -275,7 +289,7 @@ export default function DashboardPage() {
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-1">Total Trades</p>
                     <p className="text-white text-2xl font-bold">{totalTrades}</p>
-                    <p className="text-slate-500 text-xs mt-1">All time, all bots</p>
+                    <p className="text-slate-500 text-xs mt-1">Rows on the Trades page</p>
                   </div>
                 </div>
 

@@ -1,22 +1,25 @@
 import { TrendingDown, AlertTriangle } from "lucide-react";
 
 interface MaxDrawdownCardProps {
-  maxDrawdown: number;
-  maxDrawdownAmount: number;
+  maxDrawdown: number | null;
+  maxDrawdownAmount: number | null;
   formatCurrency: (value: number) => string;
 }
 
 export function MaxDrawdownCard({ maxDrawdown, maxDrawdownAmount, formatCurrency }: MaxDrawdownCardProps) {
+  const recorded = maxDrawdown != null;
+  const drawdown = maxDrawdown ?? 0;
+
   const getSeverityColor = () => {
-    if (maxDrawdown === 0) return "text-slate-400";
-    if (maxDrawdown < 10) return "text-yellow-500";
-    if (maxDrawdown < 20) return "text-orange-500";
+    if (!recorded || drawdown === 0) return "text-slate-400";
+    if (drawdown < 10) return "text-yellow-500";
+    if (drawdown < 20) return "text-orange-500";
     return "text-red-500";
   };
 
   const getSeverityIcon = () => {
-    if (maxDrawdown === 0) return <TrendingDown className="h-5 w-5 text-slate-400" />;
-    if (maxDrawdown < 20) return <TrendingDown className="h-5 w-5 text-yellow-500" />;
+    if (!recorded || drawdown === 0) return <TrendingDown className="h-5 w-5 text-slate-400" />;
+    if (drawdown < 20) return <TrendingDown className="h-5 w-5 text-yellow-500" />;
     return <AlertTriangle className="h-5 w-5 text-red-500" />;
   };
 
@@ -27,10 +30,10 @@ export function MaxDrawdownCard({ maxDrawdown, maxDrawdownAmount, formatCurrency
         {getSeverityIcon()}
       </div>
       <p className={`text-3xl font-bold mb-2 ${getSeverityColor()}`}>
-        {maxDrawdown === 0 ? "0.0%" : `-${maxDrawdown.toFixed(1)}%`}
+        {!recorded ? "—" : drawdown === 0 ? "0.0%" : `-${drawdown.toFixed(1)}%`}
       </p>
       <p className="text-sm text-slate-400">
-        {maxDrawdownAmount === 0 ? "No drawdown" : formatCurrency(Math.abs(maxDrawdownAmount))}
+        {!recorded || maxDrawdownAmount == null ? "Not recorded" : maxDrawdownAmount === 0 ? "No drawdown" : formatCurrency(Math.abs(maxDrawdownAmount))}
       </p>
     </div>
   );

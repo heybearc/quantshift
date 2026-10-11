@@ -44,13 +44,41 @@ export default function AuditLogsPage() {
   const loadLogs = async () => {
     try {
       setLoading(true);
-      setLogs([]);
+      const response = await fetch("/api/admin/audit-logs", { credentials: "include" });
+      if (!response.ok) {
+        setLogs([]);
+        return;
+      }
+      const data = await response.json();
+      const rows = Array.isArray(data.data) ? data.data : [];
+      setLogs(rows.map((log: {
+        id: string;
+        userId?: string | null;
+        action: string;
+        resourceType?: string | null;
+        resourceId?: string | null;
+        ipAddress?: string | null;
+        createdAt: string;
+        user?: { email?: string | null } | null;
+      }) => ({
+        id: log.id,
+        userId: log.userId || "",
+        userEmail: log.user?.email || "System",
+        action: log.action,
+        resourceType: log.resourceType || "—",
+        resourceId: log.resourceId || "—",
+        ipAddress: log.ipAddress || "—",
+        userAgent: "",
+        createdAt: log.createdAt,
+      })));
     } catch (error) {
       console.error("Error loading audit logs:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const last24h = logs.filter((log) => Date.now() - new Date(log.createdAt).getTime() <= 24 * 60 * 60 * 1000).length;
 
   const filteredLogs = logs.filter(log =>
     log.action.toLowerCase().includes(filter.toLowerCase()) ||
@@ -80,7 +108,7 @@ export default function AuditLogsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white">Audit Logs</h1>
-                <p className="text-slate-400 mt-2">Track all system activities and changes</p>
+                <p className="text-slate-400 mt-2">{last24h} in the last 24 hours · {logs.length} loaded</p>
               </div>
               <button
                 onClick={loadLogs}

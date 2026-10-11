@@ -24,23 +24,9 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'asc' },
     });
 
-    // If no performance metrics exist yet, return empty data
-    if (metrics.length === 0) {
-      return NextResponse.json({
-        summary: {
-          totalTrades: 0,
-          winningTrades: 0,
-          losingTrades: 0,
-          winRate: 0,
-          profitFactor: 0,
-          sharpeRatio: 0,
-          maxDrawdown: 0,
-          totalPnl: 0,
-          totalPnlPct: 0,
-        },
-        daily: [],
-      });
-    }
+    const strategyWhere: { botName?: string } = {};
+    if (botName) strategyWhere.botName = botName;
+    const strategies = await prisma.strategyPerformance.findMany({ where: strategyWhere });
 
     // Calculate aggregate metrics
     const totalTrades = metrics.reduce((sum, m) => sum + m.totalTrades, 0);
@@ -57,18 +43,52 @@ export async function GET(request: NextRequest) {
       : 0;
     const maxDrawdown = metrics.length > 0 ? Math.min(...metrics.map(m => m.maxDrawdown || 0)) : 0;
 
+    const strategyTrades = strategies.reduce((sum, row) => sum + row.totalTrades, 0);
+    const strategyWins = strategies.reduce((sum, row) => sum + row.winningTrades, 0);
+    const strategyLosses = strategies.reduce((sum, row) => sum + row.losingTrades, 0);
+    const strategyPnl = strategies.reduce((sum, row) => sum + row.totalPnl, 0);
+    const recordedDrawdowns = strategies
+      .map((row) => row.maxDrawdown)
+      .filter((value): value is number => value != null);
+    const recordedSharpes = strategies
+      .map((row) => row.sharpeRatio)
+      .filter((value): value is number => value != null);
+    const recordedFactors = strategies
+      .map((row) => row.profitFactor)
+      .filter((value): value is number => value != null);
+
+    const summary = strategyTrades > 0
+      ? {
+          totalTrades: strategyTrades,
+          winningTrades: strategyWins,
+          losingTrades: strategyLosses,
+          winRate: (strategyWins / strategyTrades) * 100,
+          profitFactor: recordedFactors.length > 0
+            ? recordedFactors.reduce((sum, value) => sum + value, 0) / recordedFactors.length
+            : null,
+          sharpeRatio: recordedSharpes.length > 0
+            ? recordedSharpes.reduce((sum, value) => sum + value, 0) / recordedSharpes.length
+            : null,
+          maxDrawdown: recordedDrawdowns.length > 0 ? Math.max(...recordedDrawdowns) : null,
+          totalPnl: strategyPnl,
+          totalPnlPct: null,
+          source: 'strategy' as const,
+        }
+      : {
+          totalTrades,
+          winningTrades: totalWins,
+          losingTrades: totalLosses,
+          winRate: avgWinRate,
+          profitFactor: avgProfitFactor,
+          sharpeRatio: avgSharpe,
+          maxDrawdown,
+          totalPnl,
+          totalPnlPct: metrics.length > 0 ? metrics[metrics.length - 1].totalPnlPct : 0,
+          source: 'daily' as const,
+        };
+
     return NextResponse.json({
-      summary: {
-        totalTrades,
-        winningTrades: totalWins,
-        losingTrades: totalLosses,
-        winRate: avgWinRate,
-        profitFactor: avgProfitFactor,
-        sharpeRatio: avgSharpe,
-        maxDrawdown,
-        totalPnl,
-        totalPnlPct: metrics.length > 0 ? metrics[metrics.length - 1].totalPnlPct : 0,
-      },
+      summary,
       daily: metrics.map(m => ({
         date: m.date.toISOString().split('T')[0],
         totalTrades: m.totalTrades,

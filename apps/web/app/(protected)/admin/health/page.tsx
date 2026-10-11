@@ -12,7 +12,18 @@ interface HealthStatus {
   database: boolean;
   api: boolean;
   bot: boolean;
+  uptime: number | null;
+  bots: { name: string; status: string }[];
   lastCheck: string;
+}
+
+function formatUptime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 export default function HealthPage() {
@@ -41,15 +52,45 @@ export default function HealthPage() {
   const checkHealth = async () => {
     try {
       setLoading(true);
+      const [statsRes, botsRes] = await Promise.all([
+        fetch("/api/admin/stats", { credentials: "include" }),
+        fetch("/api/bot/status/all", { credentials: "include" }),
+      ]);
+      const stats = statsRes.ok ? await statsRes.json() : null;
+      const botRows = botsRes.ok ? ((await botsRes.json()).bots || []) : [];
+      const bots = botRows.map((bot: { botName: string; status: string }) => ({
+        name: bot.botName,
+        status: bot.status,
+      }));
+      const running = bots.some((bot: { status: string }) =>
+        bot.status === "PRIMARY" || bot.status === "RUNNING" || bot.status === "STANDBY"
+      );
+      const reported = stats?.systemHealth?.status;
+      const status: HealthStatus["status"] = !statsRes.ok
+        ? "down"
+        : reported === "down" || reported === "degraded" || reported === "healthy"
+        ? reported
+        : "degraded";
       setHealth({
-        status: "healthy",
-        database: true,
-        api: true,
-        bot: true,
-        lastCheck: new Date().toISOString()
+        status,
+        database: statsRes.ok,
+        api: statsRes.ok && botsRes.ok,
+        bot: running,
+        uptime: typeof stats?.systemHealth?.uptime === "number" ? stats.systemHealth.uptime : null,
+        bots,
+        lastCheck: new Date().toISOString(),
       });
     } catch (error) {
       console.error("Error checking health:", error);
+      setHealth({
+        status: "down",
+        database: false,
+        api: false,
+        bot: false,
+        uptime: null,
+        bots: [],
+        lastCheck: new Date().toISOString(),
+      });
     } finally {
       setLoading(false);
     }
@@ -122,6 +163,7 @@ export default function HealthPage() {
                     <Activity className={`h-12 w-12 ${getStatusColor(health.status)}`} />
                   </div>
                   <p className="text-sm text-slate-400 mt-4">
+                    {health.uptime != null ? `Web up ${formatUptime(health.uptime)} · ` : ""}
                     Last checked: {new Date(health.lastCheck).toLocaleString()}
                   </p>
                 </div>
@@ -155,9 +197,15 @@ export default function HealthPage() {
                       {getStatusIcon(health.bot)}
                     </div>
                     <Activity className="h-8 w-8 text-slate-600 mb-2" />
-                    <p className={`text-sm font-medium ${health.bot ? "text-green-400" : "text-red-400"}`}>
-                      {health.bot ? "Running" : "Stopped"}
-                    </p>
+                    <div className="space-y-1">
+                      {health.bots.length === 0 ? (
+                        <p className="text-sm font-medium text-red-400">No bot status</p>
+                      ) : health.bots.map((bot) => (
+                        <p key={bot.name} className={`text-sm font-medium ${bot.status === "STALE" || bot.status === "UNKNOWN" ? "text-yellow-400" : "text-green-400"}`}>
+                          {bot.name.replace("quantshift-", "")}: {bot.status}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </>

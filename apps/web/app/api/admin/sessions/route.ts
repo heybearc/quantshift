@@ -14,9 +14,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get all sessions with user information
+    // Same population as the dashboard card: active and not yet expired.
     const sessions = await prisma.session.findMany({
-      include: {
+      where: {
+        isActive: true,
+        expiresAt: { gt: new Date() },
+      },
+      select: {
+        id: true,
+        userId: true,
+        expiresAt: true,
+        createdAt: true,
+        ipAddress: true,
+        userAgent: true,
         user: {
           select: {
             email: true,

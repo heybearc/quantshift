@@ -5,10 +5,10 @@ import { Navigation } from '@/components/navigation';
 import { ReleaseBanner } from '@/components/release-banner';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin, Zap } from 'lucide-react';
 import Link from 'next/link';
 
-type BotFilter = 'all' | 'equity-bot' | 'crypto-bot';
+type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
 
 const fmt2 = (v: unknown) => {
   const n = typeof v === "number" ? v : Number(v);
@@ -19,11 +19,11 @@ interface PerformanceSummary {
   winningTrades: number;
   losingTrades: number;
   winRate: number;
-  profitFactor: number;
-  sharpeRatio: number;
-  maxDrawdown: number;
+  profitFactor: number | null;
+  sharpeRatio: number | null;
+  maxDrawdown: number | null;
   totalPnl: number;
-  totalPnlPct: number;
+  totalPnlPct: number | null;
 }
 
 interface DailyMetric {
@@ -45,6 +45,7 @@ interface PerformanceData {
 }
 
 interface StrategyPerformance {
+  botName?: string;
   strategyName: string;
   totalTrades: number;
   winningTrades: number;
@@ -116,11 +117,15 @@ export default function PerformancePage() {
   if (!user) return null;
 
   const summary = performance?.summary;
-  const strategyLabel = botFilter === 'equity-bot'
-    ? 'MA Crossover · 5/20 Daily SMA'
-    : botFilter === 'crypto-bot'
-    ? 'MA/RSI/MACD · 20/50 Hourly SMA'
-    : 'All Strategies Combined';
+  const strategyNames = [...new Set(strategyPerformance.map((row) => row.strategyName))];
+  const strategyLabel = strategyNames.length > 0 ? strategyNames.join(', ') : 'No recorded strategy';
+  const strategyNote = botFilter === 'quantshift-equity'
+    ? 'Alpaca paper trading'
+    : botFilter === 'quantshift-crypto'
+    ? 'Coinbase paper trading'
+    : botFilter === 'quantshift-kraken'
+    ? 'Kraken simulation'
+    : 'Equity, crypto, and Kraken';
 
   return (
     <div className="flex h-screen bg-slate-900">
@@ -134,7 +139,7 @@ export default function PerformancePage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-white">Performance</h1>
-                <p className="text-slate-400 mt-1">Trading performance over the last {timeRange} days</p>
+                <p className="text-slate-400 mt-1">Strategy results for the full recorded history. The day range applies only to the daily table.</p>
               </div>
               <div className="flex items-center gap-3">
                 <select
@@ -157,8 +162,9 @@ export default function PerformancePage() {
             <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-700 w-fit">
               {([
                 { id: 'all' as BotFilter, label: 'All Bots', icon: null },
-                { id: 'equity-bot' as BotFilter, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" /> },
-                { id: 'crypto-bot' as BotFilter, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-equity' as BotFilter, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-crypto' as BotFilter, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-kraken' as BotFilter, label: 'Kraken Bot', icon: <Zap className="h-3.5 w-3.5" /> },
               ]).map(({ id, label, icon }) => (
                 <button key={id} onClick={() => setBotFilter(id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -189,7 +195,9 @@ export default function PerformancePage() {
                       {summary.totalPnl >= 0 ? <TrendingUp className="h-4 w-4 text-green-400" /> : <TrendingDown className="h-4 w-4 text-red-400" />}
                     </div>
                     <p className={`text-2xl font-bold ${summary.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(summary.totalPnl)}</p>
-                    <p className={`text-xs mt-1 ${summary.totalPnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtPct(summary.totalPnlPct)}</p>
+                    {summary.totalPnlPct != null && (
+                      <p className={`text-xs mt-1 ${summary.totalPnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtPct(summary.totalPnlPct)}</p>
+                    )}
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
@@ -204,15 +212,15 @@ export default function PerformancePage() {
                       <p className="text-slate-400 text-xs font-medium">Profit Factor</p>
                       <Award className="h-4 w-4 text-purple-400" />
                     </div>
-                    <p className="text-2xl font-bold text-white">{(summary.profitFactor || 0).toFixed(2)}</p>
-                    <p className="text-xs text-slate-500 mt-1">{(summary.profitFactor || 0) >= 1.5 ? 'Excellent' : (summary.profitFactor || 0) >= 1.0 ? 'Good' : 'Poor'}</p>
+                    <p className="text-2xl font-bold text-white">{summary.profitFactor == null ? '—' : summary.profitFactor.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 mt-1">{summary.profitFactor == null ? 'Not recorded' : summary.profitFactor >= 1.5 ? 'Excellent' : summary.profitFactor >= 1.0 ? 'Good' : 'Poor'}</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-slate-400 text-xs font-medium">Sharpe Ratio</p>
                       <BarChart3 className="h-4 w-4 text-orange-400" />
                     </div>
-                    <p className="text-2xl font-bold text-white">{(summary.sharpeRatio || 0).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-white">{summary.sharpeRatio == null ? '—' : summary.sharpeRatio.toFixed(2)}</p>
                     <p className="text-xs text-slate-500 mt-1">Risk-adjusted return</p>
                   </div>
                 </div>
@@ -229,13 +237,13 @@ export default function PerformancePage() {
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-3">Max Drawdown</p>
-                    <p className="text-3xl font-bold text-red-400 mb-2">{fmtPct(summary.maxDrawdown)}</p>
+                    <p className="text-3xl font-bold text-red-400 mb-2">{summary.maxDrawdown == null ? '—' : fmtPct(summary.maxDrawdown)}</p>
                     <p className="text-xs text-slate-500">Largest peak-to-trough decline</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-3">Strategy</p>
                     <p className="text-sm font-semibold text-white mb-1">{strategyLabel}</p>
-                    <p className="text-xs text-slate-500">{botFilter === 'all' ? 'Equity + Crypto combined' : botFilter === 'equity-bot' ? 'Alpaca paper trading' : 'Coinbase dry-run'}</p>
+                    <p className="text-xs text-slate-500">{strategyNote}</p>
                   </div>
                 </div>
 
@@ -261,8 +269,13 @@ export default function PerformancePage() {
                         </thead>
                         <tbody className="divide-y divide-slate-700/50">
                           {strategyPerformance.map((strategy) => (
-                            <tr key={strategy.strategyName} className="hover:bg-slate-700/30 transition-colors">
-                              <td className="px-4 py-3 text-sm font-medium text-white">{strategy.strategyName}</td>
+                            <tr key={`${strategy.botName}-${strategy.strategyName}`} className="hover:bg-slate-700/30 transition-colors">
+                              <td className="px-4 py-3 text-sm font-medium text-white">
+                                {strategy.strategyName}
+                                {botFilter === 'all' && strategy.botName && (
+                                  <span className="block text-xs font-normal text-slate-500">{strategy.botName}</span>
+                                )}
+                              </td>
                               <td className="px-4 py-3 text-sm text-right text-slate-300">
                                 {strategy.totalTrades}
                                 <span className="block text-xs text-slate-500">{strategy.winningTrades}W / {strategy.losingTrades}L</span>

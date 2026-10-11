@@ -12,6 +12,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const tradeCounts = await prisma.trade.groupBy({
+      by: ['botName'],
+      _count: { id: true },
+    });
+    const tradesByBot = new Map(tradeCounts.map((row) => [row.botName, row._count.id]));
+
     const results = await Promise.all(
       BOT_NAMES.map(async (botName) => {
         const botStatus = await prisma.botStatus.findFirst({
@@ -31,7 +37,7 @@ export async function GET(request: NextRequest) {
             unrealizedPl: 0,
             realizedPl: 0,
             positionsCount: 0,
-            tradesCount: 0,
+            tradesCount: tradesByBot.get(botName) ?? 0,
             errorMessage: null,
             updatedAt: null,
           };
@@ -50,7 +56,7 @@ export async function GET(request: NextRequest) {
           unrealizedPl: botStatus.unrealizedPl,
           realizedPl: botStatus.realizedPl,
           positionsCount: botStatus.positionsCount,
-          tradesCount: botStatus.tradesCount,
+          tradesCount: tradesByBot.get(botName) ?? 0,
           errorMessage: botStatus.errorMessage,
           updatedAt: botStatus.updatedAt.toISOString(),
         };
