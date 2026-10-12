@@ -205,8 +205,14 @@ class QuantShiftUnifiedBot:
             allocation=capital_allocation,
             has_allocation=capital_allocation is not None
         )
-        use_regime_detection = orchestrator_config.get('use_regime_detection', True)
-        use_ml_regime = orchestrator_config.get('use_ml_regime', False)
+        use_regime_detection = orchestrator_config.get(
+            'use_regime_detection',
+            self.config.get('market_regime', {}).get('enabled', True),
+        )
+        use_ml_regime = orchestrator_config.get(
+            'use_ml_regime',
+            self.config.get('market_regime', {}).get('use_ml_classifier', False),
+        )
         use_risk_management = orchestrator_config.get('use_risk_management', True)
         use_sentiment_analysis = orchestrator_config.get('use_sentiment_analysis', False)
         

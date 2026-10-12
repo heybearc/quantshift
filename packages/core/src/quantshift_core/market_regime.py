@@ -203,17 +203,17 @@ class MarketRegimeDetector:
         Returns:
             Tuple of (regime, indicators_dict)
         """
-        # Calculate indicators
-        trend_slope = self.calculate_trend_slope(market_data['Close'])
-        vol_ratio = self.calculate_volatility_ratio(
-            market_data['High'],
-            market_data['Low'],
-            market_data['Close']
-        )
+        # Calculate indicators. Callers use either close/high/low or Close/High/Low.
+        close = market_data['close'] if 'close' in market_data.columns else market_data['Close']
+        high = market_data['high'] if 'high' in market_data.columns else market_data['High']
+        low = market_data['low'] if 'low' in market_data.columns else market_data['Low']
+        trend_slope = self.calculate_trend_slope(close)
+        vol_ratio = self.calculate_volatility_ratio(high, low, close)
         
         vix = None
         if vix_data is not None and len(vix_data) > 0:
-            vix = vix_data['Close'].iloc[-1]
+            vix_close = vix_data['close'] if 'close' in vix_data.columns else vix_data['Close']
+            vix = vix_close.iloc[-1]
         
         # Classify regime
         detected_regime = self.classify_regime(trend_slope, vol_ratio, vix)
