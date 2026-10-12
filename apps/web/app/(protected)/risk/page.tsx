@@ -7,19 +7,43 @@ import { AlertTriangle, TrendingDown, Shield, Activity, RefreshCw } from 'lucide
 import { KellyStatsCard } from '@/components/dashboard/KellyStatsCard';
 
 interface RiskMetrics {
-  portfolio_heat: number;
-  portfolio_heat_pct: number;
-  max_heat_limit: number;
-  heat_utilization: number;
-  daily_pl: number;
-  daily_pl_pct: number;
-  daily_loss_limit: number;
-  drawdown: number;
-  max_drawdown_limit: number;
-  peak_equity: number;
-  circuit_breaker_status: 'normal' | 'warning' | 'triggered';
-  circuit_breaker_reason: string | null;
-  num_positions: number;
+  portfolioHeat: number | null;
+  maxPortfolioHeat: number;
+  maxDrawdown: number;
+  maxDrawdownLimit: number;
+  dailyPnl: number;
+  dailyLossLimit: number;
+  openPositions: number;
+  maxPositions: number;
+}
+
+function finite(value: unknown, fallback = 0) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function readMetrics(data: Record<string, unknown>): RiskMetrics {
+  const heat = data.portfolioHeat ?? data.portfolio_heat_pct;
+  const parsedHeat = heat == null || heat === '' ? null : finite(heat, NaN);
+  return {
+    portfolioHeat: parsedHeat != null && Number.isFinite(parsedHeat) ? parsedHeat : null,
+    maxPortfolioHeat: finite(data.maxPortfolioHeat ?? data.max_heat_limit, 0.1),
+    maxDrawdown: finite(data.maxDrawdown ?? data.drawdown, 0),
+    maxDrawdownLimit: finite(data.maxDrawdownLimit ?? data.max_drawdown_limit, 0.15),
+    dailyPnl: finite(data.dailyPnl ?? data.daily_pl, 0),
+    dailyLossLimit: finite(data.dailyLossLimit ?? data.daily_loss_limit, 0),
+    openPositions: finite(data.openPositions ?? data.num_positions, 0),
+    maxPositions: finite(data.maxPositions, 10),
+  };
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+}
+
+function percent(value: number | null, digits = 1) {
+  if (value == null || !Number.isFinite(value)) return 'N/A';
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
 export default function RiskManagementPage() {
@@ -44,7 +68,7 @@ function RiskManagementContent() {
       const response = await fetch('/api/bot/risk-metrics?bot=quantshift-equity');
       if (!response.ok) throw new Error('Failed to fetch risk metrics');
       const data = await response.json();
-      setRiskMetrics(data);
+      setRiskMetrics(readMetrics(data));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -97,6 +121,22 @@ function RiskManagementContent() {
 
   if (!riskMetrics) return null;
 
+  const heatRatio = riskMetrics.portfolioHeat == null || riskMetrics.maxPortfolioHeat <= 0
+    ? null
+    : riskMetrics.portfolioHeat / riskMetrics.maxPortfolioHeat;
+  const drawdownRatio = riskMetrics.maxDrawdownLimit > 0
+    ? riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit
+    : 0;
+  const dailyLossRatio = riskMetrics.dailyPnl < 0 && riskMetrics.dailyLossLimit > 0
+    ? Math.abs(riskMetrics.dailyPnl) / riskMetrics.dailyLossLimit
+    : 0;
+  const worstLimit = Math.max(heatRatio ?? 0, drawdownRatio, dailyLossRatio);
+  const circuitStatus: 'normal' | 'warning' | 'triggered' =
+    worstLimit >= 1 ? 'triggered' : worstLimit >= 0.8 ? 'warning' : 'normal';
+  const circuitReason = circuitStatus === 'normal'
+    ? null
+    : 'A risk limit is at or past the warning line. Heat, daily loss, and drawdown are the checks.';
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'triggered': return 'bg-red-500';
@@ -133,25 +173,25 @@ function RiskManagementContent() {
 
       {/* Circuit Breaker Status */}
       <div className={`p-6 rounded-xl border ${
-        riskMetrics.circuit_breaker_status === 'triggered' 
+        circuitStatus === 'triggered' 
           ? 'bg-red-900/20 border-red-500' 
-          : riskMetrics.circuit_breaker_status === 'warning'
+          : circuitStatus === 'warning'
           ? 'bg-yellow-900/20 border-yellow-500'
           : 'bg-green-900/20 border-green-500'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`h-4 w-4 rounded-full ${getStatusColor(riskMetrics.circuit_breaker_status)} animate-pulse`} />
+            <div className={`h-4 w-4 rounded-full ${getStatusColor(circuitStatus)} animate-pulse`} />
             <div>
               <h2 className="text-xl font-bold text-white">
-                Circuit Breaker: {getStatusText(riskMetrics.circuit_breaker_status)}
+                Circuit Breaker: {getStatusText(circuitStatus)}
               </h2>
-              {riskMetrics.circuit_breaker_reason && (
-                <p className="text-slate-300 mt-1">{riskMetrics.circuit_breaker_reason}</p>
+              {circuitReason && (
+                <p className="text-slate-300 mt-1">{circuitReason}</p>
               )}
             </div>
           </div>
-          {riskMetrics.circuit_breaker_status === 'triggered' && (
+          {circuitStatus === 'triggered' && (
             <button
               onClick={resetCircuitBreaker}
               disabled={resetting}
@@ -175,23 +215,23 @@ function RiskManagementContent() {
           </div>
           <div className="space-y-2">
             <div className="text-3xl font-bold text-white">
-              {(riskMetrics.portfolio_heat_pct * 100).toFixed(1)}%
+              {percent(riskMetrics.portfolioHeat, 1)}
             </div>
             <div className="text-sm text-slate-400">
-              Limit: {(riskMetrics.max_heat_limit * 100).toFixed(0)}%
+              Limit: {percent(riskMetrics.maxPortfolioHeat, 0)}
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-2">
+            <div className="w-full overflow-hidden bg-slate-700 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all ${
-                  riskMetrics.heat_utilization > 0.8 ? 'bg-red-500' : 
-                  riskMetrics.heat_utilization > 0.6 ? 'bg-yellow-500' : 
+                  (heatRatio ?? 0) > 0.8 ? 'bg-red-500' : 
+                  (heatRatio ?? 0) > 0.6 ? 'bg-yellow-500' : 
                   'bg-green-500'
                 }`}
-                style={{ width: `${Math.min(riskMetrics.heat_utilization * 100, 100)}%` }}
+                style={{ width: `${Math.max(0, Math.min((heatRatio ?? 0) * 100, 100))}%` }}
               />
             </div>
             <div className="text-xs text-slate-500">
-              {(riskMetrics.heat_utilization * 100).toFixed(0)}% utilized
+              {riskMetrics.portfolioHeat == null ? 'Stops are not stored on the open positions' : `${percent(heatRatio, 0)} utilized`}
             </div>
           </div>
         </div>
@@ -199,20 +239,17 @@ function RiskManagementContent() {
         {/* Daily P&L */}
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className={`h-10 w-10 ${riskMetrics.daily_pl >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'} rounded-lg flex items-center justify-center`}>
-              <TrendingDown className={`h-5 w-5 ${riskMetrics.daily_pl >= 0 ? 'text-green-400 rotate-180' : 'text-red-400'}`} />
+            <div className={`h-10 w-10 ${riskMetrics.dailyPnl >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'} rounded-lg flex items-center justify-center`}>
+              <TrendingDown className={`h-5 w-5 ${riskMetrics.dailyPnl >= 0 ? 'text-green-400 rotate-180' : 'text-red-400'}`} />
             </div>
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Daily P&L</h3>
           </div>
           <div className="space-y-2">
-            <div className={`text-3xl font-bold ${riskMetrics.daily_pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {riskMetrics.daily_pl >= 0 ? '+' : ''}${riskMetrics.daily_pl.toFixed(2)}
-            </div>
-            <div className="text-sm text-slate-400">
-              {riskMetrics.daily_pl >= 0 ? '+' : ''}{(riskMetrics.daily_pl_pct * 100).toFixed(2)}%
+            <div className={`text-3xl font-bold ${riskMetrics.dailyPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {riskMetrics.dailyPnl >= 0 ? '+' : ''}{money(riskMetrics.dailyPnl)}
             </div>
             <div className="text-xs text-slate-500">
-              Limit: -{(riskMetrics.daily_loss_limit * 100).toFixed(0)}%
+              Limit: −{money(riskMetrics.dailyLossLimit)}
             </div>
           </div>
         </div>
@@ -227,23 +264,23 @@ function RiskManagementContent() {
           </div>
           <div className="space-y-2">
             <div className="text-3xl font-bold text-white">
-              {(riskMetrics.drawdown * 100).toFixed(2)}%
+              {percent(riskMetrics.maxDrawdown, 2)}
             </div>
             <div className="text-sm text-slate-400">
-              Limit: {(riskMetrics.max_drawdown_limit * 100).toFixed(0)}%
+              Limit: {percent(riskMetrics.maxDrawdownLimit, 0)}
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-2">
+            <div className="w-full overflow-hidden bg-slate-700 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all ${
-                  riskMetrics.drawdown / riskMetrics.max_drawdown_limit > 0.8 ? 'bg-red-500' : 
-                  riskMetrics.drawdown / riskMetrics.max_drawdown_limit > 0.6 ? 'bg-yellow-500' : 
+                  drawdownRatio > 0.8 ? 'bg-red-500' : 
+                  drawdownRatio > 0.6 ? 'bg-yellow-500' : 
                   'bg-green-500'
                 }`}
-                style={{ width: `${Math.min((riskMetrics.drawdown / riskMetrics.max_drawdown_limit) * 100, 100)}%` }}
+                style={{ width: `${Math.max(0, Math.min(drawdownRatio * 100, 100))}%` }}
               />
             </div>
             <div className="text-xs text-slate-500">
-              Peak: ${riskMetrics.peak_equity?.toFixed(2) || '0.00'}
+              From the recorded strategy results
             </div>
           </div>
         </div>
@@ -258,10 +295,10 @@ function RiskManagementContent() {
           </div>
           <div className="space-y-2">
             <div className="text-3xl font-bold text-white">
-              {riskMetrics.num_positions}
+              {riskMetrics.openPositions}
             </div>
             <div className="text-sm text-slate-400">
-              Active trades
+              Cap {riskMetrics.maxPositions}
             </div>
           </div>
         </div>
@@ -282,8 +319,8 @@ function RiskManagementContent() {
               Maximum total portfolio risk exposure from all open positions.
             </p>
             <ul className="text-sm text-slate-400 space-y-1">
-              <li>• Limit: {(riskMetrics.max_heat_limit * 100).toFixed(0)}% of account equity</li>
-              <li>• Current: {(riskMetrics.portfolio_heat_pct * 100).toFixed(1)}%</li>
+              <li>• Limit: {percent(riskMetrics.maxPortfolioHeat, 0)} of account equity</li>
+              <li>• Current: {percent(riskMetrics.portfolioHeat, 1)}</li>
               <li>• Blocks new trades if limit exceeded</li>
             </ul>
           </div>
@@ -294,8 +331,8 @@ function RiskManagementContent() {
               Maximum allowed loss in a single trading day.
             </p>
             <ul className="text-sm text-slate-400 space-y-1">
-              <li>• Limit: {(riskMetrics.daily_loss_limit * 100).toFixed(0)}% of starting equity</li>
-              <li>• Current: {(Math.abs(riskMetrics.daily_pl_pct) * 100).toFixed(2)}%</li>
+              <li>• Limit: {money(riskMetrics.dailyLossLimit)}</li>
+              <li>• Current: {money(riskMetrics.dailyPnl)}</li>
               <li>• Triggers circuit breaker if exceeded</li>
             </ul>
           </div>
@@ -306,8 +343,8 @@ function RiskManagementContent() {
               Maximum allowed decline from peak equity.
             </p>
             <ul className="text-sm text-slate-400 space-y-1">
-              <li>• Limit: {(riskMetrics.max_drawdown_limit * 100).toFixed(0)}% from peak</li>
-              <li>• Current: {(riskMetrics.drawdown * 100).toFixed(2)}%</li>
+              <li>• Limit: {percent(riskMetrics.maxDrawdownLimit, 0)} from peak</li>
+              <li>• Current: {percent(riskMetrics.maxDrawdown, 2)}</li>
               <li>• Triggers circuit breaker if exceeded</li>
             </ul>
           </div>
@@ -327,14 +364,14 @@ function RiskManagementContent() {
       </div>
 
       {/* Warning Message */}
-      {riskMetrics.circuit_breaker_status === 'warning' && (
+      {circuitStatus === 'warning' && (
         <div className="bg-yellow-900/20 border border-yellow-500 rounded-xl p-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-yellow-400 mb-2">Warning: Approaching Risk Limits</h3>
               <p className="text-slate-300">
-                {riskMetrics.circuit_breaker_reason}
+                {circuitReason}
               </p>
               <p className="text-slate-400 mt-2 text-sm">
                 The bot is approaching risk limits. Monitor positions closely and consider reducing exposure.
@@ -345,14 +382,14 @@ function RiskManagementContent() {
       )}
 
       {/* Triggered Message */}
-      {riskMetrics.circuit_breaker_status === 'triggered' && (
+      {circuitStatus === 'triggered' && (
         <div className="bg-red-900/20 border border-red-500 rounded-xl p-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-6 w-6 text-red-400 flex-shrink-0 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-red-400 mb-2">Circuit Breaker Triggered - Trading Halted</h3>
               <p className="text-slate-300 mb-4">
-                {riskMetrics.circuit_breaker_reason}
+                {circuitReason}
               </p>
               <div className="bg-slate-800 rounded-lg p-4 space-y-2">
                 <p className="text-white font-semibold">Action Required:</p>
