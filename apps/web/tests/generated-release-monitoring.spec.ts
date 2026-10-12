@@ -46,9 +46,9 @@ test.describe('Monitoring page readings', () => {
   test('monitoring page keeps risk bars inside the cards', async ({ page }) => {
     await page.goto('/monitoring');
     await expect(page.getByRole('heading', { name: 'Real-Time Monitoring' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Equity' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Crypto' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Kraken' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Equity', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Crypto', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Kraken', exact: true })).toBeVisible();
     await expect(page.getByText('8333')).toHaveCount(0);
     await expect(page.getByText('83.3%')).toBeVisible();
     await expect(page.getByText('Bull Trending').first()).toBeVisible();
