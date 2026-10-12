@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,77 +13,44 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get bot status from database
-    const botStatuses = await prisma.$queryRaw<any[]>`
-      SELECT 
-        bot_name,
-        status,
-        last_heartbeat,
-        account_equity,
-        account_cash,
-        buying_power,
-        portfolio_value,
-        unrealized_pl,
-        realized_pl,
-        error_message,
-        created_at,
-        updated_at
-      FROM bot_status
-      ORDER BY bot_name
-    `;
+    const botStatuses = await prisma.botStatus.findMany({
+      orderBy: { botName: 'asc' },
+    });
 
-    // Calculate uptime and errors for each bot
     const bots = await Promise.all(botStatuses.map(async (bot) => {
-      const now = new Date();
-      const lastHeartbeat = bot.last_heartbeat ? new Date(bot.last_heartbeat) : null;
-      const createdAt = new Date(bot.created_at);
-      
-      // Calculate uptime in seconds
-      const uptime = lastHeartbeat 
-        ? Math.floor((now.getTime() - createdAt.getTime()) / 1000)
-        : 0;
+      const lastHeartbeat = bot.lastHeartbeat;
+      const heartbeatAgeSeconds = lastHeartbeat
+        ? Math.max(0, Math.floor((Date.now() - lastHeartbeat.getTime()) / 1000))
+        : null;
 
-      // Get error count in last 24 hours from logs (if available)
-      // For now, we'll use a simple check based on error_message
-      const errors24h = bot.error_message ? 1 : 0;
-
-      // Get active strategies count
-      const activeStrategies = await prisma.$queryRaw<any[]>`
-        SELECT COUNT(DISTINCT strategy) as count
+      const strategyRows = await prisma.$queryRaw<{ count: number }[]>`
+        SELECT COUNT(DISTINCT strategy)::int AS count
         FROM trades
-        WHERE bot_name = ${bot.bot_name}
-        AND created_at > NOW() - INTERVAL '7 days'
+        WHERE bot_name = ${bot.botName}
+          AND created_at > NOW() - INTERVAL '7 days'
+          AND strategy IS NOT NULL
+          AND strategy <> ''
       `;
+      const activeStrategies = Number(strategyRows[0]?.count ?? 0);
 
-      const strategyCount = activeStrategies[0]?.count || 7; // Default to 7 strategies
-
-      // Get current regime (from Redis or database)
-      const regimeRows = await prisma.$queryRaw<any[]>`
+      const regimeRows = await prisma.$queryRaw<{ regime: string | null }[]>`
         SELECT regime FROM regime_history
-        WHERE bot_name = ${bot.bot_name}
+        WHERE bot_name = ${bot.botName}
         ORDER BY timestamp DESC
         LIMIT 1
       `;
-      const currentRegime = regimeRows[0]?.regime || 'UNKNOWN';
-
-      // Calculate portfolio heat (risk as % of portfolio)
-      const portfolioHeat = bot.portfolio_value > 0
-        ? Math.abs(bot.unrealized_pl) / bot.portfolio_value
-        : 0;
+      const currentRegime = (regimeRows[0]?.regime || 'UNKNOWN').toString().trim().toUpperCase();
 
       return {
-        botName: bot.bot_name,
-        lastHeartbeat: bot.last_heartbeat,
-        uptime,
-        errors24h,
+        botName: bot.botName,
+        lastHeartbeat: lastHeartbeat?.toISOString() ?? null,
+        heartbeatAgeSeconds,
+        errors24h: bot.errorMessage ? 1 : 0,
         currentRegime,
-        activeStrategies: strategyCount,
-        portfolioHeat,
-        status: bot.status,
-        accountEquity: bot.account_equity,
-        portfolioValue: bot.portfolio_value,
-        unrealizedPl: bot.unrealized_pl,
-        realizedPl: bot.realized_pl,
+        activeStrategies,
+        unrealizedPl: bot.unrealizedPl,
+        openPositions: bot.positionsCount,
+        status: heartbeatAgeSeconds != null && heartbeatAgeSeconds < 180 ? 'running' : 'stale',
       };
     }));
 

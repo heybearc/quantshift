@@ -9,28 +9,29 @@ import { Activity, TrendingUp, AlertTriangle, BarChart3, RefreshCw } from 'lucid
 interface BotHealth {
   botName: string;
   lastHeartbeat: string | null;
-  uptime: number;
+  heartbeatAgeSeconds: number | null;
   errors24h: number;
   currentRegime: string;
   activeStrategies: number;
-  portfolioHeat: number;
+  unrealizedPl: number;
+  openPositions: number;
   status: string;
 }
 
 interface StrategyPerformance {
-  strategy: string;
-  pnlToday: number;
-  pnlWeek: number;
-  pnlMonth: number;
-  pnlAllTime: number;
+  botName: string;
+  strategyName: string;
+  totalTrades: number;
   winRate: number;
-  sharpeRatio: number;
-  activePositions: number;
+  totalPnl: number;
+  sharpeRatio: number | null;
+  profitFactor: number | null;
+  openPositions: number;
   status: string;
 }
 
 interface RiskMetrics {
-  portfolioHeat: number;
+  portfolioHeat: number | null;
   maxPortfolioHeat: number;
   maxDrawdown: number;
   maxDrawdownLimit: number;
@@ -42,11 +43,70 @@ interface RiskMetrics {
 
 interface MarketRegime {
   regime: string;
-  confidence: number;
-  trend: string;
-  volatility: number;
-  marketBreadth: number;
-  vix: number;
+  confidence: number | null;
+  trend: number | null;
+  volatility: number | null;
+  marketBreadth: number | null;
+  vix: number | null;
+}
+
+const REGIME_PRESENTATION: Record<string, { label: string; badge: string }> = {
+  BULL_TRENDING: { label: 'Bull Trending', badge: 'bg-green-500/20 text-green-400 border-green-500/50' },
+  BEAR_TRENDING: { label: 'Bear Trending', badge: 'bg-red-500/20 text-red-400 border-red-500/50' },
+  HIGH_VOL_CHOPPY: { label: 'High Vol Choppy', badge: 'bg-orange-500/20 text-orange-400 border-orange-500/50' },
+  LOW_VOL_RANGE: { label: 'Low Vol Range', badge: 'bg-blue-500/20 text-blue-400 border-blue-500/50' },
+  CRISIS: { label: 'Crisis', badge: 'bg-purple-500/20 text-purple-400 border-purple-500/50' },
+};
+
+function regimePresentation(regime: string | null | undefined) {
+  const key = (regime || '').trim().toUpperCase();
+  return REGIME_PRESENTATION[key] || {
+    label: key ? key.split('_').join(' ') : 'Unknown',
+    badge: 'bg-slate-500/20 text-slate-400 border-slate-500/50',
+  };
+}
+
+function botLabel(name: string) {
+  if (name.includes('equity')) return 'Equity';
+  if (name.includes('crypto')) return 'Crypto';
+  if (name.includes('kraken')) return 'Kraken';
+  return name;
+}
+
+function formatAge(seconds: number | null) {
+  if (seconds == null) return 'N/A';
+  if (seconds < 90) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m ago`;
+}
+
+function formatWinRate(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return 'N/A';
+  return `${value.toFixed(1)}%`;
+}
+
+function statusLabel(status: string) {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'running') return 'Running';
+  if (normalized === 'stale') return 'Stale';
+  return status || 'Unknown';
+}
+
+function meterColor(ratio: number) {
+  if (ratio > 0.8) return 'bg-red-500';
+  if (ratio > 0.6) return 'bg-yellow-500';
+  return 'bg-green-500';
+}
+
+function Meter({ ratio }: { ratio: number | null }) {
+  const raw = ratio != null && Number.isFinite(ratio) ? ratio : 0;
+  const width = Math.max(0, Math.min(raw, 1)) * 100;
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-700">
+      <div className={`h-2 rounded-full ${meterColor(raw)}`} style={{ width: `${width}%` }} />
+    </div>
+  );
 }
 
 export default function MonitoringPage() {
@@ -108,6 +168,7 @@ export default function MonitoringPage() {
       case 'running':
         return 'text-green-400';
       case 'standby':
+      case 'stale':
         return 'text-yellow-400';
       case 'error':
       case 'stopped':
@@ -115,30 +176,6 @@ export default function MonitoringPage() {
       default:
         return 'text-gray-400';
     }
-  };
-
-  const getRegimeColor = (regime: string) => {
-    if (!regime) return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
-    switch (regime.toLowerCase()) {
-      case 'bull':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
-      case 'bear':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
-      case 'high_vol':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
-      case 'low_vol':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-      case 'crisis':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
-    }
-  };
-
-  const formatUptime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
   };
 
   const formatCurrency = (value: number | null | undefined) => {
@@ -204,19 +241,24 @@ export default function MonitoringPage() {
                 <Activity className="h-5 w-5 text-cyan-400" />
                 Bot Health
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {botHealth.map((bot) => (
+              {botHealth.length === 0 ? (
+                <p className="text-sm text-slate-400">No bot heartbeats are available.</p>
+              ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {botHealth.map((bot) => {
+                  const regime = regimePresentation(bot.currentRegime);
+                  return (
                   <div key={bot.botName} className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-white">{bot.botName}</h3>
+                      <h3 className="text-lg font-semibold text-white">{botLabel(bot.botName)}</h3>
                       <span className={`text-sm font-medium ${getStatusColor(bot.status)}`}>
-                        {bot.status}
+                        {statusLabel(bot.status)}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-slate-400">Uptime</p>
-                        <p className="text-sm font-medium text-white">{formatUptime(bot.uptime)}</p>
+                        <p className="text-xs text-slate-400">Last seen</p>
+                        <p className="text-sm font-medium text-white">{formatAge(bot.heartbeatAgeSeconds)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-400">Errors (24h)</p>
@@ -225,25 +267,33 @@ export default function MonitoringPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-400">Active Strategies</p>
+                        <p className="text-xs text-slate-400">Open positions</p>
+                        <p className="text-sm font-medium text-white">{bot.openPositions}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Strategies this week</p>
                         <p className="text-sm font-medium text-white">{bot.activeStrategies}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-400">Portfolio Heat</p>
-                        <p className="text-sm font-medium text-white">{formatPercent(bot.portfolioHeat)}</p>
+                        <p className="text-xs text-slate-400">Unrealized P&L</p>
+                        <p className={`text-sm font-medium ${bot.unrealizedPl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {formatCurrency(bot.unrealizedPl)}
+                        </p>
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-700">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400">Current Regime</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium border ${getRegimeColor(bot.currentRegime)}`}>
-                          {bot.currentRegime}
+                        <span className={`px-2 py-1 rounded text-xs font-medium border ${regime.badge}`}>
+                          {regime.label}
                         </span>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+              )}
             </div>
 
             {/* Strategy Performance Section */}
@@ -258,46 +308,50 @@ export default function MonitoringPage() {
                     <thead className="bg-slate-900/50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Strategy</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Today</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Week</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Month</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">All Time</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Bot</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Trades</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Win Rate</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">All Time</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Profit Factor</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Sharpe</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Positions</th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
-                      {strategyPerformance.map((strategy) => (
-                        <tr key={strategy.strategy} className="hover:bg-slate-700/30">
+                      {strategyPerformance.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="px-6 py-4 text-sm text-slate-400">No closed-trade results yet.</td>
+                        </tr>
+                      ) : strategyPerformance.map((strategy) => (
+                        <tr key={`${strategy.botName}-${strategy.strategyName}`} className="hover:bg-slate-700/30">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                            {strategy.strategy}
+                            {strategy.strategyName}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${strategy.pnlToday >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {formatCurrency(strategy.pnlToday)}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${strategy.pnlWeek >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {formatCurrency(strategy.pnlWeek)}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${strategy.pnlMonth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {formatCurrency(strategy.pnlMonth)}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${strategy.pnlAllTime >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {formatCurrency(strategy.pnlAllTime)}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                            {botLabel(strategy.botName)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
-                            {formatPercent(strategy.winRate)}
+                            {strategy.totalTrades}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
+                            {formatWinRate(strategy.winRate)}
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${strategy.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {formatCurrency(strategy.totalPnl)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
+                            {strategy.profitFactor != null ? strategy.profitFactor.toFixed(2) : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-300">
                             {strategy.sharpeRatio != null ? strategy.sharpeRatio.toFixed(2) : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
-                            {strategy.activePositions}
+                            {strategy.openPositions}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(strategy.status)}`}>
-                              {strategy.status}
+                              {statusLabel(strategy.status)}
                             </span>
                           </td>
                         </tr>
@@ -314,25 +368,26 @@ export default function MonitoringPage() {
                 <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-yellow-400" />
                   Risk Metrics
+                  <span className="text-sm font-normal text-slate-400">Equity</span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <div className="min-w-0 overflow-hidden bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-slate-400">Portfolio Heat</p>
                       <p className="text-xs text-slate-500">{formatPercent(riskMetrics.maxPortfolioHeat)} max</p>
                     </div>
                     <div className="mb-2">
-                      <p className="text-2xl font-bold text-white">{formatPercent(riskMetrics.portfolioHeat)}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {riskMetrics.portfolioHeat == null ? 'N/A' : formatPercent(riskMetrics.portfolioHeat)}
+                      </p>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${riskMetrics.portfolioHeat / riskMetrics.maxPortfolioHeat > 0.8 ? 'bg-red-500' : riskMetrics.portfolioHeat / riskMetrics.maxPortfolioHeat > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${(riskMetrics.portfolioHeat / riskMetrics.maxPortfolioHeat) * 100}%` }}
-                      />
-                    </div>
+                    <Meter ratio={riskMetrics.portfolioHeat == null || riskMetrics.maxPortfolioHeat <= 0 ? null : riskMetrics.portfolioHeat / riskMetrics.maxPortfolioHeat} />
+                    {riskMetrics.portfolioHeat == null && (
+                      <p className="mt-2 text-xs text-slate-500">Stops are not stored on the open positions</p>
+                    )}
                   </div>
 
-                  <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <div className="min-w-0 overflow-hidden bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-slate-400">Max Drawdown</p>
                       <p className="text-xs text-slate-500">{formatPercent(riskMetrics.maxDrawdownLimit)} limit</p>
@@ -340,15 +395,10 @@ export default function MonitoringPage() {
                     <div className="mb-2">
                       <p className="text-2xl font-bold text-white">{formatPercent(riskMetrics.maxDrawdown)}</p>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit > 0.8 ? 'bg-red-500' : riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${(riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit) * 100}%` }}
-                      />
-                    </div>
+                    <Meter ratio={riskMetrics.maxDrawdownLimit > 0 ? riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit : null} />
                   </div>
 
-                  <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <div className="min-w-0 overflow-hidden bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-slate-400">Daily P&L</p>
                       <p className="text-xs text-slate-500">{formatCurrency(riskMetrics.dailyLossLimit)} limit</p>
@@ -358,15 +408,10 @@ export default function MonitoringPage() {
                         {formatCurrency(riskMetrics.dailyPnl)}
                       </p>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${Math.abs(riskMetrics.dailyPnl) / riskMetrics.dailyLossLimit > 0.8 ? 'bg-red-500' : Math.abs(riskMetrics.dailyPnl) / riskMetrics.dailyLossLimit > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${Math.min((Math.abs(riskMetrics.dailyPnl) / riskMetrics.dailyLossLimit) * 100, 100)}%` }}
-                      />
-                    </div>
+                    <Meter ratio={riskMetrics.dailyLossLimit > 0 ? Math.abs(riskMetrics.dailyPnl) / riskMetrics.dailyLossLimit : null} />
                   </div>
 
-                  <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                  <div className="min-w-0 overflow-hidden bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-slate-400">Open Positions</p>
                       <p className="text-xs text-slate-500">{riskMetrics.maxPositions} max</p>
@@ -374,12 +419,7 @@ export default function MonitoringPage() {
                     <div className="mb-2">
                       <p className="text-2xl font-bold text-white">{riskMetrics.openPositions}</p>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${riskMetrics.openPositions / riskMetrics.maxPositions > 0.8 ? 'bg-red-500' : riskMetrics.openPositions / riskMetrics.maxPositions > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${(riskMetrics.openPositions / riskMetrics.maxPositions) * 100}%` }}
-                      />
-                    </div>
+                    <Meter ratio={riskMetrics.maxPositions > 0 ? riskMetrics.openPositions / riskMetrics.maxPositions : null} />
                   </div>
                 </div>
               </div>
@@ -391,13 +431,14 @@ export default function MonitoringPage() {
                 <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-purple-400" />
                   Market Regime
+                  <span className="text-sm font-normal text-slate-400">Equity</span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">Current Regime</p>
                     <div className="flex items-center justify-between">
-                      <span className={`px-3 py-2 rounded-lg text-lg font-semibold border ${getRegimeColor(marketRegime.regime)}`}>
-                        {marketRegime.regime}
+                      <span className={`px-3 py-2 rounded-lg text-lg font-semibold border ${regimePresentation(marketRegime.regime).badge}`}>
+                        {regimePresentation(marketRegime.regime).label}
                       </span>
                       <div className="text-right">
                         <p className="text-xs text-slate-400">Confidence</p>
@@ -408,28 +449,34 @@ export default function MonitoringPage() {
 
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">Trend</p>
-                    <p className="text-2xl font-bold text-white">{marketRegime.trend}</p>
-                    <p className="text-xs text-slate-500 mt-1">50-day SMA slope</p>
+                    <p className="text-2xl font-bold text-white">
+                      {marketRegime.trend == null ? 'N/A' : marketRegime.trend > 0.001 ? 'Rising' : marketRegime.trend < -0.001 ? 'Falling' : 'Flat'}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {marketRegime.trend == null ? '50-day average slope' : `${marketRegime.trend.toFixed(4)} slope of the 50-day average`}
+                    </p>
                   </div>
 
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">Volatility</p>
-                    <p className="text-2xl font-bold text-white">{marketRegime.volatility != null ? marketRegime.volatility.toFixed(2) : 'N/A'}</p>
-                    <p className="text-xs text-slate-500 mt-1">ATR ratio</p>
+                    <p className="text-2xl font-bold text-white">{marketRegime.volatility != null ? `${marketRegime.volatility.toFixed(2)}×` : 'N/A'}</p>
+                    <p className="text-xs text-slate-500 mt-1">ATR compared with its average</p>
                   </div>
 
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">Market Breadth</p>
                     <p className="text-2xl font-bold text-white">{formatPercent(marketRegime.marketBreadth)}</p>
-                    <p className="text-xs text-slate-500 mt-1">Above 200-day MA</p>
+                    <p className="text-xs text-slate-500 mt-1">Share above their 20-day average</p>
                   </div>
 
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <p className="text-sm text-slate-400 mb-2">VIX Level</p>
-                    <p className={`text-2xl font-bold ${marketRegime.vix > 30 ? 'text-red-400' : marketRegime.vix > 20 ? 'text-yellow-400' : 'text-green-400'}`}>
+                    <p className={`text-2xl font-bold ${marketRegime.vix == null ? 'text-slate-400' : marketRegime.vix > 30 ? 'text-red-400' : marketRegime.vix > 20 ? 'text-yellow-400' : 'text-green-400'}`}>
                       {marketRegime.vix != null ? marketRegime.vix.toFixed(2) : 'N/A'}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">Fear index</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {marketRegime.vix == null ? 'Not in the latest reading' : 'Fear index'}
+                    </p>
                   </div>
                 </div>
               </div>

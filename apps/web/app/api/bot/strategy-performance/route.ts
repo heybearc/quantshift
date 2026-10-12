@@ -22,10 +22,25 @@ export async function GET(request: NextRequest) {
       orderBy: { totalPnl: 'desc' },
     });
 
+    const openGroups = await prisma.position.groupBy({
+      by: ['botName', 'strategy'],
+      _count: { _all: true },
+    });
+    const heartbeats = await prisma.botStatus.findMany({
+      select: { botName: true, lastHeartbeat: true },
+    });
+    const heartbeatByBot = new Map(heartbeats.map((row) => [row.botName, row.lastHeartbeat]));
+
     return NextResponse.json({
       strategies: strategyPerformance.map(sp => ({
         botName: sp.botName,
         strategyName: sp.strategyName,
+        openPositions: openGroups.find((group) => group.botName === sp.botName && group.strategy === sp.strategyName)?._count._all ?? 0,
+        status: (() => {
+          const seen = heartbeatByBot.get(sp.botName);
+          if (!seen) return 'stale';
+          return Date.now() - seen.getTime() < 180_000 ? 'running' : 'stale';
+        })(),
         totalTrades: sp.totalTrades,
         winningTrades: sp.winningTrades,
         losingTrades: sp.losingTrades,
