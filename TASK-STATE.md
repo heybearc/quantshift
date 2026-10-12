@@ -1,45 +1,33 @@
 # QuantShift Task State
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-10-12  
 **Current branch:** main  
-**Working on:** Phase 1.5.9 paper validation — day 3
+**Working on:** Phase 1.5.9 paper validation — day 4
 
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — clock restarted 2026-10-09. Web v1.13.0 is live on blue (CT137). Green (CT138) is standby on the same commit. Crypto paper orders stay local. Equity buys stay blocked while leverage is above 1.0.
+**Phase 1.5.9 paper validation** — clock restarted 2026-10-09 (day 4). Web v1.13.1 is live on green (CT138). Blue (CT137) is standby on the same commit (`d4ae9f4`). Crypto paper orders stay local. Kraken stays paper. Do not close the open equity book.
 
 ### What I just completed
-Fixed three critical bot safeguard issues that were preventing proper paper trading validation:
+Shipped v1.13.1 (`d4ae9f4`) and synced standby.
 
-**Issues Fixed:**
-1. **Position limit enforcement** - Equity bot exceeded max 10 positions
-2. **Crypto bot zero signals** - Not generating any trading signals
-3. **Capital allocation bug** - Regime detection giving 0% allocation to most strategies
-
-**Root Causes:**
-1. Position limits were checked but not enforced with hard blocks on BUY signals
-2. Crypto bot had market data (336 rows) but allocated_capital was 0.0
-3. ML regime classifier excluded strategies from allocation_dict, causing them to get 0% instead of equal share
-
-**Solutions Deployed:**
-1. Added pre-execution hard checks in both Alpaca and Coinbase executors to block BUY signals when at max_positions
-2. Fixed regime allocation logic to give missing strategies equal share (1/num_strategies) instead of 0.0
-3. Added comprehensive logging for position limits and capital allocation
-
-**Current Status:**
-- ✅ All 3 bots running (equity, crypto, Kraken)
-- ✅ Crypto bot generating signals with proper capital allocation ($833/strategy)
-- ✅ Position limits will block new positions beyond max
-- ✅ Equity bot has 11 positions (from broker recovery, will close naturally)
+- Market regime card uses the real classifier name (Bull Trending / Low Vol Range).
+- Kraken paper reads public prices and only orders when a strategy signals. Polygon uses POLUSD.
+- Release gate for this bump was the trading area (25 passed) plus the bot check. Full suite was not required for this patch.
+- Traffic switch #7: public https://quantshift.io is green LIVE. Blue standby is on the same commit.
 
 ### Exact Next Step
-1. Watch the paper books through the 4-week window that started 2026-10-09
-2. Do not close the equity positions to clear the leverage block
+1. Watch the paper books through the 4-week window that started 2026-10-09 (about 2026-11-06)
+2. Do not close the equity positions
 3. Do not start Phase 1.5.10 live capital until that window passes
-4. HAProxy is the source of truth: blue is LIVE, green is STANDBY, as of v1.13.0
+4. HAProxy is the source of truth: green is LIVE, blue is STANDBY, as of v1.13.1
 
 ### Recent Accomplishments
+
+**2026-10-12:**
+- ✅ Shipped v1.13.1 to green LIVE and synced blue standby (`d4ae9f4`)
+- ✅ Regime labels and Kraken public market data are on both nodes and the bots
 
 **2026-03-09:**
 - ✅ **Bot Safeguard Fixes** (COMPLETE)
