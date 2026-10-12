@@ -17,7 +17,7 @@ executor:
     - "SOLUSD"     # Solana
     - "ADAUSD"     # Cardano
     - "DOTUSD"     # Polkadot
-    - "MATICUSD"   # Polygon
+    - "POLUSD"    # Polygon
     - "AVAXUSD"    # Avalanche
     - "LINKUSD"    # Chainlink
   simulated_capital: 5000  # Start with $5,000

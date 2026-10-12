@@ -103,10 +103,18 @@ export function RegimeIndicator({ botName }: { botName: string }) {
         borderColor: 'border-purple-700/50',
         icon: <AlertTriangle className="h-5 w-5 text-purple-400" />,
         description: 'Extreme volatility or VIX spike'
+      },
+      'UNKNOWN': {
+        label: 'Unknown',
+        color: 'text-slate-400',
+        bgGradient: 'from-slate-800/50 to-slate-700/50',
+        borderColor: 'border-slate-700',
+        icon: <Activity className="h-5 w-5 text-slate-400" />,
+        description: 'Not enough history to classify the market'
       }
     };
 
-    return configs[regime] || {
+    return configs[regime.trim().toUpperCase()] || {
       label: 'Unknown',
       color: 'text-slate-400',
       bgGradient: 'from-slate-800/50 to-slate-700/50',

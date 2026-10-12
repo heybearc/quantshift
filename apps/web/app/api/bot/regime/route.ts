@@ -51,8 +51,10 @@ export async function GET(request: NextRequest) {
       ? JSON.parse(row.allocation)
       : row.allocation;
 
+    const regime = typeof row.regime === 'string' ? row.regime.trim().toUpperCase() : row.regime;
+
     return NextResponse.json({
-      regime: row.regime,
+      regime,
       confidence: num(row.confidence),
       trend: num(row.trend_slope),
       volatility: num(row.volatility),

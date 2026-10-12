@@ -613,16 +613,30 @@ class AlpacaExecutor:
                 f"Positions: {len(positions)}, Symbols: {len(self.symbols)}"
             )
             
-            # Fetch market data for all symbols
+            # Fetch market data for all symbols. Regime detection needs 200 daily bars,
+            # so SPY is loaded with a longer history than the trading symbols.
             market_data_dict = {}
             for symbol in self.symbols:
                 try:
                     results['symbols_checked'].append(symbol)
-                    market_data_dict[symbol] = self.get_market_data(symbol, days=90)
+                    history_days = 450 if symbol == 'SPY' else 90
+                    market_data_dict[symbol] = self.get_market_data(symbol, days=history_days)
                 except Exception as e:
                     error_msg = f"Error fetching data for {symbol}: {str(e)}"
                     logger.error(error_msg, exc_info=True)
                     results['errors'].append(error_msg)
+
+            spy_frame = market_data_dict.get('SPY')
+            if spy_frame is None or len(spy_frame) < 200:
+                try:
+                    long_spy = self.get_market_data('SPY', days=450)
+                    if long_spy is not None and len(long_spy) >= 200:
+                        if 'SPY' in self.symbols:
+                            market_data_dict['SPY'] = long_spy
+                        else:
+                            market_data_dict['_regime_SPY'] = long_spy
+                except Exception as e:
+                    logger.error("Error fetching SPY history for regime detection: %s", e)
             
             # Generate signals for all symbols
             if market_data_dict:

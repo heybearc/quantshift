@@ -269,14 +269,16 @@ class MLRegimeClassifier:
     
     def _extract_features(self, data: pd.DataFrame) -> Optional[Dict[str, float]]:
         """Extract technical indicator features from market data."""
-        if len(data) < 200:
+        if data is None or len(data) < 200:
             return None
         
         try:
-            close = data['close']
-            high = data['high']
-            low = data['low']
-            volume = data['volume']
+            frame = data.copy()
+            frame.columns = [str(column).lower() for column in frame.columns]
+            close = frame['close']
+            high = frame['high']
+            low = frame['low']
+            volume = frame['volume']
             
             # Trend features
             sma_20 = close.rolling(20).mean()

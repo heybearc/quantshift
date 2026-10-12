@@ -232,8 +232,13 @@ class StrategyOrchestrator:
         
         # Update regime detection if enabled
         if self.use_regime_detection:
-            # Use SPY data for regime detection (or first symbol if SPY not available)
-            regime_symbol = 'SPY' if 'SPY' in market_data else list(market_data.keys())[0]
+            # Prefer a long SPY history. _regime_SPY is not a tradable symbol.
+            if '_regime_SPY' in market_data:
+                regime_symbol = '_regime_SPY'
+            elif 'SPY' in market_data:
+                regime_symbol = 'SPY'
+            else:
+                regime_symbol = next(symbol for symbol in market_data if not str(symbol).startswith('_regime_'))
             regime_data = market_data[regime_symbol]
             
             # Detect current regime (ML or rule-based)
@@ -311,7 +316,7 @@ class StrategyOrchestrator:
                             """),
                             {
                                 'bot_name': self.bot_name,
-                                'regime': regime.value if hasattr(regime, 'value') else str(regime),
+                                'regime': regime.name if hasattr(regime, 'name') else str(regime).upper(),
                                 'method': 'ml' if self.use_ml_regime else 'rule_based',
                                 'confidence': _db_float(indicators.get('ml_confidence', indicators.get('confidence', 1.0))),
                                 'risk_multiplier': _db_float(self.regime_risk_multiplier),
@@ -332,7 +337,7 @@ class StrategyOrchestrator:
                 import json
                 from datetime import datetime
                 regime_data = {
-                    'regime': regime.value if hasattr(regime, 'value') else regime,
+                    'regime': regime.name if hasattr(regime, 'name') else str(regime).upper(),
                     'method': 'ml' if self.use_ml_regime else 'rule_based',
                     'allocation': self.capital_allocation,
                     'risk_multiplier': self.regime_risk_multiplier,
@@ -372,8 +377,10 @@ class StrategyOrchestrator:
                     if pos.metadata and pos.metadata.get('strategy') == strategy.name
                 ]
                 
-                # Generate signals for each symbol
+                # Generate signals for each symbol. Regime-only frames are not traded.
                 for symbol, data in market_data.items():
+                    if str(symbol).startswith('_regime_'):
+                        continue
                     self.logger.debug(
                         "strategy_generating_signals",
                         strategy=strategy.name,

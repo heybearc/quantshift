@@ -16,6 +16,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
+from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
 
 logger = logging.getLogger(__name__)
 
@@ -413,7 +414,7 @@ class KrakenExecutor:
             interval = 1440
             since = int((datetime.now() - timedelta(days=days)).timestamp())
             
-            response = self.kraken_client.query_public('OHLC', {
+            response = kraken_public('OHLC', {
                 'pair': symbol,
                 'interval': interval,
                 'since': since
@@ -423,8 +424,7 @@ class KrakenExecutor:
                 logger.error(f"Kraken OHLC error: {response['error']}")
                 return None
             
-            result = response.get('result', {})
-            ohlc_data = result.get(symbol, [])
+            ohlc_data = kraken_result_value(response.get('result', {}))
             
             if not ohlc_data:
                 logger.warning(f"No OHLC data returned for {symbol}")

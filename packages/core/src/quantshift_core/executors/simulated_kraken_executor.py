@@ -17,6 +17,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
+from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
 
 logger = logging.getLogger(__name__)
 
@@ -172,14 +173,14 @@ class SimulatedKrakenExecutor:
     def _get_current_price(self, symbol: str) -> Optional[float]:
         """Get current market price for a symbol."""
         try:
-            response = self.kraken_client.query_public('Ticker', {'pair': symbol})
+            response = kraken_public('Ticker', {'pair': symbol})
             
             if response.get('error'):
                 logger.warning(f"Kraken ticker error for {symbol}: {response['error']}")
                 return None
             
             result = response.get('result', {})
-            ticker_data = result.get(symbol)
+            ticker_data = kraken_result_value(result)
             
             if ticker_data:
                 # Use last trade price
@@ -412,7 +413,7 @@ class SimulatedKrakenExecutor:
             interval = 1440  # 1 day
             since = int((datetime.now() - timedelta(days=days)).timestamp())
             
-            response = self.kraken_client.query_public('OHLC', {
+            response = kraken_public('OHLC', {
                 'pair': symbol,
                 'interval': interval,
                 'since': since
@@ -532,7 +533,7 @@ class SimulatedKrakenExecutor:
             market_data = {}
             for symbol in self.symbols:
                 try:
-                    df = self.get_market_data(symbol)
+                    df = self.get_market_data(symbol, days=450)
                     if df is not None:
                         market_data[symbol] = df
                 except Exception as e:
