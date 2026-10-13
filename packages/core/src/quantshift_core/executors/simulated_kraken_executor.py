@@ -554,6 +554,10 @@ class SimulatedKrakenExecutor:
         }
 
     def _open_position(self, signal: Signal, qty: float, price: float, side: str) -> Optional[Dict[str, Any]]:
+        existing = self._positions.get(signal.symbol)
+        if existing and existing.get("side") == side:
+            logger.info("[SIMULATED] already open %s %s", side, signal.symbol)
+            return None
         if signal.symbol not in self._positions and len(self._positions) >= self._max_positions():
             logger.warning("[SIMULATED] order blocked at max positions for %s", signal.symbol)
             return None

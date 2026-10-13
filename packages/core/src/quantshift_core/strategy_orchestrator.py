@@ -371,16 +371,18 @@ class StrategyOrchestrator:
                     self.capital_allocation[strategy.name]
                 )
                 
-                # Get positions managed by this strategy
-                strategy_positions = [
-                    pos for pos in positions 
-                    if pos.metadata and pos.metadata.get('strategy') == strategy.name
-                ]
+                # Every open position is visible. Filtering on a strategy tag
+                # hid the book, so exits never fired and buys repeated.
+                strategy_positions = list(positions)
                 
                 # Generate signals for each symbol. Regime-only frames are not traded.
                 for symbol, data in market_data.items():
                     if str(symbol).startswith('_regime_'):
                         continue
+                    try:
+                        data.symbol = symbol
+                    except Exception:
+                        pass
                     self.logger.debug(
                         "strategy_generating_signals",
                         strategy=strategy.name,
