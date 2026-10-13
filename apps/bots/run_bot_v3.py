@@ -176,10 +176,14 @@ class QuantShiftUnifiedBot:
         }
         
         portfolio_max_positions = self.config.get('risk_management', {}).get('max_positions', 10)
+        learned = self._load_learned_params()
 
         for strat_config in strategy_configs:
             strategy_type = strat_config.get('type')
             strategy_params = dict(strat_config.get('params', {}))
+            for key, value in (learned.get(strategy_type) or {}).items():
+                if key not in ("risk_per_trade", "max_positions"):
+                    strategy_params[key] = value
             strategy_params.setdefault('max_positions', portfolio_max_positions)
             
             if strategy_type in STRATEGY_MAP:
@@ -1286,9 +1290,103 @@ class QuantShiftUnifiedBot:
             logger.error("trailing_stop_update_error", error=str(e), exc_info=True)
             raise
     
+    def _learned_state_path(self):
+        from pathlib import Path
+        return Path("/opt/quantshift/data/learned") / f"{self.bot_name}.json"
+
+    def _load_learned_state(self) -> Dict[str, Any]:
+        path = self._learned_state_path()
+        if not path.exists():
+            return {}
+        try:
+            return json.loads(path.read_text())
+        except Exception as exc:
+            logger.warning("learned_state_unreadable", error=str(exc))
+            return {}
+
+    def _load_learned_params(self) -> Dict[str, Any]:
+        params = self._load_learned_state().get("params") or {}
+        return params if isinstance(params, dict) else {}
+
+    def _save_learned_state(self, state: Dict[str, Any]) -> None:
+        path = self._learned_state_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state, indent=2, default=str))
+
+    def _maybe_learn(self) -> None:
+        """One lesson a day. Equity waits until the stock market is closed."""
+        if not getattr(self, "_book_ready", False):
+            return
+        if time.time() - getattr(self, "_started_at", time.time()) < 600:
+            return
+        if "equity" in (self.bot_name or "") and self.executor.is_market_open():
+            return
+        state = self._load_learned_state()
+        if time.time() - float(state.get("last_run_epoch") or 0) < 20 * 3600:
+            return
+        if SYSTEMD_AVAILABLE:
+            daemon.notify("WATCHDOG=1")
+        self._run_lesson(state)
+
+    def _run_lesson(self, state: Dict[str, Any]) -> None:
+        from quantshift_core.strategy_learner import learn_settings, symbol_pool
+
+        positions = []
+        try:
+            positions = self.executor.get_positions() or []
+        except Exception as exc:
+            logger.warning("lesson_positions_unreadable", error=str(exc))
+        held = [getattr(pos, "symbol", None) for pos in positions]
+        universe = list(getattr(self.executor, "symbols", None) or [])
+        pool = symbol_pool(held, universe)
+        strategies = list(self.strategies or [])
+        if not pool or not strategies:
+            return
+
+        strategy_cursor = int(state.get("strategy_cursor") or 0) % len(strategies)
+        symbol_cursor = int(state.get("symbol_cursor") or 0) % len(pool)
+        strategy = strategies[strategy_cursor]
+        symbol = pool[symbol_cursor]
+        state["strategy_cursor"] = strategy_cursor + 1
+        state["symbol_cursor"] = symbol_cursor + 1
+        state["last_run_epoch"] = time.time()
+        state["last_symbol"] = symbol
+        state["last_strategy"] = strategy.name
+        self._save_learned_state(state)
+
+        try:
+            frame = self.executor.get_market_data(symbol, days=400)
+        except Exception as exc:
+            logger.warning("lesson_history_failed", symbol=symbol, error=str(exc))
+            return
+        if frame is not None and not getattr(frame, "symbol", None):
+            try:
+                frame.symbol = symbol
+            except Exception:
+                pass
+
+        capital = float(getattr(self.executor, "simulated_capital", None) or 100000)
+        lesson = learn_settings(type(strategy), dict(strategy.config or {}), frame, capital)
+        if lesson:
+            updated = type(strategy)(config=lesson["params"])
+            self.strategies[strategy_cursor] = updated
+            saved = state.setdefault("params", {})
+            saved[strategy.name] = lesson["params"]
+            logger.info(
+                "strategy_lesson_adopted",
+                strategy=strategy.name,
+                symbol=symbol,
+                tuned=lesson["tuned"],
+                test_sharpe=lesson["test_metrics"].get("sharpe"),
+            )
+        else:
+            logger.info("strategy_lesson_kept", strategy=strategy.name, symbol=symbol)
+        self._save_learned_state(state)
+
     def run(self):
         """Main bot loop with hot-standby failover support."""
         self.running = True
+        self._started_at = time.time()
         
         cycle_interval = self.config.get('cycle_interval_seconds', 60)
         heartbeat_interval = self.config.get('heartbeat_interval_seconds', 30)
@@ -1296,6 +1394,7 @@ class QuantShiftUnifiedBot:
         last_cycle_time = 0
         last_heartbeat_time = 0
         last_primary_check = 0
+        last_learn_check = 0
         is_primary = False
         self._book_ready = False
         
@@ -1426,6 +1525,13 @@ class QuantShiftUnifiedBot:
                         logger.debug("market_closed")
                     
                     last_cycle_time = current_time
+
+                if is_primary and self._book_ready and current_time - last_learn_check >= 60:
+                    last_learn_check = current_time
+                    try:
+                        self._maybe_learn()
+                    except Exception as exc:
+                        logger.error("strategy_lesson_failed", error=str(exc), exc_info=True)
                 
                 # Sleep briefly to avoid busy-waiting (0.1s for fast emergency stop response)
                 time.sleep(0.1)

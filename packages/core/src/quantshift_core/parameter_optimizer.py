@@ -57,7 +57,8 @@ class ParameterOptimizer:
         strategy_class,
         parameter_ranges: Dict[str, List[Any]],
         market_data: pd.DataFrame,
-        initial_capital: float = 100000
+        initial_capital: float = 100000,
+        validate: bool = True
     ) -> Dict[str, Any]:
         """
         Find optimal parameters using walk-forward optimization.
@@ -120,7 +121,7 @@ class ParameterOptimizer:
             return None
         
         # Check if test performance is acceptable
-        if not self._validate_test_performance(test_result):
+        if validate and not self._validate_test_performance(test_result):
             logger.warning("Test performance below acceptable threshold")
             return None
         
