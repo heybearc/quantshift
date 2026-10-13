@@ -7,26 +7,25 @@
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — clock restarted 2026-10-09 (day 4). Web v1.13.2 is live on blue (CT137). Green (CT138) is standby on the same commit (`a62b744`). Crypto paper orders stay local. Kraken stays paper. Do not close the open equity book.
+**Phase 1.5.9 paper validation** — clock restarted 2026-10-09 (day 4). Web v1.13.3 is live on green (CT138). Blue (CT137) is standby on the same commit (`5b715db`). Crypto paper orders stay local. Kraken stays paper. Do not close the open equity book.
 
 ### What I just completed
-Shipped v1.13.2 (`a62b744`) and synced standby.
+Shipped v1.13.3 (`5b715db`) and synced standby.
 
-- Monitoring lists equity, crypto, and Kraken with recent heartbeats.
-- Strategy win rate is the stored percent. Risk bars stay inside the cards.
-- Portfolio heat is blank when open positions have no stops.
-- Release gate was the trading area, 27 passed. Bots were not restarted.
-- Traffic switch #8: public https://quantshift.io is blue LIVE. Green standby is on the same commit.
+- Risk Management loads. Heat stays blank when stops are not stored. The daily loss limit is in dollars.
+- Release gate was the admin area, 22 passed. Bots were not restarted.
+- Traffic switch #9: public https://quantshift.io is green LIVE. Blue standby is on the same commit.
 
 ### Exact Next Step
 1. Watch the paper books through the 4-week window that started 2026-10-09 (about 2026-11-06)
 2. Do not close the equity positions
 3. Do not start Phase 1.5.10 live capital until that window passes
-4. HAProxy is the source of truth: blue is LIVE, green is STANDBY, as of v1.13.2
+4. HAProxy is the source of truth: green is LIVE, blue is STANDBY, as of v1.13.3
 
 ### Recent Accomplishments
 
 **2026-10-12:**
+- ✅ Shipped v1.13.3 to green LIVE and synced blue standby (`5b715db`)
 - ✅ Shipped v1.13.2 to blue LIVE and synced green standby (`a62b744`)
 - ✅ Shipped v1.13.1 to green LIVE and synced blue standby (`d4ae9f4`)
 - ✅ Regime labels and Kraken public market data are on both nodes and the bots
