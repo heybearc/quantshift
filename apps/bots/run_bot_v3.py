@@ -1062,6 +1062,16 @@ class QuantShiftUnifiedBot:
             except Exception:
                 pass
 
+    def _position_pnl_pct(self, pos: Any) -> float:
+        """Percent P&L. A short profits when price falls, so its sign follows the side."""
+        entry = float(pos.entry_price or 0)
+        if entry <= 0:
+            return 0.0
+        current = float(pos.current_price)
+        if float(pos.quantity) < 0 or getattr(pos, "side", None) == "short":
+            return (entry - current) / entry * 100
+        return (current - entry) / entry * 100
+
     def _sync_positions_to_db(self, positions: List[Any]) -> None:
         """Sync current positions to database for web dashboard."""
         try:
@@ -1167,7 +1177,7 @@ class QuantShiftUnifiedBot:
                     float(pos.market_value),
                     float(pos.cost_basis) if hasattr(pos, 'cost_basis') else float(pos.market_value),
                     float(pos.unrealized_pl),
-                    float((pos.current_price - pos.entry_price) / pos.entry_price * 100) if pos.entry_price > 0 else 0.0,
+                    self._position_pnl_pct(pos),
                     strategy_name,
                     stop_loss,
                 ))

@@ -16,12 +16,27 @@ import pandas as pd
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest, LimitOrderRequest, StopOrderRequest, GetOrderByIdRequest
+from alpaca.trading.requests import (
+    ClosePositionRequest,
+    GetOrderByIdRequest,
+    GetOrdersRequest,
+    LimitOrderRequest,
+    MarketOrderRequest,
+    StopOrderRequest,
+)
 from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus, OrderStatus, OrderClass
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
+from quantshift_core.equity_exits import (
+    add_stop,
+    broker_side,
+    exit_instruction,
+    qty_text,
+    signed_quantity,
+    stop_for_position,
+)
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 
@@ -150,21 +165,95 @@ class AlpacaExecutor:
         Fetch positions from Alpaca and convert to broker-agnostic format.
         """
         alpaca_positions = self.alpaca_client.get_all_positions()
+        stops = self._protective_stops()
         
         positions = []
         for pos in alpaca_positions:
+            side = broker_side(pos.qty, getattr(pos, "side", None))
+            stop = stop_for_position(stops, pos.symbol, side)
             positions.append(Position(
                 symbol=pos.symbol,
-                quantity=float(pos.qty),
+                quantity=signed_quantity(pos.qty, side),
                 entry_price=float(pos.avg_entry_price),
                 current_price=float(pos.current_price),
                 market_value=float(pos.market_value),
                 unrealized_pl=float(pos.unrealized_pl),
                 unrealized_plpc=float(pos.unrealized_plpc),
-                side='long' if float(pos.qty) > 0 else 'short'
+                side=side,
+                metadata={"stop_loss": stop} if stop is not None else None,
             ))
         
+        self._positions_cache = {pos.symbol: pos for pos in positions}
         return positions
+
+    def _protective_stops(self) -> Dict[str, Dict[str, float]]:
+        """Open stop orders keyed by symbol. A missing read leaves stops unset."""
+        book: Dict[str, Dict[str, float]] = {}
+        try:
+            orders = self.alpaca_client.get_orders(
+                filter=GetOrdersRequest(status=QueryOrderStatus.OPEN, nested=True, limit=500)
+            ) or []
+        except Exception as e:
+            logger.warning("Could not read open orders for stops: %s", e)
+            return book
+        for order in orders:
+            self._collect_stop(book, order, getattr(order, "symbol", None))
+        return book
+
+    def _collect_stop(self, book: Dict[str, Dict[str, float]], order: Any, symbol: Optional[str]) -> None:
+        symbol = getattr(order, "symbol", None) or symbol
+        add_stop(book, symbol, getattr(order, "side", None), getattr(order, "stop_price", None))
+        for leg in getattr(order, "legs", None) or []:
+            self._collect_stop(book, leg, symbol)
+
+    def _held(self, symbol: str) -> Optional[Position]:
+        cache = getattr(self, "_positions_cache", None)
+        if cache is None:
+            self.get_positions()
+            cache = self._positions_cache or {}
+        return cache.get(symbol)
+
+    def _cancel_open_orders(self, symbol: str) -> None:
+        """Pull resting bracket legs before an exit so a later stop cannot open a short."""
+        try:
+            orders = self.alpaca_client.get_orders(
+                filter=GetOrdersRequest(
+                    status=QueryOrderStatus.OPEN,
+                    symbols=[symbol],
+                    nested=True,
+                    limit=100,
+                )
+            ) or []
+        except Exception as e:
+            logger.warning("Could not list open orders for %s: %s", symbol, e)
+            return
+        for order in orders:
+            order_symbol = getattr(order, "symbol", symbol)
+            order_id = getattr(order, "id", None)
+            if order_id and order_symbol in (symbol, None):
+                self.cancel_order(str(order_id))
+
+    def _submit_reduce_only(self, symbol: str, qty: float, side: str):
+        """Close shares already held. Never send a market order that can flip the position."""
+        client = self.alpaca_client
+        if hasattr(client, "close_position"):
+            try:
+                return client.close_position(
+                    symbol,
+                    close_options=ClosePositionRequest(qty=qty_text(qty)),
+                )
+            except Exception as e:
+                logger.warning("Reduce-only close failed for %s qty=%s: %s", symbol, qty, e)
+                return None
+        order_side = OrderSide.SELL if side == "sell" else OrderSide.BUY
+        return client.submit_order(
+            MarketOrderRequest(
+                symbol=symbol,
+                qty=float(qty),
+                side=order_side,
+                time_in_force=TimeInForce.DAY,
+            )
+        )
     
     def get_market_data(
         self,
@@ -262,6 +351,17 @@ class AlpacaExecutor:
         try:
             if signal.signal_type == SignalType.HOLD:
                 return None
+
+            if signal.signal_type == SignalType.SELL:
+                return self._execute_exit(signal)
+
+            held = self._held(signal.symbol)
+            if held is not None and held.side == "short":
+                logger.warning(
+                    "BUY blocked while %s is short; covering the short instead",
+                    signal.symbol,
+                )
+                return self._execute_exit(signal, cover_all=True)
             
             # Validate position limits for BUY signals
             if signal.signal_type == SignalType.BUY:
@@ -446,10 +546,14 @@ class AlpacaExecutor:
         Returns:
             Order ID if successful, None otherwise
         """
+        held = self._held(symbol)
+        if held is not None and held.side == "short":
+            logger.warning("Refusing a sell-stop on short %s", symbol)
+            return None
         try:
             sl_request = StopOrderRequest(
                 symbol=symbol,
-                qty=quantity,
+                qty=abs(float(quantity)),
                 side=OrderSide.SELL,
                 time_in_force=TimeInForce.GTC,
                 stop_price=round(stop_price, 2)
@@ -554,6 +658,10 @@ class AlpacaExecutor:
             # Get account and positions
             account = self.get_account()
             positions = self.get_positions()
+            covers = self._cover_shorts(positions)
+            if covers:
+                results['orders_executed'].extend(covers)
+                positions = self.get_positions()
             account.positions_count = len(positions)
             
             # Ensure symbols are loaded (lazy loading)
@@ -685,42 +793,94 @@ class AlpacaExecutor:
         
         return results
     
+    def _execute_exit(self, signal: Signal, cover_all: bool = False) -> Optional[Dict[str, Any]]:
+        """Sell a long or buy to cover a short. A sell while flat is skipped."""
+        requested = None if cover_all else signal.position_size
+        order = self.close_position(
+            signal.symbol,
+            0 if requested is None else requested,
+            reason=signal.reason or "strategy exit",
+        )
+        if not order:
+            return None
+        from quantshift_core.decision_log import decision_reason, decision_snapshot
+        decision = decision_snapshot(signal)
+        order['fill_price'] = order.get('fill_price') or signal.price
+        order['signal_reason'] = signal.reason
+        order['strategy'] = decision['strategy']
+        order['entry_reason'] = decision_reason(signal)
+        order['regime'] = decision['regime']
+        order['regime_confidence'] = decision['regime_confidence']
+        order['sentiment_score'] = decision['sentiment_score']
+        return order
+
+    def _cover_shorts(self, positions: List[Position]) -> List[Dict[str, Any]]:
+        """Equity is long-only. Buy back any open short before new signals."""
+        orders = []
+        for pos in positions:
+            if pos.side != "short":
+                continue
+            logger.warning(
+                "Covering equity short %s qty=%s",
+                pos.symbol,
+                abs(float(pos.quantity)),
+            )
+            order = self.close_position(
+                pos.symbol,
+                abs(float(pos.quantity)),
+                reason="cover short; equity bot is long-only",
+            )
+            if order:
+                order['strategy'] = order.get('strategy') or 'equity-long-only'
+                order['entry_reason'] = order.get('entry_reason') or order.get('reason')
+                orders.append(order)
+        return orders
+
     def close_position(self, symbol: str, quantity: float, reason: str = "Position closure") -> Optional[Dict[str, Any]]:
         """
-        Close a position by submitting a market sell order.
-        
-        Args:
-            symbol: Symbol to close
-            quantity: Quantity to close (absolute value)
-            reason: Reason for closure (for logging)
-            
-        Returns:
-            Order details if successful, None otherwise
+        Reduce a position without opening the other side.
+
+        A long is sold, up to the shares held. A short is bought back.
+        Resting bracket orders are cancelled first, then the size is read again.
         """
         try:
-            # Submit market sell order to close position
-            order_request = MarketOrderRequest(
-                symbol=symbol,
-                qty=abs(quantity),
-                side=OrderSide.SELL,
-                time_in_force=TimeInForce.DAY
+            self._cancel_open_orders(symbol)
+            self._positions_cache = None
+            held = self._held(symbol)
+            instruction = exit_instruction(
+                held.side if held else None,
+                held.quantity if held else 0,
+                quantity,
             )
-            order = self.alpaca_client.submit_order(order_request)
-            
+            if instruction is None:
+                logger.info("Not closing %s: no open position (%s)", symbol, reason)
+                return None
+
+            order = self._submit_reduce_only(symbol, instruction["qty"], instruction["side"])
+            if order is None:
+                return None
+            self._positions_cache = None
+
             logger.info(
-                f"Position closed: SELL {quantity} {symbol} @ market - {reason}"
+                "Position reduced: %s %s %s @ market - %s",
+                instruction["side"],
+                instruction["qty"],
+                symbol,
+                reason,
             )
-            
+
             return {
                 'id': str(order.id),
-                'symbol': order.symbol,
-                'qty': float(order.qty),
-                'side': order.side.value,
-                'type': order.type.value,
-                'status': order.status.value,
-                'reason': reason
+                'symbol': getattr(order, "symbol", symbol),
+                'qty': float(getattr(order, "qty", instruction["qty"])),
+                'side': order.side.value if hasattr(order.side, "value") else str(order.side),
+                'type': order.type.value if hasattr(getattr(order, "type", None), "value") else "market",
+                'status': order.status.value if hasattr(getattr(order, "status", None), "value") else "accepted",
+                'reason': reason,
+                'signal_reason': reason,
+                'entry_reason': reason,
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to close position {symbol}: {e}", exc_info=True)
             return None
