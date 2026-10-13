@@ -108,6 +108,11 @@ export default function PerformancePage() {
 
   const fmt = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
   const fmtPct = (v: number) => `${v >= 0 ? '+' : ''}${fmt2(v)}%`;
+  const fmtDecline = (v: number) => {
+    const n = Math.abs(Number(v));
+    const digits = n > 0 && n < 0.01 ? 4 : 2;
+    return `${n.toFixed(digits)}%`;
+  };
 
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -237,8 +242,8 @@ export default function PerformancePage() {
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-3">Max Drawdown</p>
-                    <p className="text-3xl font-bold text-red-400 mb-2">{summary.maxDrawdown == null ? '—' : fmtPct(summary.maxDrawdown)}</p>
-                    <p className="text-xs text-slate-500">Largest peak-to-trough decline</p>
+                    <p className="text-3xl font-bold text-red-400 mb-2">{summary.maxDrawdown == null ? '—' : fmtDecline(summary.maxDrawdown)}</p>
+                    <p className="text-xs text-slate-500">Largest peak-to-trough decline of account equity</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-3">Strategy</p>
@@ -287,7 +292,7 @@ export default function PerformancePage() {
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-slate-300">{strategy.profitFactor?.toFixed(2) || '—'}</td>
                               <td className="px-4 py-3 text-sm text-right text-slate-300">{strategy.sharpeRatio?.toFixed(2) || '—'}</td>
-                              <td className="px-4 py-3 text-sm text-right text-red-400">{strategy.maxDrawdown ? fmtPct(strategy.maxDrawdown) : '—'}</td>
+                              <td className="px-4 py-3 text-sm text-right text-red-400">{strategy.maxDrawdown == null ? '—' : fmtDecline(strategy.maxDrawdown)}</td>
                             </tr>
                           ))}
                         </tbody>

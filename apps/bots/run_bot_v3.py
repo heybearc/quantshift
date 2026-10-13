@@ -910,8 +910,17 @@ class QuantShiftUnifiedBot:
                 
                 # Initialize performance tracker with database connection
                 if not self.performance_tracker:
-                    self.performance_tracker = StrategyPerformanceTracker(self.db_conn)
-                    logger.info("performance_tracker_initialized")
+                    starting_capital = getattr(self.executor, "simulated_capital", None)
+                    if not starting_capital:
+                        try:
+                            starting_capital = float(self.executor.get_account().equity)
+                        except Exception:
+                            starting_capital = 0
+                    self.performance_tracker = StrategyPerformanceTracker(
+                        self.db_conn,
+                        starting_capital=starting_capital or 0,
+                    )
+                    logger.info("performance_tracker_initialized", starting_capital=starting_capital)
             
             # Get current account info
             account = self.executor.get_account()

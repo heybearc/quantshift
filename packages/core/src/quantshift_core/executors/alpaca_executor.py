@@ -33,6 +33,7 @@ from quantshift_core.equity_exits import (
     add_stop,
     broker_side,
     exit_instruction,
+    order_is_working,
     qty_text,
     signed_quantity,
     stop_for_position,
@@ -165,7 +166,7 @@ class AlpacaExecutor:
         Fetch positions from Alpaca and convert to broker-agnostic format.
         """
         alpaca_positions = self.alpaca_client.get_all_positions()
-        stops = self._protective_stops()
+        stops = self._protective_stops([pos.symbol for pos in alpaca_positions])
         
         positions = []
         for pos in alpaca_positions:
@@ -186,23 +187,35 @@ class AlpacaExecutor:
         self._positions_cache = {pos.symbol: pos for pos in positions}
         return positions
 
-    def _protective_stops(self) -> Dict[str, Dict[str, float]]:
-        """Open stop orders keyed by symbol. A missing read leaves stops unset."""
+    def _protective_stops(self, symbols: Optional[List[str]] = None) -> Dict[str, Dict[str, float]]:
+        """Working stop orders keyed by symbol. A missing read leaves stops unset.
+
+        Alpaca keeps the protective leg of a filled bracket at status "held".
+        An open-only query returns the take-profit limit and hides that stop.
+        """
         book: Dict[str, Dict[str, float]] = {}
-        try:
-            orders = self.alpaca_client.get_orders(
-                filter=GetOrdersRequest(status=QueryOrderStatus.OPEN, nested=True, limit=500)
-            ) or []
-        except Exception as e:
-            logger.warning("Could not read open orders for stops: %s", e)
-            return book
-        for order in orders:
-            self._collect_stop(book, order, getattr(order, "symbol", None))
+        queries = [GetOrdersRequest(status=QueryOrderStatus.OPEN, nested=True, limit=500)]
+        if symbols:
+            queries.append(GetOrdersRequest(
+                status=QueryOrderStatus.ALL,
+                symbols=list(symbols),
+                nested=True,
+                limit=500,
+            ))
+        for request in queries:
+            try:
+                orders = self.alpaca_client.get_orders(filter=request) or []
+            except Exception as e:
+                logger.warning("Could not read orders for stops: %s", e)
+                continue
+            for order in orders:
+                self._collect_stop(book, order, getattr(order, "symbol", None))
         return book
 
     def _collect_stop(self, book: Dict[str, Dict[str, float]], order: Any, symbol: Optional[str]) -> None:
         symbol = getattr(order, "symbol", None) or symbol
-        add_stop(book, symbol, getattr(order, "side", None), getattr(order, "stop_price", None))
+        if order_is_working(getattr(order, "status", None)):
+            add_stop(book, symbol, getattr(order, "side", None), getattr(order, "stop_price", None))
         for leg in getattr(order, "legs", None) or []:
             self._collect_stop(book, leg, symbol)
 

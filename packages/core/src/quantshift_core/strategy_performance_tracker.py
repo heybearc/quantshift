@@ -10,20 +10,24 @@ from datetime import datetime
 import psycopg2
 import structlog
 
+from .drawdown import drawdown_percent
+
 logger = structlog.get_logger()
 
 
 class StrategyPerformanceTracker:
     """Tracks and updates per-strategy performance metrics."""
     
-    def __init__(self, db_conn):
+    def __init__(self, db_conn, starting_capital: float = 0):
         """
         Initialize the tracker.
         
         Args:
             db_conn: PostgreSQL database connection
+            starting_capital: Account equity the drawdown percent is measured against
         """
         self.db_conn = db_conn
+        self.starting_capital = float(starting_capital or 0)
     
     def update_strategy_performance(
         self,
@@ -97,12 +101,11 @@ class StrategyPerformanceTracker:
                 total_losses = avg_loss * losing_trades if avg_loss and losing_trades > 0 else 0
                 profit_factor = (total_wins / total_losses) if total_losses > 0 else None
                 
-                # Update peak equity and calculate drawdown
-                if total_pnl > peak_equity:
+                # Peak stays the high of cumulative P&L. Drawdown is that
+                # giveback divided by starting capital, not by the profit peak.
+                if total_pnl > (peak_equity or 0):
                     peak_equity = total_pnl
-                    current_drawdown = 0
-                else:
-                    current_drawdown = ((peak_equity - total_pnl) / peak_equity * 100) if peak_equity > 0 else 0
+                current_drawdown = drawdown_percent(peak_equity or 0, total_pnl, self.starting_capital)
                 
                 # Get max drawdown
                 cursor.execute("""
@@ -153,7 +156,7 @@ class StrategyPerformanceTracker:
                 largest_loss = abs(trade_pnl) if not is_win else None
                 profit_factor = None
                 peak_equity = trade_pnl if trade_pnl > 0 else 0
-                current_drawdown = 0 if trade_pnl >= 0 else abs(trade_pnl / peak_equity * 100) if peak_equity > 0 else 0
+                current_drawdown = drawdown_percent(peak_equity, trade_pnl, self.starting_capital)
                 max_drawdown = current_drawdown
                 
                 cursor.execute("""

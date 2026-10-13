@@ -34,6 +34,14 @@ def qty_text(qty: float) -> str:
     return f"{qty:.8f}".rstrip("0").rstrip(".")
 
 
+_WORKING_STATUSES = {"", "new", "held", "accepted", "pending_new", "partially_filled"}
+
+
+def order_is_working(status: Any) -> bool:
+    """A filled or canceled order is not protection. A held bracket leg still is."""
+    return _label(status) in _WORKING_STATUSES
+
+
 def add_stop(book: Dict[str, Dict[str, float]], symbol: str, order_side: Any, stop_price: Any) -> None:
     """Keep the tightest protective stop. A sell stop protects a long; a buy stop protects a short."""
     if not symbol or stop_price is None:

@@ -15,7 +15,6 @@ import json
 from pathlib import Path
 
 from .parameter_optimizer import ParameterOptimizer
-from .strategy_performance_tracker import StrategyPerformanceMonitor
 
 logger = structlog.get_logger(__name__)
 
@@ -33,7 +32,8 @@ class OptimizationScheduler:
         db_manager: Any,
         optimization_interval_days: int = 30,
         min_trades_required: int = 50,
-        optimization_history_path: str = '/opt/quantshift/data/optimization_history.json'
+        optimization_history_path: str = '/opt/quantshift/data/optimization_history.json',
+        bar_source: Any = None,
     ):
         """
         Initialize optimization scheduler.
@@ -48,6 +48,8 @@ class OptimizationScheduler:
         self.optimization_interval_days = optimization_interval_days
         self.min_trades_required = min_trades_required
         self.optimization_history_path = optimization_history_path
+        self.bar_source = bar_source
+        self._symbol: Optional[str] = None
         
         self.optimizer = ParameterOptimizer(
             train_months=6,
@@ -130,7 +132,9 @@ class OptimizationScheduler:
         strategy_name: str,
         bot_name: str,
         parameter_ranges: Dict[str, List[Any]],
-        current_params: Dict[str, Any]
+        current_params: Dict[str, Any],
+        symbol: Optional[str] = None,
+        market_data: Any = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Run parameter optimization for a strategy.
@@ -153,9 +157,9 @@ class OptimizationScheduler:
         )
         
         try:
-            # Fetch market data for optimization
-            # This is a simplified version - real implementation would fetch actual market data
-            market_data = self._fetch_market_data(bot_name, strategy_name)
+            self._symbol = symbol
+            if market_data is None:
+                market_data = self._fetch_market_data(bot_name, strategy_name)
             
             if market_data is None or len(market_data) < 200:
                 logger.error("insufficient_market_data", strategy=strategy_name)
@@ -321,15 +325,31 @@ class OptimizationScheduler:
         return filtered[:limit]
     
     def _fetch_market_data(self, bot_name: str, strategy_name: str) -> Any:
-        """
-        Fetch market data for optimization.
-        
-        This is a placeholder - real implementation would fetch
-        actual OHLCV data from database or data provider.
-        """
-        # TODO: Implement actual market data fetching
-        logger.warning("market_data_fetch_not_implemented")
-        return None
+        """Load daily bars for the symbol under test from the bar source."""
+        source = self.bar_source or getattr(self.db_manager, "get_market_data", None)
+        symbol = self._symbol
+        if source is None or not symbol:
+            logger.warning(
+                "market_data_source_missing",
+                bot=bot_name,
+                strategy=strategy_name,
+                symbol=symbol,
+            )
+            return None
+        try:
+            if hasattr(source, "get_market_data"):
+                frame = source.get_market_data(symbol, days=400)
+            else:
+                frame = source(symbol)
+        except Exception as exc:
+            logger.warning("market_data_fetch_failed", symbol=symbol, error=str(exc))
+            return None
+        if frame is not None and symbol and not getattr(frame, "symbol", None):
+            try:
+                frame.symbol = symbol
+            except Exception:
+                pass
+        return frame
     
     def _calculate_improvement(
         self,

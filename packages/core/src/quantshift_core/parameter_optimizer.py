@@ -180,51 +180,9 @@ class ParameterOptimizer:
         Returns metrics dict or None if backtest failed.
         """
         try:
-            # Create strategy instance with parameters
             strategy = strategy_class(config=params)
-            
-            # Run simple backtest
-            trades = []
-            capital = initial_capital
-            equity_curve = [capital]
-            
-            # Simulate trading
-            for i in range(len(data)):
-                if i < 50:  # Need some history for indicators
-                    continue
-                
-                window = data.iloc[:i+1]
-                
-                # Generate signals (simplified - real implementation would be more complex)
-                # This is a placeholder - actual backtest would use strategy.generate_signals()
-                # For now, just track equity
-                equity_curve.append(capital)
-            
-            # Calculate metrics
-            if len(equity_curve) < 2:
-                return None
-            
-            returns = pd.Series(equity_curve).pct_change().dropna()
-            
-            if len(returns) == 0:
-                return None
-            
-            # Calculate Sharpe ratio (annualized)
-            sharpe = self._calculate_sharpe(returns)
-            
-            # Calculate max drawdown
-            drawdown = self._calculate_max_drawdown(equity_curve)
-            
-            # Calculate total return
-            total_return = (equity_curve[-1] - equity_curve[0]) / equity_curve[0]
-            
-            return {
-                'sharpe': sharpe,
-                'total_return': total_return,
-                'max_drawdown': drawdown,
-                'num_trades': len(trades)
-            }
-            
+            from .backtesting import run_strategy_backtest
+            return run_strategy_backtest(strategy, data, initial_capital)
         except Exception as e:
             logger.error(f"Backtest failed for params {params}: {e}")
             return None

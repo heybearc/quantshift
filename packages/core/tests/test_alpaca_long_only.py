@@ -47,7 +47,7 @@ def _stub_modules():
     requests.ClosePositionRequest = Req
     enums.OrderSide = OrderSide
     enums.TimeInForce = SimpleNamespace(DAY="day", GTC="gtc")
-    enums.QueryOrderStatus = SimpleNamespace(OPEN="open")
+    enums.QueryOrderStatus = SimpleNamespace(OPEN="open", ALL="all", CLOSED="closed")
     enums.OrderStatus = SimpleNamespace(FILLED="filled", PARTIALLY_FILLED="partial")
     enums.OrderClass = SimpleNamespace(BRACKET="bracket")
     historical.StockHistoricalDataClient = object
@@ -171,6 +171,34 @@ def test_short_with_positive_qty_keeps_the_buy_stop():
     assert positions[0].side == "short"
     assert positions[0].quantity == -5
     assert positions[0].metadata["stop_loss"] == 110
+
+
+def test_held_bracket_stop_is_stored_and_a_canceled_stop_is_not():
+    limit = SimpleNamespace(symbol="BA", side="sell", status="new", stop_price=None, legs=None)
+    parent = SimpleNamespace(
+        symbol="BA",
+        side="buy",
+        status="filled",
+        stop_price=None,
+        legs=[
+            SimpleNamespace(symbol="BA", side="sell", status="new", stop_price=None, legs=None),
+            SimpleNamespace(symbol="BA", side="sell", status="canceled", stop_price=190, legs=None),
+            SimpleNamespace(symbol="BA", side="sell", status="held", stop_price=177.51, legs=None),
+        ],
+    )
+    broker = Broker([_position("BA", 21, "long")], orders=[])
+
+    def get_orders(filter=None):
+        status = getattr(filter, "status", None)
+        status = str(getattr(status, "value", status) or "").lower()
+        if status == "all":
+            return [parent]
+        return [limit]
+
+    broker.get_orders = get_orders
+    positions = _executor(broker).get_positions()
+
+    assert positions[0].metadata["stop_loss"] == 177.51
 
 
 def test_sell_larger_than_the_long_closes_only_the_long_and_cancels_the_bracket():

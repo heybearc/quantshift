@@ -9,6 +9,106 @@ import structlog
 logger = structlog.get_logger()
 
 
+def run_strategy_backtest(strategy, data: pd.DataFrame, initial_capital: float = 100000) -> Optional[Dict]:
+    """Walk bars, ask the strategy for signals, and mark the account to market.
+
+    Returns sharpe, total_return, and max_drawdown as fractions, plus the
+    number of closed trades. None when the frame has no close column.
+    """
+    if data is None or len(data) < 2 or "close" not in getattr(data, "columns", []):
+        return None
+
+    from .strategies.base_strategy import Account, Position, SignalType
+
+    engine = BacktestEngine(initial_capital=initial_capital, commission=0.0, slippage=0.0)
+    symbol = getattr(data, "symbol", None) or "UNKNOWN"
+    closed = 0
+
+    for i in range(1, len(data)):
+        window = data.iloc[: i + 1]
+        price = float(window["close"].iloc[-1])
+        if price <= 0:
+            continue
+        stamp = window.index[i]
+        if not isinstance(stamp, datetime):
+            stamp = datetime.utcnow()
+
+        if symbol in engine.positions:
+            before = len([trade for trade in engine.trades if "pnl" in trade])
+            engine.check_stops(symbol, price, stamp)
+            closed += len([trade for trade in engine.trades if "pnl" in trade]) - before
+
+        held = engine.positions.get(symbol)
+        positions = []
+        if held:
+            positions.append(Position(
+                symbol=symbol,
+                quantity=held["quantity"],
+                entry_price=held["entry_price"],
+                current_price=price,
+                market_value=price * held["quantity"],
+                unrealized_pl=(price - held["entry_price"]) * held["quantity"],
+                unrealized_plpc=(price - held["entry_price"]) / held["entry_price"] if held["entry_price"] else 0,
+                side="long",
+            ))
+        account = Account(
+            equity=engine.capital,
+            cash=engine.capital,
+            buying_power=engine.capital,
+            portfolio_value=engine.capital,
+            positions_count=len(positions),
+        )
+        try:
+            signals = strategy.generate_signals(window, account, positions) or []
+        except Exception as exc:
+            logger.warning("backtest_signal_failed", error=str(exc))
+            signals = []
+
+        for signal in signals:
+            kind = getattr(getattr(signal, "signal_type", None), "value", signal.signal_type)
+            kind = str(kind).lower()
+            if kind == SignalType.BUY.value and symbol not in engine.positions:
+                qty = int(getattr(signal, "position_size", 0) or 0)
+                if qty > 0:
+                    engine.execute_trade(
+                        symbol, "BUY", float(signal.price or price), qty, stamp,
+                        getattr(signal, "stop_loss", None),
+                        getattr(signal, "take_profit", None),
+                    )
+            elif kind == SignalType.SELL.value and symbol in engine.positions:
+                engine.execute_trade(symbol, "SELL", float(signal.price or price), 0, stamp)
+                closed += 1
+
+        engine.update_equity(stamp, {symbol: price})
+
+    if symbol in engine.positions:
+        engine.execute_trade(symbol, "SELL", price, 0, stamp)
+        closed += 1
+        engine.update_equity(stamp, {symbol: price})
+
+    curve = engine.equity_curve
+    if len(curve) < 2:
+        return None
+    returns = pd.Series(curve).pct_change().dropna()
+    sharpe = 0.0
+    if len(returns) > 1 and returns.std() != 0:
+        sharpe = float(returns.mean() / returns.std() * np.sqrt(252))
+    peak = curve[0]
+    max_dd = 0.0
+    for value in curve:
+        if value > peak:
+            peak = value
+        if peak > 0:
+            max_dd = max(max_dd, (peak - value) / peak)
+    total_return = (curve[-1] - curve[0]) / curve[0] if curve[0] else 0.0
+    return {
+        "sharpe": sharpe,
+        "total_return": float(total_return),
+        "max_drawdown": float(max_dd),
+        "num_trades": closed,
+    }
+
+
 class BacktestEngine:
     """Backtesting engine for trading strategies."""
 
@@ -280,11 +380,17 @@ class WalkForwardOptimizer:
         return best_params
 
     def _backtest_with_params(self, data: pd.DataFrame, params: Dict) -> Dict:
-        """Run backtest with specific parameters."""
-        engine = BacktestEngine()
-        strategy = self.strategy_class(**params)
-        
-        # Run backtest (simplified)
-        # In real implementation, this would run the full strategy
-        
-        return engine.get_metrics()
+        """Run the strategy on this window and return its metrics."""
+        try:
+            strategy = self.strategy_class(config=params)
+        except TypeError:
+            strategy = self.strategy_class(**params)
+        result = run_strategy_backtest(strategy, data, 10000)
+        if not result:
+            return {"sharpe_ratio": 0.0, "total_return": 0.0, "max_drawdown": 0.0, "num_trades": 0}
+        return {
+            "sharpe_ratio": result["sharpe"],
+            "total_return": result["total_return"],
+            "max_drawdown": result["max_drawdown"],
+            "num_trades": result["num_trades"],
+        }
