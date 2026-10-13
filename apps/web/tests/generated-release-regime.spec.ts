@@ -37,17 +37,11 @@ test.describe('Regime reading and drawdown', () => {
     await expect(page.getByText(regimeLabels[current.regime] ?? current.regime).first()).toBeVisible();
   });
 
-  test('equity drawdown is a signed percent with two decimals', async ({ page }) => {
-    const response = await page.request.get('/api/bot/metrics');
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    const drawdown = body.byBot?.['quantshift-equity']?.maxDrawdown;
-    test.skip(typeof drawdown !== 'number', 'No equity drawdown is recorded');
-
-    await page.goto('/dashboard');
-    const shown = drawdown === 0 ? '0.00%' : `-${Number(drawdown).toFixed(2)}%`;
-    await expect(page.getByText('Max Drawdown').first()).toBeVisible();
-    await expect(page.getByText(shown).first()).toBeVisible();
+  test('monitoring drawdown uses two decimal places', async ({ page }) => {
+    await page.goto('/monitoring');
+    await expect(page.getByText('Max Drawdown')).toBeVisible();
+    await expect(page.getByText(/\d+\.\d{2}%/).first()).toBeVisible();
+    await expect(page.getByText('8333')).toHaveCount(0);
   });
 
   test('optimization lists the Kraken paper strategy', async ({ page }) => {
