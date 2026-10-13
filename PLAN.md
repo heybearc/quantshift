@@ -1,6 +1,6 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-10-10
+**Last Updated:** 2026-10-13
 **Current Status:** Phase 1.5.9 paper validation, day 1. Clock restarted 2026-10-13. No live money.
 
 ---
@@ -1094,8 +1094,9 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 Only items that are still open. Completed phases above stay as history. Duplicate lists that described multi-strategy, regime detection, and the Coinbase bot as unbuilt were removed on 2026-10-10.
 
 ### Open now — paper window
-- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-13
-- [ ] Leave the equity book alone while leverage is above 1.0
+- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-13 (about 2026-11-10)
+- [ ] Confirm the new equity longs have Alpaca brackets. The database stop column is still null
+- [ ] Ship the standby web fixes (regime page, −1.27% drawdown, Kraken optimization row) when a release is requested
 - [ ] Score that window before any Phase 1.5.10 live capital
 
 ### Open later — after the paper window
@@ -1118,7 +1119,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 🐛 Known Bugs
 
 ### Critical (Fix Immediately)
-None currently identified.
+- **Equity stops are not stored.** Positions opened after the 2026-10-13 flatten have `stop_loss` null. Crypto and Kraken paper stops are stored. Check the Alpaca orders before treating the equity book as protected.
 
 ### Non-Critical (Backlog)
 
@@ -1139,6 +1140,8 @@ None currently identified.
 ## 💡 User Feedback & Feature Requests
 
 ### From Users
+- [x] Restart the paper window and reset simulated cash. Crypto and Kraken start at configured capital. Alpaca paper balance stays at the broker. Date: 2026-10-13
+- [x] Crypto simulation must sell fractional sizes, and trailing stops must be able to exit. Date: 2026-10-13
 - [ ] Additional trading metrics requested (effort: M) - More detailed performance indicators
 - [ ] Historical performance tracking (effort: L) - Performance over time view
 
@@ -1152,7 +1155,7 @@ None currently identified.
 
 ### Now — through the paper window
 - [ ] Phase 1.5.9 daily monitoring. Clock started 2026-10-13.
-- [ ] Leave equity buys blocked while the book is over the leverage cap.
+- [ ] Equity new buys stay blocked while leverage is above the cash cap.
 
 ### After four clean weeks
 - [ ] Phase 1.5.10 gradual live capital, starting at $200
@@ -1195,6 +1198,9 @@ Phase 1.5.10 does not start until the paper window passes.
 
 ## ✅ Recently Completed (Last 30 Days)
 
+- [x] Paper window restarted 2026-10-13. Crypto $10,000 and Kraken $5,000 simulated books cleared. Equity paper positions closed at the open. Commits `1f247ec`, `8ad01c1`. Date: 2026-10-13
+- [x] Crypto fractional sells and stored paper stops. Kraken paper `execute_signal`. Equity buy block when leveraged or the position read is empty. Date: 2026-10-13
+- [x] Regime page, drawdown shown as −1.27%, and Kraken row on optimization deployed to blue standby (`0a6d733`). Not switched live. Date: 2026-10-12
 - [x] Phase 1: Modular Bot Architecture - COMPLETE - Date: 2026-02-27
 - [x] Strategy Performance Tracking infrastructure complete - Date: 2026-02-27
 - [x] Phase 1.5: Critical Safety Features added to implementation plan - Date: 2026-02-27

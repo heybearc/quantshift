@@ -256,6 +256,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
 
+## D-QS-016: Paper window restart on 2026-10-13
+- **Decision:** The Phase 1.5.9 clock restarted on 2026-10-13. Crypto simulated cash starts at $10,000. Kraken simulated cash starts at $5,000 and stays in simulation. Alpaca paper positions were closed. The Alpaca paper account balance was not rewritten to $100,000.
+- **Why:** The prior window already failed must-pass checks. Crypto had no stored stops, and equity was over its position cap.
+- **When:** 2026-10-13
+- **Do not:** Start live capital before four clean weeks, or turn Kraken simulation off.
+
 ## D-QS-015: MCP Tool Traffic Switch State Tracking Issue
 
 **Date:** 2026-03-05  
