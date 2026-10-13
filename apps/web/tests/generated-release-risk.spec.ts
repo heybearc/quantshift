@@ -31,8 +31,8 @@ test.describe('Risk page stays up', () => {
 
     await page.goto('/risk');
     await expect(page.getByRole('heading', { name: 'Risk Management' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Circuit Breaker/ })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Portfolio Heat' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Circuit Breaker:/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Portfolio Heat' }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Daily P&L' })).toBeVisible();
     await expect(page.getByText('client-side exception')).toHaveCount(0);
     expect(errors).toEqual([]);
