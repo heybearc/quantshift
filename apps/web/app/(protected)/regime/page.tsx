@@ -13,7 +13,7 @@ export default function RegimePage() {
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-white">Market Regime Analysis</h2>
               <p className="text-slate-400">
-                ML-powered regime detection with 91.7% accuracy
+                Latest equity regime reading
               </p>
             </div>
           </div>

@@ -187,9 +187,9 @@ export default function MonitoringPage() {
     }).format(value);
   };
 
-  const formatPercent = (value: number | null | undefined) => {
+  const formatPercent = (value: number | null | undefined, digits = 1) => {
     if (value == null || isNaN(value)) return 'N/A';
-    return `${(value * 100).toFixed(1)}%`;
+    return `${(value * 100).toFixed(digits)}%`;
   };
 
   if (loading) {
@@ -393,7 +393,7 @@ export default function MonitoringPage() {
                       <p className="text-xs text-slate-500">{formatPercent(riskMetrics.maxDrawdownLimit)} limit</p>
                     </div>
                     <div className="mb-2">
-                      <p className="text-2xl font-bold text-white">{formatPercent(riskMetrics.maxDrawdown)}</p>
+                      <p className="text-2xl font-bold text-white">{formatPercent(riskMetrics.maxDrawdown, 2)}</p>
                     </div>
                     <Meter ratio={riskMetrics.maxDrawdownLimit > 0 ? riskMetrics.maxDrawdown / riskMetrics.maxDrawdownLimit : null} />
                   </div>

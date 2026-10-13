@@ -31,6 +31,7 @@ interface StrategyStatus {
   enabled: boolean;
   disabled_reason?: string;
   disabled_at?: string;
+  note?: string;
   performance_metrics?: {
     win_rate: number;
     sharpe: number | null;
@@ -179,6 +180,9 @@ function OptimizationContent() {
                       <p className="text-white font-medium">{strategy.strategy_name}</p>
                       {strategy.disabled_reason && (
                         <p className="text-sm text-red-400 mt-1">{strategy.disabled_reason}</p>
+                      )}
+                      {strategy.note && (
+                        <p className="text-sm text-slate-400 mt-1">{strategy.note}</p>
                       )}
                     </div>
                   </div>

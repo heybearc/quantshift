@@ -30,7 +30,7 @@ export function MaxDrawdownCard({ maxDrawdown, maxDrawdownAmount, formatCurrency
         {getSeverityIcon()}
       </div>
       <p className={`text-3xl font-bold mb-2 ${getSeverityColor()}`}>
-        {!recorded ? "—" : drawdown === 0 ? "0.0%" : `-${drawdown.toFixed(1)}%`}
+        {!recorded ? "—" : drawdown === 0 ? "0.00%" : `-${drawdown.toFixed(2)}%`}
       </p>
       <p className="text-sm text-slate-400">
         {!recorded || maxDrawdownAmount == null ? "Not recorded" : maxDrawdownAmount === 0 ? "No drawdown" : formatCurrency(Math.abs(maxDrawdownAmount))}
