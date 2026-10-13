@@ -186,7 +186,7 @@ class RSIMeanReversion(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"RSI overbought: {latest['rsi']:.1f} > {self.rsi_overbought}",
-                    position_size=int(position.quantity),
+                    position_size=float(position.quantity),
                     metadata={
                         'rsi': latest['rsi'],
                         'rsi_prev': prev['rsi'],

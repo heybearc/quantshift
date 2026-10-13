@@ -177,7 +177,7 @@ class KeltnerChannelStrategy(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"Keltner upper band touch + RSI {latest['rsi']:.1f}",
-                    position_size=int(position.quantity),
+                    position_size=float(position.quantity),
                     metadata={
                         'ema': latest['ema'],
                         'upper_band': latest['upper_band'],

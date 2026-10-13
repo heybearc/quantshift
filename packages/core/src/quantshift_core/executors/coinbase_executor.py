@@ -152,6 +152,10 @@ class CoinbaseExecutor:
                 unrealized_pl=unrealized,
                 unrealized_plpc=(unrealized / (entry * qty)) if entry and qty else 0.0,
                 side="long",
+                metadata={
+                    "stop_loss": pos.get("stop_loss"),
+                    "take_profit": pos.get("take_profit"),
+                },
             ))
         return positions
 
@@ -577,13 +581,32 @@ class CoinbaseExecutor:
             side = 'BUY' if signal.signal_type == SignalType.BUY else 'SELL'
 
             if self._is_paper():
-                return self._simulate_order(
+                qty = float(signal.position_size or 0)
+                if signal.signal_type != SignalType.BUY:
+                    held = self._sim_positions.get(signal.symbol)
+                    if held:
+                        held_qty = float(held["quantity"])
+                        # A whole-number size is the truncated full position.
+                        # Sell the real quantity, including a fraction under 1.
+                        if qty <= 0 or qty == int(held_qty):
+                            qty = held_qty
+                order = self._simulate_order(
                     signal.symbol,
                     side,
-                    signal.position_size or 1,
+                    qty,
                     signal.price or 0,
                     signal.reason or "",
                 )
+                if order and signal.signal_type == SignalType.BUY:
+                    pos = self._sim_positions.get(signal.symbol)
+                    if pos is not None:
+                        if signal.stop_loss:
+                            pos["stop_loss"] = float(signal.stop_loss)
+                            order["stop_loss"] = pos["stop_loss"]
+                        if signal.take_profit:
+                            pos["take_profit"] = float(signal.take_profit)
+                            order["take_profit"] = pos["take_profit"]
+                return order
             
             # For BUY signals with stop_loss and take_profit: use bracket order pattern
             if signal.signal_type == SignalType.BUY and signal.stop_loss and signal.take_profit:
@@ -831,6 +854,9 @@ class CoinbaseExecutor:
         try:
             if self._is_paper():
                 order_id = _client_order_id("simsl", symbol)
+                pos = self._sim_positions.get(symbol)
+                if pos is not None:
+                    pos["stop_loss"] = float(stop_price)
                 logger.info("[SIMULATED] stop recorded %s qty=%s stop=%s", symbol, quantity, stop_price)
                 return order_id
             import time
@@ -916,6 +942,40 @@ class CoinbaseExecutor:
         """
         return True
     
+    def _last_close(self, frame) -> Optional[float]:
+        if frame is None or len(frame) == 0:
+            return None
+        for column in ("close", "Close"):
+            if column in frame.columns:
+                price = float(frame[column].iloc[-1])
+                return price if price > 0 else None
+        return None
+
+    def _close_paper_brackets(self, market_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Sell a paper position when its stored stop or target is touched."""
+        if not self._is_paper():
+            return []
+        closed = []
+        for symbol, pos in list(self._sim_positions.items()):
+            price = self._last_close(market_data.get(symbol))
+            if price is None:
+                continue
+            pos["current_price"] = price
+            stop = pos.get("stop_loss")
+            target = pos.get("take_profit")
+            reason = None
+            if stop and price <= float(stop):
+                reason = "paper stop"
+            elif target and price >= float(target):
+                reason = "paper take profit"
+            if not reason:
+                continue
+            order = self._simulate_order(symbol, "SELL", float(pos["quantity"]), price, reason)
+            if order:
+                closed.append(order)
+                logger.info("[SIMULATED] bracket exit %s %s @ %.6f", symbol, reason, price)
+        return closed
+
     def run_strategy_cycle(self) -> List[Dict[str, Any]]:
         """
         Run one complete strategy cycle:
@@ -965,13 +1025,17 @@ class CoinbaseExecutor:
             if not market_data:
                 logger.warning("No market data available, skipping cycle")
                 return []
+
+            executed_orders = self._close_paper_brackets(market_data)
+            positions = self.get_positions()
+            account = self.get_account()
             
             # 3. Generate signals from strategy
             signals = self.strategy.generate_signals(market_data, account, positions)
             
             if not signals:
                 logger.debug("No signals generated")
-                return []
+                return executed_orders
             
             # Check max positions limit
             max_positions = int(
@@ -990,7 +1054,6 @@ class CoinbaseExecutor:
                 )
             
             # 4. Execute signals
-            executed_orders = []
             for signal in signals:
                 # Skip BUY signals if at max positions
                 if signal.signal_type == SignalType.BUY and at_max_positions:
@@ -1053,9 +1116,16 @@ class CoinbaseExecutor:
                         "quantity": float(pos["quantity"]),
                         "entry_price": float(pos["entry_price"]),
                         "current_price": float(pos["current_price"]),
+                        "stop_loss": pos.get("stop_loss"),
+                        "take_profit": pos.get("take_profit"),
                     }
                     for pos in db_positions
                 }
+                open_cost = sum(
+                    float(pos["quantity"]) * float(pos["entry_price"])
+                    for pos in db_positions
+                )
+                self._sim_cash = max(0.0, float(self.simulated_capital or 0) - open_cost)
                 recovery_stats['broker_positions'] = len(self._sim_positions)
                 recovery_stats['db_positions'] = len(db_positions)
                 logger.info(

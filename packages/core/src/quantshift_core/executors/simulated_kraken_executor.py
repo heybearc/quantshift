@@ -158,13 +158,23 @@ class SimulatedKrakenExecutor:
                 else:  # short
                     pos_data['unrealized_pl'] = (pos_data['entry_price'] - current_price) * abs(pos_data['quantity'])
             
+            quantity = float(pos_data['quantity'])
+            price = float(pos_data['current_price'])
+            entry = float(pos_data['entry_price'])
+            unrealized = float(pos_data['unrealized_pl'])
             position = Position(
                 symbol=symbol,
-                quantity=pos_data['quantity'],
-                entry_price=pos_data['entry_price'],
-                current_price=pos_data['current_price'],
-                unrealized_pl=pos_data['unrealized_pl'],
-                side=pos_data['side']
+                quantity=quantity,
+                entry_price=entry,
+                current_price=price,
+                market_value=abs(quantity) * price,
+                unrealized_pl=unrealized,
+                unrealized_plpc=(unrealized / (entry * abs(quantity))) if entry and quantity else 0.0,
+                side=pos_data['side'],
+                metadata={
+                    "stop_loss": pos_data.get("stop_loss"),
+                    "take_profit": pos_data.get("take_profit"),
+                },
             )
             positions.append(position)
         
@@ -476,22 +486,184 @@ class SimulatedKrakenExecutor:
             return self.symbol_universe.get_symbols()
         return self.symbols or []
     
-    def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
-        """
-        Recover positions on startup (no-op for simulation).
-        
-        Args:
-            db_session: Database session (unused in simulation)
-            bot_name: Name of the bot (unused in simulation)
-            
-        Returns:
-            Empty recovery stats
-        """
-        logger.info("[SIMULATED] Position recovery not needed - simulation mode")
+    def place_stop_order(self, symbol: str, quantity: float, stop_price: float) -> Optional[str]:
+        pos = self._positions.get(symbol)
+        if pos is None:
+            return None
+        pos["stop_loss"] = float(stop_price)
+        logger.info("[SIMULATED] stop recorded %s qty=%s stop=%s", symbol, quantity, stop_price)
+        return f"sim-kraken-stop-{symbol}"
+
+    def cancel_order(self, order_id: str) -> bool:
+        logger.info("[SIMULATED] cancel ignored %s", order_id)
+        return True
+
+    def _close_paper_brackets(self, market_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        closed = []
+        for symbol, pos in list(self._positions.items()):
+            frame = market_data.get(symbol)
+            if frame is None or len(frame) == 0:
+                continue
+            column = "close" if "close" in frame.columns else ("Close" if "Close" in frame.columns else None)
+            if column is None:
+                continue
+            price = float(frame[column].iloc[-1])
+            if price <= 0:
+                continue
+            pos["current_price"] = price
+            stop = pos.get("stop_loss")
+            target = pos.get("take_profit")
+            reason = None
+            if pos.get("side") == "short":
+                if stop and price >= float(stop):
+                    reason = "paper stop"
+                elif target and price <= float(target):
+                    reason = "paper take profit"
+            else:
+                if stop and price <= float(stop):
+                    reason = "paper stop"
+                elif target and price >= float(target):
+                    reason = "paper take profit"
+            if not reason:
+                continue
+            order = self._reduce_position(symbol, float(pos["quantity"]), price, "SELL" if pos.get("side") == "long" else "BUY", reason)
+            if order:
+                closed.append(order)
+        return closed
+
+    def _max_positions(self) -> int:
+        return int(
+            self.risk_config.get(
+                'max_positions',
+                self.risk_config.get('limits', {}).get('max_positions', 6),
+            )
+        )
+
+    def _order_record(self, symbol: str, side: str, qty: float, price: float, reason: str) -> Dict[str, Any]:
+        self._next_order_id += 1
         return {
-            'orphaned_positions': 0,
-            'ghost_positions': 0,
-            'recovered_positions': []
+            "id": f"sim-kraken-{self._next_order_id}",
+            "symbol": symbol,
+            "qty": qty,
+            "side": side,
+            "type": "market",
+            "status": "SIMULATED",
+            "fill_price": price,
+            "submitted_at": datetime.utcnow().isoformat(),
+            "signal_reason": reason,
+        }
+
+    def _open_position(self, signal: Signal, qty: float, price: float, side: str) -> Optional[Dict[str, Any]]:
+        if signal.symbol not in self._positions and len(self._positions) >= self._max_positions():
+            logger.warning("[SIMULATED] order blocked at max positions for %s", signal.symbol)
+            return None
+        leverage = max(1.0, float(self.max_leverage or 1.0))
+        margin = qty * price / leverage
+        if margin > self._cash + 1e-9:
+            logger.warning(
+                "[SIMULATED] rejected %s %s margin=%.2f cash=%.2f",
+                side,
+                signal.symbol,
+                margin,
+                self._cash,
+            )
+            return None
+        self._cash -= margin
+        self._positions[signal.symbol] = {
+            "quantity": qty,
+            "entry_price": price,
+            "current_price": price,
+            "unrealized_pl": 0.0,
+            "side": side,
+            "leverage": leverage,
+            "margin": margin,
+            "stop_loss": float(signal.stop_loss) if signal.stop_loss else None,
+            "take_profit": float(signal.take_profit) if signal.take_profit else None,
+        }
+        logger.info("[SIMULATED] opened %s %s qty=%s @ %.4f", side, signal.symbol, qty, price)
+        return self._order_record(signal.symbol, "BUY" if side == "long" else "SELL", qty, price, signal.reason or "")
+
+    def _reduce_position(self, symbol: str, qty: float, price: float, order_side: str, reason: str) -> Optional[Dict[str, Any]]:
+        pos = self._positions.get(symbol)
+        if not pos or qty <= 0:
+            return None
+        held = float(pos["quantity"])
+        qty = min(qty, held)
+        fraction = qty / held if held else 1.0
+        if pos["side"] == "long":
+            pnl = (price - float(pos["entry_price"])) * qty
+        else:
+            pnl = (float(pos["entry_price"]) - price) * qty
+        self._cash += float(pos.get("margin", 0.0)) * fraction + pnl
+        pos["quantity"] = held - qty
+        pos["margin"] = float(pos.get("margin", 0.0)) * (1.0 - fraction)
+        pos["current_price"] = price
+        if pos["quantity"] <= 1e-12:
+            del self._positions[symbol]
+        logger.info("[SIMULATED] reduced %s qty=%s @ %.4f pnl=%.2f", symbol, qty, price, pnl)
+        return self._order_record(symbol, order_side, qty, price, reason)
+
+    def execute_signal(self, signal: Signal) -> Optional[Dict[str, Any]]:
+        """Fill a paper Kraken order. Shorts are allowed. Nothing is sent to Kraken."""
+        if signal.signal_type == SignalType.HOLD:
+            return None
+        price = float(signal.price or 0) or float(self._get_current_price(signal.symbol) or 0)
+        requested = abs(float(signal.position_size or 0))
+        if price <= 0:
+            logger.warning("[SIMULATED] order missing price for %s", signal.symbol)
+            return None
+        existing = self._positions.get(signal.symbol)
+        if signal.signal_type == SignalType.BUY:
+            if existing and existing.get("side") == "short":
+                held = float(existing["quantity"])
+                qty = held if requested <= 0 or requested == int(held) else min(requested, held)
+                return self._reduce_position(signal.symbol, qty, price, "BUY", signal.reason or "cover")
+            if requested <= 0:
+                return None
+            return self._open_position(signal, requested, price, "long")
+        if existing and existing.get("side") == "long":
+            held = float(existing["quantity"])
+            qty = held if requested <= 0 or requested == int(held) else min(requested, held)
+            return self._reduce_position(signal.symbol, qty, price, "SELL", signal.reason or "sell")
+        if requested <= 0:
+            return None
+        return self._open_position(signal, requested, price, "short")
+
+    def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
+        """Reload the paper book from the database and reserve margin from starting cash."""
+        from quantshift_core.state_manager import StateManager
+
+        db_positions = StateManager(bot_name).get_positions_atomic(bot_name)
+        self._positions = {}
+        margin_used = 0.0
+        leverage = max(1.0, float(self.max_leverage or 1.0))
+        for pos in db_positions:
+            qty = abs(float(pos["quantity"]))
+            entry = float(pos["entry_price"])
+            margin = qty * entry / leverage
+            margin_used += margin
+            self._positions[pos["symbol"]] = {
+                "quantity": qty,
+                "entry_price": entry,
+                "current_price": float(pos["current_price"]),
+                "unrealized_pl": float(pos.get("unrealized_pl") or 0),
+                "side": "long",
+                "leverage": leverage,
+                "margin": margin,
+                "stop_loss": pos.get("stop_loss"),
+            }
+        self._cash = max(0.0, float(self.simulated_capital) - margin_used)
+        self._recovered_broker_count = len(self._positions)
+        logger.info(
+            "[SIMULATED] recovered %s positions, cash=%.2f",
+            len(self._positions),
+            self._cash,
+        )
+        return {
+            "broker_positions": len(self._positions),
+            "db_positions": len(db_positions),
+            "orphaned_added": 0,
+            "ghosts_removed": 0,
         }
     
     def run_strategy_cycle(self) -> List[Dict[str, Any]]:
@@ -542,16 +714,19 @@ class SimulatedKrakenExecutor:
             if not market_data:
                 logger.warning("[SIMULATED] No market data available, skipping cycle")
                 return []
+
+            executed_orders = self._close_paper_brackets(market_data)
+            positions = self.get_positions()
+            account = self.get_account()
             
             # 4. Generate signals from strategy
             signals = self.strategy.generate_signals(market_data, account, positions)
             
             if not signals:
                 logger.debug("[SIMULATED] No signals generated")
-                return []
+                return executed_orders
             
             # 5. Execute signals (simulated)
-            executed_orders = []
             for signal in signals:
                 order = self.execute_signal(signal)
                 if order:

@@ -190,7 +190,7 @@ class DonchianBreakoutStrategy(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"Donchian {self.exit_period}-period breakdown exit",
-                    position_size=int(position.quantity),
+                    position_size=float(position.quantity),
                     metadata={
                         'exit_low': latest['exit_low'],
                         'entry_price': position.entry_price,

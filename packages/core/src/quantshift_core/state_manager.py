@@ -347,8 +347,9 @@ class StateManager:
         with self.atomic_transaction() as session:
             result = session.execute(
                 text("""
-                    SELECT symbol, quantity, entry_price, current_price, 
-                           unrealized_pl, strategy AS strategy_name, created_at, updated_at
+                    SELECT symbol, quantity, entry_price, current_price,
+                           unrealized_pl, strategy AS strategy_name, created_at, updated_at,
+                           stop_loss
                     FROM positions
                     WHERE bot_name = :bot_name
                 """),
@@ -364,6 +365,7 @@ class StateManager:
                     "current_price": float(row.current_price),
                     "unrealized_pl": float(row.unrealized_pl),
                     "strategy_name": row.strategy_name,
+                    "stop_loss": float(row.stop_loss) if row.stop_loss is not None else None,
                     "created_at": row.created_at.isoformat() if row.created_at else None,
                     "updated_at": row.updated_at.isoformat() if row.updated_at else None
                 })

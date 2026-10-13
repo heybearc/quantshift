@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
 **Last Updated:** 2026-10-10
-**Current Status:** Phase 1.5.9 paper validation, day 2. Clock restarted 2026-10-09. Web is v1.12.0. No live money.
+**Current Status:** Phase 1.5.9 paper validation, day 1. Clock restarted 2026-10-13. No live money.
 
 ---
 
@@ -502,19 +502,19 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
     - Crypto bot capital allocation (regime detection bug fixed)
     - Added comprehensive logging for debugging
   
-- [ ] **Monitor daily for 4 clean weeks** (clock restarted 2026-10-09; crypto paper fills stay local)
+- [ ] **Monitor daily for 4 clean weeks** (clock restarted 2026-10-13; crypto paper fills stay local)
   - Zero stuck positions (MUST PASS) - monitoring
   - Zero limit violations (MUST PASS) - enforcement is on
   - All bracket orders execute correctly (MUST PASS) - monitoring
   - Bot recovers from crashes (MUST PASS) - monitoring
   - Performance tracking accurate within 1% (MUST PASS) - monitoring
   - Crypto holds at least 5 positions (MUST PASS) - met on 2026-10-10 (8 positions)
-  - Equity new buys stay blocked while leverage is above 1.0. Do not close those positions to clear the block.
+  - Equity new buys stay blocked while leverage is above 1.0.
 
 - [ ] **Success criteria**
   - If any must-pass item fails, fix it and restart the 4-week clock
   - Live money (1.5.10) starts only after 4 consecutive clean weeks
-  - **Current status:** day 2 of the window that started 2026-10-09
+  - **Current status:** day 1 of the window that started 2026-10-13
 
 #### 1.5.10 Gradual Live Deployment (6-8 weeks) - AFTER PAPER VALIDATION
 - [ ] **Week 1-2: $200 live** ($100 equity, $100 crypto)
@@ -1094,7 +1094,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 Only items that are still open. Completed phases above stay as history. Duplicate lists that described multi-strategy, regime detection, and the Coinbase bot as unbuilt were removed on 2026-10-10.
 
 ### Open now — paper window
-- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-09
+- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-13
 - [ ] Leave the equity book alone while leverage is above 1.0
 - [ ] Score that window before any Phase 1.5.10 live capital
 
@@ -1151,7 +1151,7 @@ None currently identified.
 ## 🗺️ Roadmap (Strategic)
 
 ### Now — through the paper window
-- [ ] Phase 1.5.9 daily monitoring. Clock started 2026-10-09.
+- [ ] Phase 1.5.9 daily monitoring. Clock started 2026-10-13.
 - [ ] Leave equity buys blocked while the book is over the leverage cap.
 
 ### After four clean weeks

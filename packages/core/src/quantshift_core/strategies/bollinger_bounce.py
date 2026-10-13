@@ -191,7 +191,7 @@ class BollingerBounce(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"BB middle reached (mean reversion)",
-                    position_size=int(position.quantity),
+                    position_size=float(position.quantity),
                     metadata={
                         'bb_middle': latest['bb_middle'],
                         'entry_price': position.entry_price,

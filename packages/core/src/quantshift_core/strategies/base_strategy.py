@@ -42,7 +42,7 @@ class Signal:
     # Risk management parameters (calculated by strategy)
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
-    position_size: Optional[int] = None
+    position_size: Optional[float] = None
     
     def __post_init__(self):
         if self.metadata is None:

@@ -166,7 +166,7 @@ class VWAPReversionStrategy(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"VWAP reversion target reached, P&L: ${position.unrealized_pl:.2f}",
-                    position_size=int(position.quantity),
+                    position_size=float(position.quantity),
                     metadata={
                         'vwap': latest['vwap'],
                         'vwap_upper': latest['vwap_upper'],

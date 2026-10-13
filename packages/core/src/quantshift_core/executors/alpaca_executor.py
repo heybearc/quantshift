@@ -149,26 +149,22 @@ class AlpacaExecutor:
         """
         Fetch positions from Alpaca and convert to broker-agnostic format.
         """
-        try:
-            alpaca_positions = self.alpaca_client.get_all_positions()
-            
-            positions = []
-            for pos in alpaca_positions:
-                positions.append(Position(
-                    symbol=pos.symbol,
-                    quantity=float(pos.qty),
-                    entry_price=float(pos.avg_entry_price),
-                    current_price=float(pos.current_price),
-                    market_value=float(pos.market_value),
-                    unrealized_pl=float(pos.unrealized_pl),
-                    unrealized_plpc=float(pos.unrealized_plpc),
-                    side='long' if float(pos.qty) > 0 else 'short'
-                ))
-            
-            return positions
-        except Exception as e:
-            logger.error(f"Error fetching positions: {e}", exc_info=True)
-            return []
+        alpaca_positions = self.alpaca_client.get_all_positions()
+        
+        positions = []
+        for pos in alpaca_positions:
+            positions.append(Position(
+                symbol=pos.symbol,
+                quantity=float(pos.qty),
+                entry_price=float(pos.avg_entry_price),
+                current_price=float(pos.current_price),
+                market_value=float(pos.market_value),
+                unrealized_pl=float(pos.unrealized_pl),
+                unrealized_plpc=float(pos.unrealized_plpc),
+                side='long' if float(pos.qty) > 0 else 'short'
+            ))
+        
+        return positions
     
     def get_market_data(
         self,
@@ -576,36 +572,35 @@ class AlpacaExecutor:
                 results['errors'].append(f"Circuit breaker: {halt_reason}")
                 return results
 
-            # Max positions cap — close the excess, then skip new BUY signals
+            # Block new buys when the book is full or leveraged. Do not sell
+            # the excess here; a failed position read used to look empty and
+            # the next cycle opened another batch.
             max_positions = int(
                 self.risk_config.get(
                     'max_positions',
                     self.risk_config.get('limits', {}).get('max_positions', 10),
                 )
             )
-            if len(positions) > max_positions:
-                excess = sorted(positions, key=lambda pos: abs(pos.market_value))
-                for pos in excess[:len(positions) - max_positions]:
-                    logger.warning(
-                        "Closing excess position %s qty=%s to enforce max %s",
-                        pos.symbol,
-                        pos.quantity,
-                        max_positions,
-                    )
-                    self.close_position(
-                        pos.symbol,
-                        pos.quantity,
-                        reason=f"max_positions trim ({len(positions)}>{max_positions})",
-                    )
-                positions = self.get_positions()
-                account.positions_count = len(positions)
-            at_max_positions = len(positions) >= max_positions
+            max_leverage = float(self.risk_config.get('max_leverage', 1.0) or 1.0)
+            gross_value = sum(abs(float(pos.market_value or 0)) for pos in positions)
+            equity = float(account.equity or 0)
+            leverage = (gross_value / equity) if equity > 0 else 0.0
+            recovered = getattr(self, "_recovered_broker_count", None)
+            unread_book = recovered not in (None, 0) and len(positions) == 0
+            at_max_positions = (
+                len(positions) >= max_positions
+                or leverage > max_leverage
+                or unread_book
+            )
             
             if at_max_positions:
                 logger.warning(
-                    "At max positions (%s/%s) - blocking BUY signals",
+                    "Blocking BUY signals positions=%s/%s leverage=%.2f max_leverage=%.2f unread_book=%s",
                     len(positions),
                     max_positions,
+                    leverage,
+                    max_leverage,
+                    unread_book,
                 )
             
             logger.info(
@@ -761,6 +756,7 @@ class AlpacaExecutor:
             # Get all positions from broker
             broker_positions = self.alpaca_client.get_all_positions()
             recovery_stats['broker_positions'] = len(broker_positions)
+            self._recovered_broker_count = len(broker_positions)
             
             # Get all positions from database for this bot
             state_manager = StateManager(bot_name)

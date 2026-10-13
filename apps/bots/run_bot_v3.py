@@ -1138,19 +1138,24 @@ class QuantShiftUnifiedBot:
                 except Exception as e:
                     logger.debug("strategy_attribution_lookup_failed", symbol=pos.symbol, error=str(e))
                 
+                stop_loss = None
+                meta = getattr(pos, "metadata", None) or {}
+                if meta.get("stop_loss") is not None:
+                    stop_loss = float(meta["stop_loss"])
                 cursor.execute("""
                     INSERT INTO positions (
                         id, bot_name, symbol, quantity, entry_price, current_price,
                         market_value, cost_basis, unrealized_pl, unrealized_pl_pct,
-                        strategy, entered_at, created_at, updated_at
+                        strategy, stop_loss, entered_at, created_at, updated_at
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
                     ON CONFLICT (bot_name, symbol) DO UPDATE SET
                         quantity = EXCLUDED.quantity,
                         current_price = EXCLUDED.current_price,
                         market_value = EXCLUDED.market_value,
                         unrealized_pl = EXCLUDED.unrealized_pl,
                         unrealized_pl_pct = EXCLUDED.unrealized_pl_pct,
+                        stop_loss = COALESCE(EXCLUDED.stop_loss, positions.stop_loss),
                         updated_at = NOW()
                 """, (
                     position_id,
@@ -1163,7 +1168,8 @@ class QuantShiftUnifiedBot:
                     float(pos.cost_basis) if hasattr(pos, 'cost_basis') else float(pos.market_value),
                     float(pos.unrealized_pl),
                     float((pos.current_price - pos.entry_price) / pos.entry_price * 100) if pos.entry_price > 0 else 0.0,
-                    strategy_name
+                    strategy_name,
+                    stop_loss,
                 ))
             
             self.db_conn.commit()
@@ -1177,9 +1183,32 @@ class QuantShiftUnifiedBot:
                 except:
                     pass
     
+    def _register_open_stops(self):
+        """Hand open positions that already have a stop to the trailer."""
+        if not self.trailing_stop_manager:
+            return
+        try:
+            positions = self.executor.get_positions()
+        except Exception as e:
+            logger.warning("trailing_register_skipped", error=str(e))
+            return
+        for pos in positions:
+            meta = getattr(pos, "metadata", None) or {}
+            stop = meta.get("stop_loss")
+            if not stop or pos.symbol in self.trailing_stop_manager.position_trackers:
+                continue
+            self.trailing_stop_manager.add_position(
+                symbol=pos.symbol,
+                bot_name=self.bot_name,
+                entry_price=float(pos.entry_price),
+                quantity=float(pos.quantity),
+                stop_loss=float(stop),
+            )
+
     def _update_trailing_stops(self):
         """Update trailing stops for all open positions."""
         try:
+            self._register_open_stops()
             # Get current positions
             positions = self.executor.get_positions()
             
@@ -1249,6 +1278,7 @@ class QuantShiftUnifiedBot:
         last_heartbeat_time = 0
         last_primary_check = 0
         is_primary = False
+        self._book_ready = False
         
         logger.info(
             "bot_started",
@@ -1302,6 +1332,9 @@ class QuantShiftUnifiedBot:
                                 )
                             except Exception as e:
                                 logger.error("position_recovery_failed", error=str(e))
+                            else:
+                                self._book_ready = True
+                                self._register_open_stops()
                         elif not is_primary and was_primary:
                             logger.info("became_standby", bot_name=self.bot_name)
                     except Exception as e:
@@ -1314,8 +1347,9 @@ class QuantShiftUnifiedBot:
                     self.send_heartbeat()
                     last_heartbeat_time = current_time
                 
-                # Run strategy cycle (only if primary)
-                if is_primary and current_time - last_cycle_time >= cycle_interval:
+                # Run strategy cycle only after the open book has been read.
+                # A cycle that runs against an empty read will buy another batch.
+                if is_primary and self._book_ready and current_time - last_cycle_time >= cycle_interval:
                     # Check emergency stop again before starting cycle (immediate response)
                     if self._check_emergency_stop():
                         logger.critical("emergency_stop_flag_detected_before_cycle")

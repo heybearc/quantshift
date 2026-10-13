@@ -219,7 +219,7 @@ class MACrossoverStrategy(BaseStrategy):
                 price=latest['close'],
                 confidence=1.0,
                 reason=f"Death cross detected (MA {self.short_window}/{self.long_window})",
-                position_size=int(position.quantity),
+                position_size=float(position.quantity),
                 metadata={
                     'short_ma': latest['short_ma'],
                     'long_ma': latest['long_ma'],
