@@ -240,6 +240,10 @@ class QuantShiftUnifiedBot:
             risk_management=use_risk_management,
             sentiment_analysis=use_sentiment_analysis
         )
+        saved_weights = self._load_learned_state().get("weights")
+        if isinstance(saved_weights, dict) and saved_weights:
+            self.strategy.learned_weights = saved_weights
+            self.strategy.capital_allocation = saved_weights
     
     def _init_executor(self):
         """Initialize broker-specific executor."""
@@ -1314,10 +1318,15 @@ class QuantShiftUnifiedBot:
         path.write_text(json.dumps(state, indent=2, default=str))
 
     def _maybe_learn(self) -> None:
-        """One lesson a day. Equity waits until the stock market is closed."""
+        """Score every strategy once a day. Equity waits until the market is closed.
+
+        The history is daily bars, so another pass the same day would study the
+        same candles. The pass covers every strategy. Parameter search stays on
+        one strategy per pass because that search is the slow part.
+        """
         if not getattr(self, "_book_ready", False):
             return
-        if time.time() - getattr(self, "_started_at", time.time()) < 600:
+        if time.time() - getattr(self, "_started_at", time.time()) < 120:
             return
         if "equity" in (self.bot_name or "") and self.executor.is_market_open():
             return
@@ -1329,7 +1338,7 @@ class QuantShiftUnifiedBot:
         self._run_lesson(state)
 
     def _run_lesson(self, state: Dict[str, Any]) -> None:
-        from quantshift_core.strategy_learner import learn_settings, symbol_pool
+        from quantshift_core.strategy_learner import blend_allocation, exam_settings, learn_settings, symbol_pool
 
         positions = []
         try:
@@ -1345,13 +1354,12 @@ class QuantShiftUnifiedBot:
 
         strategy_cursor = int(state.get("strategy_cursor") or 0) % len(strategies)
         symbol_cursor = int(state.get("symbol_cursor") or 0) % len(pool)
-        strategy = strategies[strategy_cursor]
         symbol = pool[symbol_cursor]
+        tune = strategies[strategy_cursor]
         state["strategy_cursor"] = strategy_cursor + 1
         state["symbol_cursor"] = symbol_cursor + 1
         state["last_run_epoch"] = time.time()
         state["last_symbol"] = symbol
-        state["last_strategy"] = strategy.name
         self._save_learned_state(state)
 
         try:
@@ -1366,22 +1374,46 @@ class QuantShiftUnifiedBot:
                 pass
 
         capital = float(getattr(self.executor, "simulated_capital", None) or 100000)
-        lesson = learn_settings(type(strategy), dict(strategy.config or {}), frame, capital)
+        scores: Dict[str, Any] = {}
+        for strategy in strategies:
+            if SYSTEMD_AVAILABLE:
+                daemon.notify("WATCHDOG=1")
+            metrics = exam_settings(type(strategy), dict(strategy.config or {}), frame, capital)
+            if metrics:
+                scores[strategy.name] = metrics.get("sharpe")
+        logger.info("strategy_exam", symbol=symbol, scores=scores)
+
+        if SYSTEMD_AVAILABLE:
+            daemon.notify("WATCHDOG=1")
+        lesson = learn_settings(type(tune), dict(tune.config or {}), frame, capital)
         if lesson:
-            updated = type(strategy)(config=lesson["params"])
+            updated = type(tune)(config=lesson["params"])
             self.strategies[strategy_cursor] = updated
             saved = state.setdefault("params", {})
-            saved[strategy.name] = lesson["params"]
+            saved[tune.name] = lesson["params"]
+            if lesson.get("test_metrics"):
+                scores[tune.name] = lesson["test_metrics"].get("sharpe")
             logger.info(
                 "strategy_lesson_adopted",
-                strategy=strategy.name,
+                strategy=tune.name,
                 symbol=symbol,
                 tuned=lesson["tuned"],
                 test_sharpe=lesson["test_metrics"].get("sharpe"),
             )
         else:
-            logger.info("strategy_lesson_kept", strategy=strategy.name, symbol=symbol)
+            logger.info("strategy_lesson_kept", strategy=tune.name, symbol=symbol)
+
+        current = dict(getattr(self.strategy, "capital_allocation", None) or {})
+        if not current:
+            share = 1.0 / len(strategies)
+            current = {strategy.name: share for strategy in strategies}
+        weights = blend_allocation(current, scores)
+        state["weights"] = weights
+        state["last_scores"] = scores
+        self.strategy.learned_weights = weights
+        self.strategy.capital_allocation = weights
         self._save_learned_state(state)
+        logger.info("strategy_weights_updated", symbol=symbol, weights=weights)
 
     def run(self):
         """Main bot loop with hot-standby failover support."""

@@ -104,6 +104,7 @@ class StrategyOrchestrator:
             
             self.base_allocation = capital_allocation  # Store base allocation
             self.capital_allocation = capital_allocation or self._equal_allocation()
+            self.learned_weights = None
         else:
             self.regime_detector = None
             self.ml_regime_classifier = None
@@ -117,6 +118,7 @@ class StrategyOrchestrator:
                 }
             else:
                 self.capital_allocation = capital_allocation
+            self.learned_weights = None
         
         # Initialize risk manager if needed
         if use_risk_management:
@@ -289,6 +291,12 @@ class StrategyOrchestrator:
                 else:
                     # Fallback to equal allocation if regime dict is empty
                     self.capital_allocation = self._equal_allocation()
+                if self.learned_weights:
+                    from .strategy_learner import smooth_allocation
+                    self.capital_allocation = smooth_allocation(
+                        self.capital_allocation,
+                        self.learned_weights,
+                    )
                 
                 self.logger.info(
                     "regime_allocation_updated",

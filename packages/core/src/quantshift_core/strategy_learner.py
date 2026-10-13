@@ -38,6 +38,51 @@ def tunable_ranges(params: Dict[str, Any], limit: int = 2) -> Dict[str, List[Any
     return ranges
 
 
+def smooth_allocation(base: Dict[str, float], learned: Dict[str, float], keep: float = 0.5) -> Dict[str, float]:
+    """Keep half of a fresh regime allocation and half of what the exams have learned."""
+    names = list(dict.fromkeys(list(base) + list(learned)))
+    mixed = {
+        name: keep * float(base.get(name) or 0) + (1 - keep) * float(learned.get(name) or 0)
+        for name in names
+    }
+    total = sum(mixed.values()) or 1.0
+    return {name: weight / total for name, weight in mixed.items()}
+
+
+def blend_allocation(
+    allocation: Dict[str, float],
+    scores: Dict[str, Optional[float]],
+    floor: float = 0.08,
+    cap: float = 0.30,
+    step: float = 0.04,
+) -> Dict[str, float]:
+    """Move a small slice of capital from the weakest scored strategy to the strongest.
+
+    One symbol cannot take the whole book. A strategy stays between the floor
+    and the cap, and equal scores leave the allocation unchanged.
+    """
+    names = [name for name in allocation if name]
+    if not names:
+        return {}
+    weights = {name: max(float(allocation.get(name) or 0), 0.0) for name in names}
+    total = sum(weights.values()) or 1.0
+    weights = {name: weight / total for name, weight in weights.items()}
+    known = {
+        name: float(scores[name])
+        for name in names
+        if isinstance(scores.get(name), (int, float))
+    }
+    if len(known) < 2 or len(set(known.values())) < 2:
+        return weights
+    ranked = sorted(known, key=lambda name: known[name], reverse=True)
+    best, worst = ranked[0], ranked[-1]
+    move = min(step, weights[worst] - floor, cap - weights[best])
+    if move > 0:
+        weights[best] += move
+        weights[worst] -= move
+    return weights
+
+
 def lesson_is_better(current: Optional[Dict[str, float]], candidate: Optional[Dict[str, float]]) -> bool:
     """True when the candidate held up on the later history better than today."""
     if not candidate or candidate.get("num_trades", 0) < 1:
@@ -51,6 +96,26 @@ def lesson_is_better(current: Optional[Dict[str, float]], candidate: Optional[Di
     if float(candidate.get("max_drawdown", 1.0)) > current_drawdown + 0.05:
         return False
     return True
+
+
+def exam_settings(strategy_class, base_params: Dict[str, Any], market_data, starting_capital: float) -> Optional[Dict[str, float]]:
+    """Score the live settings on the recent history. This is the strategy comparison."""
+    if market_data is None or len(market_data) < 80:
+        return None
+    from .backtesting import run_strategy_backtest
+
+    window = market_data.iloc[-120:].copy()
+    symbol = getattr(market_data, "symbol", None)
+    if symbol and not getattr(window, "symbol", None):
+        try:
+            window.symbol = symbol
+        except Exception:
+            pass
+    try:
+        strategy = strategy_class(config=dict(base_params))
+    except Exception:
+        return None
+    return run_strategy_backtest(strategy, window, starting_capital)
 
 
 def learn_settings(

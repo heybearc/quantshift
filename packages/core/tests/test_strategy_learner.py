@@ -1,6 +1,6 @@
 """The learner studies held names first and does not retune risk."""
 
-from quantshift_core.strategy_learner import lesson_is_better, symbol_pool, tunable_ranges
+from quantshift_core.strategy_learner import blend_allocation, lesson_is_better, symbol_pool, tunable_ranges
 
 
 def test_held_names_are_studied_before_the_qualified_list():
@@ -21,6 +21,21 @@ def test_risk_is_not_a_searched_setting():
     assert "volume_confirmation" not in ranges
     assert set(ranges) == {"rsi_period", "atr_sl_multiplier"}
     assert 14 in ranges["rsi_period"]
+
+
+def test_the_best_strategy_gains_capital_and_cannot_take_the_book():
+    start = {"A": 0.20, "B": 0.40, "C": 0.40}
+    weights = blend_allocation(start, {"A": 1.5, "B": 0.2, "C": -0.4})
+    assert weights["A"] > start["A"]
+    assert weights["C"] < start["C"]
+    assert weights["A"] <= 0.30 + 1e-9
+    assert min(weights.values()) >= 0.08 - 1e-9
+    assert abs(sum(weights.values()) - 1) < 1e-9
+
+
+def test_equal_scores_do_not_move_capital():
+    start = {"A": 0.5, "B": 0.5}
+    assert blend_allocation(start, {"A": 0.4, "B": 0.4}) == start
 
 
 def test_a_lesson_must_beat_the_current_settings():
