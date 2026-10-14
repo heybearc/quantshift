@@ -20,6 +20,7 @@ interface Position {
   unrealizedPlPct: number;
   stopLoss?: number;
   takeProfit?: number;
+  side?: string;
   strategy: string;
   decision?: string | null;
   enteredAt: string;
@@ -154,10 +155,12 @@ export default function PositionsPage() {
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Bot</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Symbol</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Side</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Strategy</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Quantity</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Entry Price</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Current Price</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Take profit</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Market Value</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Unrealized P&L</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Entered</th>
@@ -169,6 +172,8 @@ export default function PositionsPage() {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {position.botName.includes('equity')
                                   ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"><BarChart2 className="h-3 w-3" />Equity</span>
+                                  : position.botName.includes('kraken')
+                                  ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-violet-900/40 text-violet-300">Kraken</span>
                                   : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-900/40 text-orange-300"><Bitcoin className="h-3 w-3" />Crypto</span>
                                 }
                               </td>
@@ -186,6 +191,11 @@ export default function PositionsPage() {
                                   )}
                                 </div>
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {position.side === 'short'
+                                  ? <span className="text-red-400">Short</span>
+                                  : <span className="text-green-400">Long</span>}
+                              </td>
                               <td className="px-6 py-4 text-sm text-slate-400">
                                 <div>{position.strategy}</div>
                                 {position.decision && <div className="text-xs text-slate-500 mt-1 max-w-xs">{position.decision}</div>}
@@ -193,6 +203,7 @@ export default function PositionsPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{position.quantity < 1 ? position.quantity.toFixed(6) : position.quantity.toFixed(4)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.entryPrice)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.currentPrice)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{position.takeProfit ? formatCurrency(position.takeProfit) : '—'}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">{formatCurrency(position.marketValue)}</td>
                               <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${position.unrealizedPl >= 0 ? "text-green-500" : "text-red-500"}`}>
                                 {formatCurrency(position.unrealizedPl)}

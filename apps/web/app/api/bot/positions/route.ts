@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
         unrealizedPlPct: position.unrealizedPlPct,
         stopLoss: position.stopLoss,
         takeProfit: position.takeProfit,
+        side: position.side === 'short' ? 'short' : 'long',
         strategy: position.strategy,
         decision: decisionByPosition.get(`${position.botName}:${position.symbol}`)?.entryReason || null,
         enteredAt: position.enteredAt.toISOString(),
