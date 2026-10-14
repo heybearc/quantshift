@@ -167,6 +167,19 @@ class BaseStrategy(ABC):
             Number of shares/units to trade
         """
         pass
+
+    def shorts_enabled(self) -> bool:
+        """True only when this strategy's config allows opening shorts."""
+        return bool(self.config.get("enable_shorts", False))
+
+    def held_position(self, positions: List[Position], symbol: str) -> Optional[Position]:
+        for pos in positions:
+            if pos.symbol == symbol:
+                return pos
+        return None
+
+    def is_short(self, position: Position) -> bool:
+        return str(getattr(position, "side", "long") or "long").lower() == "short"
     
     def calculate_stop_loss(
         self,

@@ -124,11 +124,10 @@ class RSIMeanReversion(BaseStrategy):
         # Get symbol from index or metadata
         symbol = self._get_symbol_from_data(market_data)
         
-        # Check if we have a position in this symbol
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # Entry signal: RSI crosses below oversold threshold
-        if not has_position:
+        if held is None:
             if latest['rsi'] < self.rsi_oversold and prev['rsi'] >= self.rsi_oversold:
                 # Calculate position size and risk parameters
                 atr = latest['atr']
@@ -173,11 +172,54 @@ class RSIMeanReversion(BaseStrategy):
                         rsi=latest['rsi'],
                         position_size=position_size
                     )
+
+            elif (
+                self.shorts_enabled()
+                and latest['rsi'] > self.rsi_overbought
+                and prev['rsi'] <= self.rsi_overbought
+            ):
+                atr = latest['atr']
+                position_size = self.calculate_position_size(
+                    Signal(
+                        signal_type=SignalType.SELL,
+                        symbol=symbol,
+                        timestamp=datetime.utcnow(),
+                        price=latest['close']
+                    ),
+                    account,
+                    atr
+                )
+                stop_loss = latest['close'] + (atr * self.atr_sl_multiplier)
+                take_profit = latest['close'] - (atr * self.atr_tp_multiplier)
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"RSI overbought short: {latest['rsi']:.1f} > {self.rsi_overbought}",
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    position_size=position_size,
+                    metadata={'rsi': latest['rsi'], 'rsi_prev': prev['rsi'], 'atr': atr, 'side': 'short'}
+                )
+                if self.validate_signal(signal, account, positions):
+                    signals.append(signal)
         
-        # Exit signal: RSI crosses above overbought threshold
-        elif has_position:
-            position = next(pos for pos in positions if pos.symbol == symbol)
-            
+        elif self.is_short(held):
+            if latest['rsi'] < self.rsi_oversold and prev['rsi'] >= self.rsi_oversold:
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"RSI oversold cover: {latest['rsi']:.1f} < {self.rsi_oversold}",
+                    position_size=float(held.quantity),
+                    metadata={'rsi': latest['rsi'], 'entry_price': held.entry_price}
+                )
+                signals.append(signal)
+        else:
             if latest['rsi'] > self.rsi_overbought and prev['rsi'] <= self.rsi_overbought:
                 signal = Signal(
                     signal_type=SignalType.SELL,
@@ -186,12 +228,12 @@ class RSIMeanReversion(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"RSI overbought: {latest['rsi']:.1f} > {self.rsi_overbought}",
-                    position_size=float(position.quantity),
+                    position_size=float(held.quantity),
                     metadata={
                         'rsi': latest['rsi'],
                         'rsi_prev': prev['rsi'],
-                        'entry_price': position.entry_price,
-                        'unrealized_pl': position.unrealized_pl
+                        'entry_price': held.entry_price,
+                        'unrealized_pl': held.unrealized_pl
                     }
                 )
                 
@@ -201,7 +243,7 @@ class RSIMeanReversion(BaseStrategy):
                     symbol=symbol,
                     price=latest['close'],
                     rsi=latest['rsi'],
-                    unrealized_pl=position.unrealized_pl
+                    unrealized_pl=held.unrealized_pl
                 )
         
         return signals

@@ -103,10 +103,10 @@ class VWAPReversionStrategy(BaseStrategy):
         
         latest = valid_df.iloc[-1]
         symbol = self._get_symbol_from_data(market_data)
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # BUY Signal: Price below VWAP lower band + volume spike
-        if not has_position:
+        if held is None:
             if (latest['close'] < latest['vwap_lower'] and 
                 latest['volume_ratio'] >= self.volume_spike_threshold):
                 
@@ -149,10 +149,52 @@ class VWAPReversionStrategy(BaseStrategy):
                         vwap=latest['vwap'],
                         volume_ratio=latest['volume_ratio']
                     )
+
+            elif (
+                self.shorts_enabled()
+                and latest['close'] > latest['vwap_upper']
+                and latest['volume_ratio'] >= self.volume_spike_threshold
+            ):
+                atr = latest['atr']
+                position_size = self.calculate_position_size(
+                    Signal(SignalType.SELL, symbol, datetime.utcnow(), latest['close']),
+                    account,
+                    atr
+                )
+                stop_loss = latest['close'] + (self.atr_sl_multiplier * atr)
+                take_profit = latest['close'] - (self.atr_tp_multiplier * atr)
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=min(latest['volume_ratio'] / self.volume_spike_threshold, 1.0),
+                    reason=f"Price above VWAP upper band, volume spike {latest['volume_ratio']:.1f}x",
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    position_size=position_size,
+                    metadata={'vwap': latest['vwap'], 'atr': atr, 'side': 'short'}
+                )
+                if self.validate_signal(signal, account, positions):
+                    signals.append(signal)
         
-        # SELL Signal: Price above VWAP upper band + volume spike OR mean reversion to VWAP
-        elif has_position:
-            position = next(pos for pos in positions if pos.symbol == symbol)
+        elif self.is_short(held):
+            if ((latest['close'] < latest['vwap_lower'] and
+                 latest['volume_ratio'] >= self.volume_spike_threshold) or
+                (latest['close'] <= latest['vwap'] and held.unrealized_pl > 0)):
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"VWAP short cover, P&L: ${held.unrealized_pl:.2f}",
+                    position_size=float(held.quantity),
+                    metadata={'vwap': latest['vwap'], 'entry_price': held.entry_price}
+                )
+                signals.append(signal)
+        else:
+            position = held
             
             # Exit on upper band touch with volume OR reversion to VWAP
             if ((latest['close'] > latest['vwap_upper'] and 

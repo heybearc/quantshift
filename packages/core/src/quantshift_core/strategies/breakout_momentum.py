@@ -133,6 +133,11 @@ class BreakoutMomentum(BaseStrategy):
                 latest['volume'] > (latest['avg_volume'] * self.volume_multiplier)
             )
             
+            breakdown_entry = (
+                self.shorts_enabled()
+                and latest['close'] < prev['low_10']
+                and latest['volume'] > (latest['avg_volume'] * self.volume_multiplier)
+            )
             if breakout:
                 # Calculate position size and risk parameters
                 atr = latest['atr']
@@ -181,6 +186,43 @@ class BreakoutMomentum(BaseStrategy):
                     volume_ratio=latest['volume'] / latest['avg_volume'],
                     position_size=position_size
                 )
+            elif breakdown_entry:
+                atr = latest['atr']
+                position_size = self.calculate_position_size(
+                    Signal(signal_type=SignalType.SELL, symbol=symbol, timestamp=datetime.utcnow(), price=latest['close']),
+                    account,
+                    atr
+                )
+                stop_loss = latest['close'] + (atr * self.atr_trail_multiplier)
+                risk_amount = stop_loss - latest['close']
+                take_profit = latest['close'] - (risk_amount * 3.0)
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    position_size=position_size,
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    metadata={'strategy': self.name, 'entry_reason': 'breakdown_short', 'atr': float(atr), 'side': 'short'}
+                )
+                signals.append(signal)
+        
+        elif self.is_short(existing_position):
+            atr = latest['atr']
+            trailing_stop = latest['close'] + (atr * self.atr_trail_multiplier)
+            stop_hit = latest['high'] >= trailing_stop
+            breakout_against = latest['close'] > latest['high_20']
+            if stop_hit or breakout_against:
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    position_size=existing_position.quantity,
+                    metadata={'strategy': self.name, 'exit_reason': 'short_stop' if stop_hit else 'breakout_against', 'atr': float(atr)}
+                )
+                signals.append(signal)
         
         # Exit signal: trailing stop hit OR breakdown below 10-day low
         else:

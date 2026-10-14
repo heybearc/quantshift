@@ -101,9 +101,12 @@ class KrakenExecutor:
     
     def _ensure_symbols_loaded(self) -> None:
         """Lazy load symbols on first use if using dynamic symbols."""
-        if self.use_dynamic_symbols and self.symbols is None:
-            self.symbols = self.symbol_universe.get_symbols()
-            logger.info(f"Symbols lazy loaded: {len(self.symbols)} symbols")
+        if not self.use_dynamic_symbols or not self.symbol_universe:
+            return
+        if self.symbols is not None and self.symbol_universe._is_cache_valid():
+            return
+        self.symbols = self.symbol_universe.get_symbols()
+        logger.info(f"Symbols loaded: {len(self.symbols)} symbols")
     
     def get_account(self) -> Account:
         """

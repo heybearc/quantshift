@@ -113,10 +113,10 @@ class DonchianBreakoutStrategy(BaseStrategy):
         latest = valid_df.iloc[-1]
         prev = valid_df.iloc[-2]
         symbol = self._get_symbol_from_data(market_data)
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # BUY Signal: Breakout above entry_high
-        if not has_position:
+        if held is None:
             # Check for breakout
             breakout = (latest['close'] > latest['entry_high'] and 
                        prev['close'] <= prev['entry_high'])
@@ -173,10 +173,54 @@ class DonchianBreakoutStrategy(BaseStrategy):
                         entry_high=latest['entry_high'],
                         atr=atr
                     )
+
+            breakdown_entry = (
+                self.shorts_enabled()
+                and latest['close'] < latest['entry_low']
+                and prev['close'] >= prev['entry_low']
+            )
+            if breakdown_entry:
+                if self.volume_confirmation and latest['volume'] <= latest['avg_volume']:
+                    return signals
+                atr = latest['atr']
+                position_size = self.calculate_position_size(
+                    Signal(SignalType.SELL, symbol, datetime.utcnow(), latest['close']),
+                    account,
+                    atr
+                )
+                stop_loss = latest['close'] + (self.atr_sl_multiplier * atr)
+                take_profit = latest['close'] - (self.atr_trail_multiplier * atr)
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=min(latest['channel_width_pct'] / 5.0, 1.0),
+                    reason=f"Donchian {self.entry_period}-period breakdown short, ATR: {atr:.2f}",
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    position_size=position_size,
+                    metadata={'entry_low': latest['entry_low'], 'atr': atr, 'side': 'short'}
+                )
+                if self.validate_signal(signal, account, positions):
+                    signals.append(signal)
         
-        # SELL Signal: Breakdown below exit_low
-        elif has_position:
-            position = next(pos for pos in positions if pos.symbol == symbol)
+        elif self.is_short(held):
+            cover = latest['close'] > latest['exit_high'] and prev['close'] <= prev['exit_high']
+            if cover:
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"Donchian {self.exit_period}-period breakout cover",
+                    position_size=float(held.quantity),
+                    metadata={'exit_high': latest['exit_high'], 'entry_price': held.entry_price}
+                )
+                signals.append(signal)
+        else:
+            position = held
             
             # Exit on breakdown below exit_low
             breakdown = (latest['close'] < latest['exit_low'] and 

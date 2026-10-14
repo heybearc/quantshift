@@ -111,10 +111,10 @@ class KeltnerChannelStrategy(BaseStrategy):
         
         latest = valid_df.iloc[-1]
         symbol = self._get_symbol_from_data(market_data)
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # BUY Signal: Price at/below lower band + RSI oversold
-        if not has_position:
+        if held is None:
             if (latest['close'] <= latest['lower_band'] and 
                 latest['rsi'] < self.rsi_buy_threshold):
                 
@@ -162,9 +162,48 @@ class KeltnerChannelStrategy(BaseStrategy):
                 if self.validate_signal(signal, account, positions):
                     signals.append(signal)
                     self.logger.info("buy_signal_generated", symbol=symbol, price=latest['close'])
+
+            elif (
+                self.shorts_enabled()
+                and latest['close'] >= latest['upper_band']
+                and latest['rsi'] > self.rsi_sell_threshold
+            ):
+                if self.volume_confirmation and latest['volume'] <= latest['avg_volume']:
+                    return signals
+                atr = latest['atr']
+                stub = Signal(SignalType.SELL, symbol, datetime.utcnow(), latest['close'])
+                position_size = self.calculate_position_size(stub, account, atr)
+                stop_loss = self.calculate_stop_loss(stub, atr)
+                take_profit = self.calculate_take_profit(stub, stop_loss)
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"Keltner upper band short + RSI {latest['rsi']:.1f}",
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    position_size=position_size,
+                    metadata={'rsi': latest['rsi'], 'atr': atr, 'side': 'short'}
+                )
+                if self.validate_signal(signal, account, positions):
+                    signals.append(signal)
         
-        # SELL Signal: Price at/above upper band + RSI overbought
-        elif has_position:
+        elif self.is_short(held):
+            if latest['close'] <= latest['lower_band'] and latest['rsi'] < self.rsi_buy_threshold:
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"Keltner lower band cover + RSI {latest['rsi']:.1f}",
+                    position_size=float(held.quantity),
+                    metadata={'entry_price': held.entry_price, 'unrealized_pl': held.unrealized_pl}
+                )
+                signals.append(signal)
+        else:
             if (latest['close'] >= latest['upper_band'] and 
                 latest['rsi'] > self.rsi_sell_threshold):
                 

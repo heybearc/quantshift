@@ -130,11 +130,10 @@ class MACrossoverStrategy(BaseStrategy):
         # Get symbol from index or metadata
         symbol = self._get_symbol_from_data(market_data)
         
-        # Check if we have a position in this symbol
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # Generate BUY signal on golden cross
-        if golden_cross and not has_position:
+        if golden_cross and held is None:
             # Apply filters
             filters_passed, filter_reason = self._apply_buy_filters(
                 df, latest, market_data
@@ -207,10 +206,44 @@ class MACrossoverStrategy(BaseStrategy):
                     symbol=symbol,
                     reason=filter_reason
                 )
+
+        elif death_cross and held is None and self.shorts_enabled():
+            atr = latest['atr']
+            stub = Signal(SignalType.SELL, symbol, datetime.utcnow(), latest['close'])
+            position_size = self.calculate_position_size(stub, account, atr)
+            stop_loss = self.calculate_stop_loss(stub, atr)
+            take_profit = self.calculate_take_profit(stub, stop_loss)
+            signal = Signal(
+                signal_type=SignalType.SELL,
+                symbol=symbol,
+                timestamp=datetime.utcnow(),
+                price=latest['close'],
+                confidence=1.0,
+                reason=f"Death cross short (MA {self.short_window}/{self.long_window})",
+                stop_loss=stop_loss,
+                take_profit=take_profit,
+                position_size=position_size,
+                metadata={'short_ma': latest['short_ma'], 'long_ma': latest['long_ma'], 'atr': atr, 'side': 'short'}
+            )
+            if self.validate_signal(signal, account, positions):
+                signals.append(signal)
+        
+        elif held is not None and self.is_short(held) and golden_cross:
+            signal = Signal(
+                signal_type=SignalType.BUY,
+                symbol=symbol,
+                timestamp=datetime.utcnow(),
+                price=latest['close'],
+                confidence=1.0,
+                reason=f"Golden cross cover (MA {self.short_window}/{self.long_window})",
+                position_size=float(held.quantity),
+                metadata={'entry_price': held.entry_price, 'unrealized_pl': held.unrealized_pl}
+            )
+            signals.append(signal)
         
         # Generate SELL signal on death cross
-        elif death_cross and has_position:
-            position = next(pos for pos in positions if pos.symbol == symbol)
+        elif death_cross and held is not None and not self.is_short(held):
+            position = held
             
             signal = Signal(
                 signal_type=SignalType.SELL,

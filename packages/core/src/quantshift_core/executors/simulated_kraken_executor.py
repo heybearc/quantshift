@@ -475,6 +475,15 @@ class SimulatedKrakenExecutor:
         """
         return True
     
+    def _ensure_symbols_loaded(self) -> None:
+        """Load the curated list, and reload it after the universe cache expires."""
+        if not self.symbol_universe:
+            return
+        if self.symbols is not None and self.symbol_universe._is_cache_valid():
+            return
+        self.symbols = self.symbol_universe.get_symbols()
+        logger.info("[SIMULATED] symbols loaded: %s", len(self.symbols or []))
+
     def get_symbols(self) -> List[str]:
         """
         Get list of symbols to trade.
@@ -482,8 +491,7 @@ class SimulatedKrakenExecutor:
         Returns:
             List of trading symbols
         """
-        if self.symbol_universe:
-            return self.symbol_universe.get_symbols()
+        self._ensure_symbols_loaded()
         return self.symbols or []
     
     def place_stop_order(self, symbol: str, quantity: float, stop_price: float) -> Optional[str]:
@@ -646,15 +654,19 @@ class SimulatedKrakenExecutor:
             entry = float(pos["entry_price"])
             margin = qty * entry / leverage
             margin_used += margin
+            side = str(pos.get("side") or "long").lower()
+            if side not in ("long", "short"):
+                side = "long"
             self._positions[pos["symbol"]] = {
                 "quantity": qty,
                 "entry_price": entry,
                 "current_price": float(pos["current_price"]),
                 "unrealized_pl": float(pos.get("unrealized_pl") or 0),
-                "side": "long",
+                "side": side,
                 "leverage": leverage,
                 "margin": margin,
                 "stop_loss": pos.get("stop_loss"),
+                "take_profit": pos.get("take_profit"),
             }
         self._cash = max(0.0, float(self.simulated_capital) - margin_used)
         self._recovered_broker_count = len(self._positions)
@@ -698,7 +710,8 @@ class SimulatedKrakenExecutor:
             account = self.get_account()
             positions = self.get_positions()
             
-            # 2. Ensure symbols are loaded
+            # 2. Ensure symbols are loaded. The curated list refreshes when its cache expires.
+            self._ensure_symbols_loaded()
             if not self.symbols:
                 logger.warning("[SIMULATED] No symbols configured, skipping cycle")
                 return []

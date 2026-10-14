@@ -128,10 +128,10 @@ class BollingerBounce(BaseStrategy):
         symbol = self._get_symbol_from_data(market_data)
         
         # Check if we have a position in this symbol
-        has_position = any(pos.symbol == symbol for pos in positions)
+        held = self.held_position(positions, symbol)
         
         # Entry signal: price touches lower BB + RSI < threshold
-        if not has_position:
+        if held is None:
             if latest['low'] <= latest['bb_lower'] and latest['rsi'] < self.rsi_entry_threshold:
                 # Calculate position size and risk parameters
                 atr = latest['atr']
@@ -178,11 +178,49 @@ class BollingerBounce(BaseStrategy):
                         rsi=latest['rsi'],
                         position_size=position_size
                     )
+
+            elif (
+                self.shorts_enabled()
+                and latest['high'] >= latest['bb_upper']
+                and latest['rsi'] > (100 - self.rsi_entry_threshold)
+            ):
+                atr = latest['atr']
+                position_size = self.calculate_position_size(
+                    Signal(SignalType.SELL, symbol, datetime.utcnow(), latest['close']),
+                    account,
+                    atr
+                )
+                stop_loss = latest['bb_upper'] + (atr * self.atr_sl_multiplier)
+                take_profit = latest['bb_middle']
+                signal = Signal(
+                    signal_type=SignalType.SELL,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason=f"BB upper touch short + RSI {latest['rsi']:.1f}",
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    position_size=position_size,
+                    metadata={'bb_upper': latest['bb_upper'], 'rsi': latest['rsi'], 'atr': atr, 'side': 'short'}
+                )
+                if self.validate_signal(signal, account, positions):
+                    signals.append(signal)
         
-        # Exit signal: price reaches middle band (mean reversion)
-        elif has_position:
-            position = next(pos for pos in positions if pos.symbol == symbol)
-            
+        elif self.is_short(held):
+            if latest['low'] <= latest['bb_middle']:
+                signal = Signal(
+                    signal_type=SignalType.BUY,
+                    symbol=symbol,
+                    timestamp=datetime.utcnow(),
+                    price=latest['close'],
+                    confidence=1.0,
+                    reason="BB middle reached (cover short)",
+                    position_size=float(held.quantity),
+                    metadata={'bb_middle': latest['bb_middle'], 'entry_price': held.entry_price}
+                )
+                signals.append(signal)
+        else:
             if latest['high'] >= latest['bb_middle']:
                 signal = Signal(
                     signal_type=SignalType.SELL,
@@ -191,11 +229,11 @@ class BollingerBounce(BaseStrategy):
                     price=latest['close'],
                     confidence=1.0,
                     reason=f"BB middle reached (mean reversion)",
-                    position_size=float(position.quantity),
+                    position_size=float(held.quantity),
                     metadata={
                         'bb_middle': latest['bb_middle'],
-                        'entry_price': position.entry_price,
-                        'unrealized_pl': position.unrealized_pl
+                        'entry_price': held.entry_price,
+                        'unrealized_pl': held.unrealized_pl
                     }
                 )
                 
@@ -204,7 +242,7 @@ class BollingerBounce(BaseStrategy):
                     "sell_signal_generated",
                     symbol=symbol,
                     price=latest['close'],
-                    unrealized_pl=position.unrealized_pl
+                    unrealized_pl=held.unrealized_pl
                 )
         
         return signals

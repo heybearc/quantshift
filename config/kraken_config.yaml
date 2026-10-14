@@ -9,44 +9,36 @@ executor:
   type: "kraken"
   simulation_mode: true  # Set to false when ready for live trading
   max_leverage: 2.0  # Conservative 2x leverage (max 5x available)
-  use_dynamic_symbols: false  # Use curated list for now
-  symbols:
-    # Kraken API format (use simple pair names)
-    - "XBTUSD"     # Bitcoin
-    - "ETHUSD"     # Ethereum
-    - "SOLUSD"     # Solana
-    - "ADAUSD"     # Cardano
-    - "DOTUSD"     # Polkadot
-    - "POLUSD"    # Polygon
-    - "AVAXUSD"    # Avalanche
-    - "LINKUSD"    # Chainlink
+  use_dynamic_symbols: true  # Re-rank the curated USD list by live dollar volume
+  symbol_universe:
+    max_symbols: 25
+    min_volume: 1000000  # $1M 24h dollar volume
   simulated_capital: 5000  # Start with $5,000
 
-# Strategy configuration - MEAN REVERSION FOCUSED (good for margin/shorts)
+# Strategy configuration - same seven as crypto, with shorts and take-profit
 strategies:
-  # Mean Reversion Strategies (better for range-bound + shorts)
-  - type: "RSIMeanReversion"
-    params:
-      rsi_period: 14
-      rsi_oversold: 25  # Lower for crypto
-      rsi_overbought: 75  # Higher for crypto
-      atr_period: 14
-      atr_sl_multiplier: 2.5
-      atr_tp_multiplier: 4.0
-      risk_per_trade: 0.02
-      enable_shorts: true  # Enable short positions
-  
   - type: "BollingerBounce"
     params:
       bb_period: 20
-      bb_std: 2.5  # Wider bands for crypto volatility
+      bb_std: 2.5
       rsi_period: 14
       rsi_entry_threshold: 50
       atr_period: 14
       atr_sl_multiplier: 2.0
       risk_per_trade: 0.02
-      enable_shorts: true  # Enable short positions
-  
+      enable_shorts: true
+
+  - type: "RSIMeanReversion"
+    params:
+      rsi_period: 14
+      rsi_oversold: 25
+      rsi_overbought: 75
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_tp_multiplier: 4.0
+      risk_per_trade: 0.02
+      enable_shorts: true
+
   - type: "KeltnerChannelStrategy"
     params:
       ema_period: 20
@@ -57,7 +49,50 @@ strategies:
       rsi_sell_threshold: 60
       risk_per_trade: 0.02
       volume_confirmation: true
-      enable_shorts: true  # Enable short positions
+      enable_shorts: true
+
+  - type: "VWAPReversionStrategy"
+    params:
+      vwap_std_multiplier: 2.5
+      volume_spike_threshold: 1.5
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_tp_multiplier: 4.0
+      risk_per_trade: 0.02
+      enable_shorts: true
+
+  - type: "BreakoutMomentum"
+    params:
+      breakout_period: 15
+      volume_multiplier: 2.0
+      atr_period: 14
+      atr_trail_multiplier: 2.0
+      breakdown_period: 10
+      risk_per_trade: 0.02
+      enable_shorts: true
+
+  - type: "MACrossoverStrategy"
+    params:
+      short_window: 10
+      long_window: 30
+      atr_period: 14
+      risk_per_trade: 0.02
+      volume_confirmation: true
+      trend_confirmation: false
+      support_resistance_filter: true
+      enable_shorts: true
+
+  - type: "DonchianBreakoutStrategy"
+    params:
+      entry_period: 20
+      exit_period: 10
+      atr_period: 14
+      atr_sl_multiplier: 2.5
+      atr_trail_multiplier: 3.0
+      risk_per_trade: 0.02
+      volume_confirmation: true
+      min_atr_filter: 0.0
+      enable_shorts: true
 
 # Risk management - MARGIN TRADING SPECIFIC
 risk_management:
@@ -117,25 +152,45 @@ market_regime:
   # Strategy allocation by regime (mean reversion focus)
   regime_strategy_allocation:
     BULL_TRENDING:
-      RSIMeanReversion: 0.30
-      BollingerBounce: 0.40
-      KeltnerChannelStrategy: 0.30
-    BEAR_TRENDING:  # Shorts work well here
-      RSIMeanReversion: 0.40  # Mean reversion + shorts
-      BollingerBounce: 0.30
-      KeltnerChannelStrategy: 0.30
+      BreakoutMomentum: 0.20
+      MACrossoverStrategy: 0.16
+      DonchianBreakoutStrategy: 0.16
+      BollingerBounce: 0.12
+      RSIMeanReversion: 0.12
+      KeltnerChannelStrategy: 0.12
+      VWAPReversionStrategy: 0.12
+    BEAR_TRENDING:
+      RSIMeanReversion: 0.20
+      BollingerBounce: 0.16
+      BreakoutMomentum: 0.16
+      DonchianBreakoutStrategy: 0.12
+      MACrossoverStrategy: 0.12
+      KeltnerChannelStrategy: 0.12
+      VWAPReversionStrategy: 0.12
     HIGH_VOL_CHOPPY:
-      RSIMeanReversion: 0.50  # Mean reversion best in choppy
-      BollingerBounce: 0.50
-      KeltnerChannelStrategy: 0.00
-    LOW_VOL_RANGE:  # Best for mean reversion
-      RSIMeanReversion: 0.40
-      BollingerBounce: 0.40
-      KeltnerChannelStrategy: 0.20
+      BollingerBounce: 0.22
+      RSIMeanReversion: 0.18
+      KeltnerChannelStrategy: 0.16
+      VWAPReversionStrategy: 0.16
+      BreakoutMomentum: 0.10
+      MACrossoverStrategy: 0.10
+      DonchianBreakoutStrategy: 0.08
+    LOW_VOL_RANGE:
+      RSIMeanReversion: 0.18
+      BollingerBounce: 0.18
+      KeltnerChannelStrategy: 0.16
+      VWAPReversionStrategy: 0.16
+      MACrossoverStrategy: 0.12
+      BreakoutMomentum: 0.10
+      DonchianBreakoutStrategy: 0.10
     CRISIS:
-      RSIMeanReversion: 0.00  # Disable all in crisis
-      BollingerBounce: 0.00
-      KeltnerChannelStrategy: 0.00
+      BollingerBounce: 0.20
+      RSIMeanReversion: 0.16
+      KeltnerChannelStrategy: 0.16
+      VWAPReversionStrategy: 0.12
+      BreakoutMomentum: 0.12
+      MACrossoverStrategy: 0.12
+      DonchianBreakoutStrategy: 0.12
 
 # Phase 3: Advanced Risk Management
 advanced_risk:

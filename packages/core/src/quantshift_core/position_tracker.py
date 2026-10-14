@@ -48,6 +48,10 @@ class PositionTracker:
     strategy: str = "UNKNOWN"
     entered_at: datetime = field(default_factory=datetime.utcnow)
     last_stop_update: Optional[datetime] = None
+    side: str = "long"
+
+    def _is_short(self) -> bool:
+        return str(self.side).lower() == "short"
     
     def update_price(self, new_price: float) -> bool:
         """
@@ -61,7 +65,8 @@ class PositionTracker:
         """
         self.current_price = new_price
         
-        if new_price > self.high_water_mark:
+        improved = new_price < self.high_water_mark if self._is_short() else new_price > self.high_water_mark
+        if improved:
             old_hwm = self.high_water_mark
             self.high_water_mark = new_price
             logger.info(
@@ -88,7 +93,12 @@ class PositionTracker:
         if self.trailing_stop_active:
             return False
         
-        gain_pct = (self.high_water_mark - self.entry_price) / self.entry_price
+        if self.entry_price <= 0:
+            return False
+        if self._is_short():
+            gain_pct = (self.entry_price - self.high_water_mark) / self.entry_price
+        else:
+            gain_pct = (self.high_water_mark - self.entry_price) / self.entry_price
         return gain_pct >= activation_threshold_pct
     
     def calculate_trailing_stop_price(
@@ -117,10 +127,9 @@ class PositionTracker:
         # Use the larger of the two
         trail_distance = max(atr_distance, pct_distance)
         
-        # Trailing stop is trail_distance below high water mark
-        new_stop = self.high_water_mark - trail_distance
-        
-        return new_stop
+        if self._is_short():
+            return self.high_water_mark + trail_distance
+        return self.high_water_mark - trail_distance
     
     def should_update_stop(
         self,
@@ -138,7 +147,8 @@ class PositionTracker:
             True if stop should be updated
         """
         if only_improve:
-            # For long positions, new stop must be higher than current
+            if self._is_short():
+                return new_stop_price < self.current_stop_loss
             return new_stop_price > self.current_stop_loss
         else:
             return new_stop_price != self.current_stop_loss
@@ -154,7 +164,10 @@ class PositionTracker:
         self.current_stop_loss = new_stop_price
         self.last_stop_update = datetime.utcnow()
         
-        locked_profit = (new_stop_price - self.entry_price) * self.quantity
+        if self._is_short():
+            locked_profit = (self.entry_price - new_stop_price) * self.quantity
+        else:
+            locked_profit = (new_stop_price - self.entry_price) * self.quantity
         
         logger.info(
             "stop_loss_updated",
@@ -163,7 +176,7 @@ class PositionTracker:
             new_stop=f"${new_stop_price:.2f}",
             high_water_mark=f"${self.high_water_mark:.2f}",
             locked_profit=f"${locked_profit:.2f}",
-            locked_profit_pct=f"{((new_stop_price - self.entry_price) / self.entry_price * 100):.2f}%"
+            locked_profit_pct=f"{(locked_profit / (self.entry_price * self.quantity) * 100) if self.entry_price and self.quantity else 0:.2f}%"
         )
     
     def activate_trailing_stop(self) -> None:

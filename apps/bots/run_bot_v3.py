@@ -1166,16 +1166,22 @@ class QuantShiftUnifiedBot:
                     logger.debug("strategy_attribution_lookup_failed", symbol=pos.symbol, error=str(e))
                 
                 stop_loss = None
+                take_profit = None
                 meta = getattr(pos, "metadata", None) or {}
                 if meta.get("stop_loss") is not None:
                     stop_loss = float(meta["stop_loss"])
+                if meta.get("take_profit") is not None:
+                    take_profit = float(meta["take_profit"])
+                side = str(getattr(pos, "side", None) or "long").lower()
+                if side not in ("long", "short"):
+                    side = "long"
                 cursor.execute("""
                     INSERT INTO positions (
                         id, bot_name, symbol, quantity, entry_price, current_price,
                         market_value, cost_basis, unrealized_pl, unrealized_pl_pct,
-                        strategy, stop_loss, entered_at, created_at, updated_at
+                        strategy, stop_loss, take_profit, side, entered_at, created_at, updated_at
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
                     ON CONFLICT (bot_name, symbol) DO UPDATE SET
                         quantity = EXCLUDED.quantity,
                         current_price = EXCLUDED.current_price,
@@ -1183,6 +1189,8 @@ class QuantShiftUnifiedBot:
                         unrealized_pl = EXCLUDED.unrealized_pl,
                         unrealized_pl_pct = EXCLUDED.unrealized_pl_pct,
                         stop_loss = COALESCE(EXCLUDED.stop_loss, positions.stop_loss),
+                        take_profit = COALESCE(EXCLUDED.take_profit, positions.take_profit),
+                        side = EXCLUDED.side,
                         updated_at = NOW()
                 """, (
                     position_id,
@@ -1197,6 +1205,8 @@ class QuantShiftUnifiedBot:
                     self._position_pnl_pct(pos),
                     strategy_name,
                     stop_loss,
+                    take_profit,
+                    side,
                 ))
             
             self.db_conn.commit()
@@ -1230,6 +1240,7 @@ class QuantShiftUnifiedBot:
                 entry_price=float(pos.entry_price),
                 quantity=float(pos.quantity),
                 stop_loss=float(stop),
+                side=str(getattr(pos, "side", None) or "long"),
             )
 
     def _update_trailing_stops(self):

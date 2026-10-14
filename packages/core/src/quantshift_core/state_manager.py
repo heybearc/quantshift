@@ -349,7 +349,7 @@ class StateManager:
                 text("""
                     SELECT symbol, quantity, entry_price, current_price,
                            unrealized_pl, strategy AS strategy_name, created_at, updated_at,
-                           stop_loss
+                           stop_loss, take_profit, side
                     FROM positions
                     WHERE bot_name = :bot_name
                 """),
@@ -366,6 +366,8 @@ class StateManager:
                     "unrealized_pl": float(row.unrealized_pl),
                     "strategy_name": row.strategy_name,
                     "stop_loss": float(row.stop_loss) if row.stop_loss is not None else None,
+                    "take_profit": float(row.take_profit) if row.take_profit is not None else None,
+                    "side": row.side or "long",
                     "created_at": row.created_at.isoformat() if row.created_at else None,
                     "updated_at": row.updated_at.isoformat() if row.updated_at else None
                 })

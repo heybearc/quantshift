@@ -10,10 +10,50 @@ Fetches and ranks symbols dynamically based on:
 This enables QuantShift to scale to 100s of symbols while staying within API limits.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Set, Tuple
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+import urllib.request
 import structlog
 import os
+
+# Liquid Kraken USD pairs. A refresh re-ranks this list by live dollar volume
+# and drops any name Kraken no longer lists. Altnames match the bot's orders.
+KRAKEN_USD_CANDIDATES = [
+    "XBTUSD", "ETHUSD", "SOLUSD", "XRPUSD", "ADAUSD", "AVAXUSD", "DOTUSD",
+    "LINKUSD", "LTCUSD", "BCHUSD", "ATOMUSD", "UNIUSD", "AAVEUSD", "NEARUSD",
+    "APTUSD", "SUIUSD", "INJUSD", "TIAUSD", "ARBUSD", "OPUSD", "RENDERUSD",
+    "FILUSD", "ALGOUSD", "XLMUSD", "HBARUSD", "ICPUSD", "ETCUSD", "XTZUSD",
+    "GRTUSD", "IMXUSD", "STXUSD", "SHIBUSD", "PEPEUSD", "WIFUSD", "BONKUSD",
+    "SEIUSD", "RUNEUSD", "FETUSD", "POLUSD", "XDGUSD",
+]
+
+
+def refresh_curated_symbols(
+    candidates: List[str],
+    volumes: Optional[Dict[str, float]],
+    max_symbols: int,
+    min_volume: float = 0,
+    listed: Optional[Set[str]] = None,
+) -> List[str]:
+    """Keep the curated names that are still listed, best dollar volume first.
+
+    A missing volume does not drop a name. A volume below min_volume does.
+    Names absent from `listed` are dropped when that set is provided.
+    """
+    kept: List[Tuple[float, str]] = []
+    for symbol in candidates:
+        if listed is not None and symbol not in listed:
+            continue
+        volume = None if not volumes else volumes.get(symbol)
+        if volume is not None and volume < min_volume:
+            continue
+        kept.append((-1.0 if volume is None else volume, symbol))
+    ranked = sorted((item for item in kept if item[0] >= 0), key=lambda item: (-item[0], item[1]))
+    unknown = [symbol for volume, symbol in kept if volume < 0]
+    ordered = [symbol for _, symbol in ranked] + unknown
+    return ordered[:max_symbols]
 
 logger = structlog.get_logger()
 
@@ -47,9 +87,12 @@ class SymbolUniverse:
         
         # Default limits based on executor type
         if executor_type == 'alpaca':
-            self.max_symbols = self.config.get('max_symbols', 100)
-        else:  # coinbase
-            self.max_symbols = self.config.get('max_symbols', 50)
+            default_max = 100
+        elif executor_type == 'kraken':
+            default_max = 25
+        else:
+            default_max = 50
+        self.max_symbols = self.config.get('max_symbols', default_max)
         
         self.min_volume = self.config.get('min_volume', 1_000_000)
         self.exclude_symbols = set(self.config.get('exclude_symbols', []))
@@ -88,9 +131,15 @@ class SymbolUniverse:
             symbols = self._fetch_alpaca_symbols()
         elif self.executor_type == 'coinbase':
             symbols = self._fetch_coinbase_symbols()
+        elif self.executor_type == 'kraken':
+            symbols = self._fetch_kraken_symbols()
         else:
             self.logger.error("unknown_executor_type", executor_type=self.executor_type)
-            return []
+            symbols = None
+
+        if not symbols:
+            symbols = self.symbol_cache or self._static_fallback()
+            self.logger.warning("symbol_refresh_kept_curated", count=len(symbols))
         
         # Update cache
         self.symbol_cache = symbols
@@ -189,12 +238,112 @@ class SymbolUniverse:
         Using curated fallback list for Phase 1. Will implement proper
         API-based fetching in Phase 2 with better error handling.
         """
-        self.logger.info(
-            "using_curated_crypto_list",
-            reason="coinbase_api_unreliable",
-            count=self.max_symbols
+        candidates = self._get_top_crypto_symbols()
+        try:
+            listed, volumes = self._coinbase_listing_and_volume(candidates)
+        except Exception as exc:
+            self.logger.warning("crypto_universe_refresh_failed", error=str(exc))
+            return None
+        selected = refresh_curated_symbols(
+            candidates, volumes, self.max_symbols, self.min_volume, listed
         )
-        return self._get_fallback_crypto_symbols()
+        self.logger.info("crypto_universe_refreshed", selected=len(selected), candidates=len(candidates))
+        return selected or None
+
+    def _fetch_kraken_symbols(self) -> Optional[List[str]]:
+        """Re-rank the curated Kraken USD list by 24h dollar volume."""
+        candidates = list(self.config.get("candidates") or KRAKEN_USD_CANDIDATES)
+        try:
+            from quantshift_core.executors.kraken_public import kraken_public
+            listed, volumes = self._kraken_listing_and_volume(candidates, kraken_public)
+        except Exception as exc:
+            self.logger.warning("kraken_universe_refresh_failed", error=str(exc))
+            return None
+        selected = refresh_curated_symbols(
+            candidates, volumes, self.max_symbols, self.min_volume, listed
+        )
+        self.logger.info("kraken_universe_refreshed", selected=len(selected), candidates=len(candidates))
+        return selected or None
+
+    def _static_fallback(self) -> List[str]:
+        if self.executor_type == "alpaca":
+            return self._get_fallback_equity_symbols()[:self.max_symbols]
+        if self.executor_type == "kraken":
+            candidates = list(self.config.get("candidates") or KRAKEN_USD_CANDIDATES)
+            return candidates[:self.max_symbols]
+        return self._get_fallback_crypto_symbols()[:self.max_symbols]
+
+    def _kraken_listing_and_volume(self, candidates: List[str], kraken_public) -> Tuple[Set[str], Dict[str, float]]:
+        pairs = kraken_public("AssetPairs", {})
+        if pairs.get("error"):
+            raise RuntimeError(str(pairs.get("error")))
+        key_to_alt: Dict[str, str] = {}
+        listed: Set[str] = set()
+        for key, info in (pairs.get("result") or {}).items():
+            if not isinstance(info, dict):
+                continue
+            alt = info.get("altname")
+            if not alt:
+                continue
+            key_to_alt[key] = alt
+            if info.get("status") in (None, "online"):
+                listed.add(alt)
+        ticker = kraken_public("Ticker", {"pair": ",".join(candidates)})
+        if ticker.get("error"):
+            raise RuntimeError(str(ticker.get("error")))
+        volumes: Dict[str, float] = {}
+        for key, info in (ticker.get("result") or {}).items():
+            alt = key_to_alt.get(key)
+            if not alt or not isinstance(info, dict):
+                continue
+            try:
+                last = float(info["c"][0])
+                day_volume = float(info["v"][1])
+            except (KeyError, TypeError, ValueError, IndexError):
+                continue
+            volumes[alt] = last * day_volume
+        return listed, volumes
+
+    def _coinbase_listing_and_volume(self, candidates: List[str]) -> Tuple[Optional[Set[str]], Dict[str, float]]:
+        """Listed USD products, plus dollar volume for the curated names. Times out."""
+        request = urllib.request.Request(
+            "https://api.exchange.coinbase.com/products",
+            headers={"User-Agent": "quantshift"},
+        )
+        with urllib.request.urlopen(request, timeout=5) as response:
+            products = json.loads(response.read().decode())
+        listed = {
+            item.get("id")
+            for item in products
+            if isinstance(item, dict)
+            and item.get("status") == "online"
+            and not item.get("trading_disabled")
+            and str(item.get("id", "")).endswith("-USD")
+        }
+        volumes: Dict[str, float] = {}
+
+        def one(symbol: str) -> Tuple[str, Optional[float]]:
+            stats_request = urllib.request.Request(
+                f"https://api.exchange.coinbase.com/products/{symbol}/stats",
+                headers={"User-Agent": "quantshift"},
+            )
+            try:
+                with urllib.request.urlopen(stats_request, timeout=2) as response:
+                    stats = json.loads(response.read().decode())
+                return symbol, float(stats["volume"]) * float(stats["last"])
+            except Exception:
+                return symbol, None
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = [pool.submit(one, symbol) for symbol in candidates if symbol in listed]
+            for future in as_completed(futures):
+                try:
+                    symbol, volume = future.result()
+                except Exception:
+                    continue
+                if volume is not None:
+                    volumes[symbol] = volume
+        return listed, volumes
     
     def _get_sp100_symbols(self) -> List[str]:
         """

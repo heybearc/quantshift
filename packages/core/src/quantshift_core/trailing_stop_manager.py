@@ -73,6 +73,7 @@ class TrailingStopManager:
         entry_price: float,
         quantity: float,
         stop_loss: float,
+        side: str = "long",
         stop_order_id: Optional[str] = None,
         take_profit_order_id: Optional[str] = None,
         strategy: str = "UNKNOWN"
@@ -106,7 +107,8 @@ class TrailingStopManager:
             stop_order_id=stop_order_id,
             take_profit_order_id=take_profit_order_id,
             strategy=strategy,
-            entered_at=datetime.utcnow()
+            entered_at=datetime.utcnow(),
+            side=side or "long",
         )
         
         self.position_trackers[symbol] = tracker
