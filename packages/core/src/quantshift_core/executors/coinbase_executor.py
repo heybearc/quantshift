@@ -5,9 +5,11 @@ This module handles the Coinbase-specific implementation of strategy execution.
 It bridges the gap between broker-agnostic strategies and Coinbase Advanced Trade API.
 """
 
+import json
+import logging
 import sys
 import time
-import logging
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import pandas as pd
@@ -124,6 +126,26 @@ class CoinbaseExecutor:
 
     def _is_paper(self) -> bool:
         return bool(self.simulated_capital and self.simulated_capital > 0)
+
+    def _paper_cash_path(self, bot_name: str) -> Path:
+        return Path(f"/opt/quantshift/data/paper_cash/{bot_name}.json")
+
+    def load_paper_cash(self, bot_name: str) -> Optional[float]:
+        """Uninvested paper cash from the last run. Starting capital is not a refill."""
+        path = self._paper_cash_path(bot_name)
+        if not path.exists():
+            return None
+        try:
+            return float(json.loads(path.read_text()).get("cash"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def save_paper_cash(self, bot_name: str) -> None:
+        if not self._is_paper() or not bot_name:
+            return
+        path = self._paper_cash_path(bot_name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"cash": round(float(self._sim_cash), 6)}))
 
     def _paper_account(self) -> Account:
         market_value = sum(
@@ -1189,7 +1211,10 @@ class CoinbaseExecutor:
                     float(pos["quantity"]) * float(pos["entry_price"])
                     for pos in db_positions
                 )
-                self._sim_cash = max(0.0, float(self.simulated_capital or 0) - open_cost)
+                saved_cash = self.load_paper_cash(bot_name)
+                if saved_cash is None:
+                    saved_cash = float(self.simulated_capital or 0) - open_cost
+                self._sim_cash = max(0.0, saved_cash)
                 recovery_stats['broker_positions'] = len(self._sim_positions)
                 recovery_stats['db_positions'] = len(db_positions)
                 logger.info(

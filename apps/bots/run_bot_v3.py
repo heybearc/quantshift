@@ -1005,6 +1005,8 @@ class QuantShiftUnifiedBot:
             
             # Sync positions to database for web dashboard
             self._sync_positions_to_db(positions)
+            if hasattr(self.executor, "save_paper_cash"):
+                self.executor.save_paper_cash(self.bot_name)
             
         except Exception as e:
             logger.error("db_heartbeat_failed", error=str(e), exc_info=True)
