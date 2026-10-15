@@ -169,20 +169,58 @@ class RiskManager:
         """
         if new_symbol not in market_data:
             return {}
-        
+
+        new_returns = self._return_series(market_data[new_symbol], lookback_days)
+        if new_returns is None:
+            return {}
+
         correlations = {}
-        new_returns = market_data[new_symbol]['Close'].pct_change().tail(lookback_days)
-        
         for pos in positions:
-            if pos.symbol in market_data and pos.symbol != new_symbol:
-                existing_returns = market_data[pos.symbol]['Close'].pct_change().tail(lookback_days)
-                
-                # Calculate correlation
-                correlation = new_returns.corr(existing_returns)
-                if not np.isnan(correlation):
-                    correlations[pos.symbol] = correlation
-        
+            if pos.symbol not in market_data or pos.symbol == new_symbol:
+                continue
+            existing_returns = self._return_series(market_data[pos.symbol], lookback_days)
+            if existing_returns is None:
+                continue
+            paired = pd.concat([new_returns, existing_returns], axis=1, join="inner").dropna()
+            if len(paired) < 10:
+                continue
+            correlation = paired.iloc[:, 0].corr(paired.iloc[:, 1])
+            if correlation is not None and not np.isnan(correlation):
+                correlations[pos.symbol] = float(correlation)
+
         return correlations
+
+    def _return_series(self, frame: pd.DataFrame, lookback_days: int) -> Optional[pd.Series]:
+        """Recent percent changes. Hourly bars use a longer window than a daily lookback."""
+        close = None
+        for name in ("close", "Close"):
+            if name in frame.columns:
+                close = frame[name]
+                break
+        if close is None or len(close) < 3:
+            return None
+        bars = lookback_days
+        if len(frame.index) >= 3:
+            spacing = frame.index[-1] - frame.index[-2]
+            if hasattr(spacing, "total_seconds") and spacing.total_seconds() < 20 * 3600:
+                bars = max(lookback_days, 72)
+        return close.pct_change().dropna().tail(bars)
+
+    def correlation_block_reason(
+        self,
+        positions: List[Position],
+        new_symbol: str,
+        market_data: Dict[str, pd.DataFrame],
+    ) -> Optional[str]:
+        """Why a new long is the same bet as a name already held, or None."""
+        correlations = self.calculate_position_correlation(positions, new_symbol, market_data)
+        for existing_symbol, corr in correlations.items():
+            if abs(corr) > self.max_position_correlation:
+                return (
+                    f"Correlation with {existing_symbol} ({corr:.2f}) "
+                    f"exceeds limit {self.max_position_correlation}"
+                )
+        return None
     
     def check_sector_exposure(
         self,
@@ -423,15 +461,9 @@ class RiskManager:
         
         # Check correlation if market data available
         if market_data and len(positions) > 0:
-            correlations = self.calculate_position_correlation(
-                positions,
-                signal.symbol,
-                market_data
-            )
-            
-            for existing_symbol, corr in correlations.items():
-                if abs(corr) > self.max_position_correlation:
-                    return False, f"Correlation with {existing_symbol} ({corr:.2f}) exceeds limit {self.max_position_correlation}"
+            reason = self.correlation_block_reason(positions, signal.symbol, market_data)
+            if reason:
+                return False, reason
         
         # Check sector exposure
         position_value = signal.price * signal.position_size

@@ -5,6 +5,7 @@ Manages multiple trading strategies simultaneously with capital allocation,
 conflict resolution, performance tracking, and market regime adaptation.
 """
 
+from types import SimpleNamespace
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 import pandas as pd
@@ -515,6 +516,7 @@ class StrategyOrchestrator:
             validated_signals = []
             rejected_count = 0
             
+            accepted_buys = []
             for signal in resolved_signals:
                 is_valid, reason = self.risk_manager.validate_signal(
                     signal,
@@ -522,9 +524,25 @@ class StrategyOrchestrator:
                     positions,
                     market_data
                 )
-                
+                if (
+                    is_valid
+                    and signal.signal_type == SignalType.BUY
+                    and accepted_buys
+                    and market_data
+                ):
+                    pending_reason = self.risk_manager.correlation_block_reason(
+                        accepted_buys,
+                        signal.symbol,
+                        market_data,
+                    )
+                    if pending_reason:
+                        is_valid = False
+                        reason = pending_reason
+
                 if is_valid:
                     validated_signals.append(signal)
+                    if signal.signal_type == SignalType.BUY:
+                        accepted_buys.append(SimpleNamespace(symbol=signal.symbol))
                 else:
                     rejected_count += 1
                     self.logger.warning(

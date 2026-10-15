@@ -16,6 +16,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from coinbase.rest import RESTClient
 
+from quantshift_core.candles import drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 
@@ -87,6 +88,7 @@ class CoinbaseExecutor:
         self.risk_config = risk_config or {}
         self._sim_cash = float(simulated_capital) if simulated_capital else 0.0
         self._sim_positions: Dict[str, Dict[str, float]] = {}
+        self._traded_bar: Dict[str, str] = {}
         
         # Initialize position limits with config values
         self.position_limits = PositionLimits(
@@ -155,6 +157,7 @@ class CoinbaseExecutor:
                 metadata={
                     "stop_loss": pos.get("stop_loss"),
                     "take_profit": pos.get("take_profit"),
+                    "strategy": pos.get("strategy"),
                 },
             ))
         return positions
@@ -206,6 +209,9 @@ class CoinbaseExecutor:
                 logger.warning("simulated SELL rejected %s: no position", symbol)
                 return None
             sell_qty = min(qty, existing["quantity"])
+            entry = float(existing["entry_price"])
+            realized = (price - entry) * sell_qty
+            strategy_name = existing.get("strategy")
             self._sim_cash += sell_qty * price
             existing["quantity"] -= sell_qty
             existing["current_price"] = price
@@ -223,7 +229,7 @@ class CoinbaseExecutor:
             self._sim_cash,
             reason,
         )
-        return {
+        order = {
             "id": order_id,
             "symbol": symbol,
             "qty": qty,
@@ -234,6 +240,12 @@ class CoinbaseExecutor:
             "submitted_at": datetime.utcnow().isoformat(),
             "signal_reason": reason,
         }
+        if side == "SELL":
+            order["realized_pnl"] = realized
+            order["pnl_pct"] = ((price - entry) / entry * 100) if entry else 0.0
+            if strategy_name:
+                order["strategy"] = strategy_name
+        return order
     
     def _ensure_symbols_loaded(self) -> None:
         """Lazy load symbols on first use if using dynamic symbols."""
@@ -473,10 +485,24 @@ class CoinbaseExecutor:
             
             # Sort by date (oldest first)
             df = df.sort_index()
-            
-            # Add symbol as attribute for strategy to access
+            mark_price = float(df["close"].iloc[-1])
+            bar_seconds = {
+                "ONE_MINUTE": 60,
+                "FIVE_MINUTE": 300,
+                "ONE_HOUR": 3600,
+                "ONE_DAY": 86400,
+            }.get(granularity, 3600)
+            df = drop_forming_candle(df, bar_seconds)
+            if len(df) == 0:
+                logger.warning("no closed candles yet for %s", symbol)
+                return pd.DataFrame()
+
+            # Add symbol as attribute for strategy to access.
+            # mark_price is the latest print, including the hour still forming,
+            # so a stop can trigger before that hour closes.
             df.symbol = symbol
-            
+            df.attrs["mark_price"] = mark_price
+
             logger.debug(f"Fetched {len(df)} candles for {symbol}")
             return df
             
@@ -603,6 +629,10 @@ class CoinbaseExecutor:
                 if order and signal.signal_type == SignalType.BUY:
                     pos = self._sim_positions.get(signal.symbol)
                     if pos is not None:
+                        strategy_name = (signal.metadata or {}).get("strategy")
+                        if strategy_name:
+                            pos["strategy"] = strategy_name
+                            order["strategy"] = strategy_name
                         if signal.stop_loss:
                             pos["stop_loss"] = float(signal.stop_loss)
                             order["stop_loss"] = pos["stop_loss"]
@@ -954,13 +984,29 @@ class CoinbaseExecutor:
                 return price if price > 0 else None
         return None
 
+    def _mark_price(self, frame) -> Optional[float]:
+        """Latest traded price, including the candle that has not closed."""
+        if frame is None:
+            return None
+        mark = getattr(frame, "attrs", {}).get("mark_price")
+        if mark:
+            price = float(mark)
+            if price > 0:
+                return price
+        return self._last_close(frame)
+
+    def _closed_bar_key(self, frame) -> Optional[str]:
+        if frame is None or len(frame) == 0:
+            return None
+        return str(frame.index[-1])
+
     def _close_paper_brackets(self, market_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Sell a paper position when its stored stop or target is touched."""
         if not self._is_paper():
             return []
         closed = []
         for symbol, pos in list(self._sim_positions.items()):
-            price = self._last_close(market_data.get(symbol))
+            price = self._mark_price(market_data.get(symbol))
             if price is None:
                 continue
             pos["current_price"] = price
@@ -976,6 +1022,9 @@ class CoinbaseExecutor:
             order = self._simulate_order(symbol, "SELL", float(pos["quantity"]), price, reason)
             if order:
                 closed.append(order)
+                bar_key = self._closed_bar_key(market_data.get(symbol))
+                if bar_key:
+                    self._traded_bar[symbol] = bar_key
                 logger.info("[SIMULATED] bracket exit %s %s @ %.6f", symbol, reason, price)
         return closed
 
@@ -1068,9 +1117,20 @@ class CoinbaseExecutor:
                         signal.reason,
                     )
                     continue
-                
+
+                bar_key = self._closed_bar_key(market_data.get(signal.symbol))
+                if bar_key and self._traded_bar.get(signal.symbol) == bar_key:
+                    logger.info(
+                        "signal skipped, this closed hour was already traded: %s %s",
+                        signal.symbol,
+                        signal.signal_type.value,
+                    )
+                    continue
+
                 order = self.execute_signal(signal)
                 if order:
+                    if bar_key:
+                        self._traded_bar[signal.symbol] = bar_key
                     executed_orders.append(order)
                     self._daily_trades += 1
             
@@ -1121,6 +1181,7 @@ class CoinbaseExecutor:
                         "current_price": float(pos["current_price"]),
                         "stop_loss": pos.get("stop_loss"),
                         "take_profit": pos.get("take_profit"),
+                        "strategy": pos.get("strategy_name"),
                     }
                     for pos in db_positions
                 }

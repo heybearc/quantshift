@@ -232,6 +232,10 @@ class QuantShiftUnifiedBot:
             db_manager=self.state_manager.db
         )
         
+        risk_limits = self.config.get("risk_management") or {}
+        if self.strategy.risk_manager is not None and risk_limits.get("max_position_correlation") is not None:
+            self.strategy.risk_manager.max_position_correlation = float(risk_limits["max_position_correlation"])
+        
         logger.info(
             "orchestrator_initialized",
             num_strategies=len(self.strategies),
@@ -1012,6 +1016,25 @@ class QuantShiftUnifiedBot:
                     pass
                 self.db_conn = None
     
+    def _record_realized_closes(self, orders: List[Any]) -> None:
+        """Count a crypto close from its fill. A flat blink is not a loss."""
+        if "crypto" not in (self.bot_name or "") or not orders or not self.performance_tracker:
+            return
+        for order in orders:
+            if not isinstance(order, dict) or order.get("realized_pnl") is None:
+                continue
+            pnl = float(order["realized_pnl"])
+            if abs(pnl) < 0.01:
+                logger.info("scratch_close_ignored", symbol=order.get("symbol"), pnl=pnl)
+                continue
+            self.performance_tracker.update_strategy_performance(
+                bot_name=self.bot_name,
+                strategy_name=order.get("strategy") or "Unknown",
+                trade_pnl=pnl,
+                trade_pnl_pct=float(order.get("pnl_pct") or 0),
+                is_win=pnl > 0,
+            )
+
     def _record_trade_decisions(self, orders: List[Any]) -> None:
         """Store why each filled order happened. Does not place or change orders."""
         if not orders or not self.db_conn:
@@ -1100,8 +1123,10 @@ class QuantShiftUnifiedBot:
             # Get currently held symbols
             current_symbols = [pos.symbol for pos in positions] if positions else []
             
-            # Find positions that were closed (in DB but not in current positions)
-            if self.performance_tracker:
+            # A missing crypto symbol is not a closed trade. Paper positions
+            # blink out of a snapshot, and a flat blink was being stored as a loss.
+            # Crypto closes are recorded from the fill instead.
+            if self.performance_tracker and "crypto" not in (self.bot_name or ""):
                 cursor.execute("""
                     SELECT symbol, unrealized_pl, entry_price, current_price, strategy
                     FROM positions 
@@ -1153,21 +1178,22 @@ class QuantShiftUnifiedBot:
                 # Generate deterministic ID from bot_name and symbol
                 position_id = f"{self.bot_name}_{pos.symbol}"
                 
-                # Get strategy name from Redis (stored when signal was executed)
-                strategy_name = 'StrategyOrchestrator'  # Default
-                try:
-                    redis_key = f"bot:{self.bot_name}:position:{pos.symbol}"
-                    position_data = self.state_manager.redis_client.get(redis_key)
-                    if position_data:
-                        import json
-                        pos_dict = json.loads(position_data)
-                        strategy_name = pos_dict.get('strategy', 'StrategyOrchestrator')
-                except Exception as e:
-                    logger.debug("strategy_attribution_lookup_failed", symbol=pos.symbol, error=str(e))
-                
                 stop_loss = None
                 take_profit = None
                 meta = getattr(pos, "metadata", None) or {}
+                strategy_name = meta.get("strategy") or None
+                if not strategy_name:
+                    strategy_name = "Unknown"
+                    try:
+                        redis_key = f"bot:{self.bot_name}:position:{pos.symbol}"
+                        position_data = self.state_manager.redis_client.get(redis_key)
+                        if position_data:
+                            import json
+                            pos_dict = json.loads(position_data)
+                            strategy_name = pos_dict.get("strategy") or "Unknown"
+                    except Exception as e:
+                        logger.debug("strategy_attribution_lookup_failed", symbol=pos.symbol, error=str(e))
+               
                 if meta.get("stop_loss") is not None:
                     stop_loss = float(meta["stop_loss"])
                 if meta.get("take_profit") is not None:
@@ -1191,6 +1217,10 @@ class QuantShiftUnifiedBot:
                         stop_loss = COALESCE(EXCLUDED.stop_loss, positions.stop_loss),
                         take_profit = COALESCE(EXCLUDED.take_profit, positions.take_profit),
                         side = EXCLUDED.side,
+                        strategy = CASE
+                            WHEN EXCLUDED.strategy <> 'Unknown' THEN EXCLUDED.strategy
+                            ELSE positions.strategy
+                        END,
                         updated_at = NOW()
                 """, (
                     position_id,
@@ -1533,6 +1563,7 @@ class QuantShiftUnifiedBot:
                                 else cycle_result
                             )
                             self._record_trade_decisions(executed_orders or [])
+                            self._record_realized_closes(executed_orders or [])
                             self._store_vix_on_latest_regime()
                             
                             # Update state after cycle
