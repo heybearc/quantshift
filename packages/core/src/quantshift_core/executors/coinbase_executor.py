@@ -18,7 +18,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from coinbase.rest import RESTClient
 
-from quantshift_core.candles import AttachedFrame, drop_forming_candle
+from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 
@@ -180,6 +180,7 @@ class CoinbaseExecutor:
                     "stop_loss": pos.get("stop_loss"),
                     "take_profit": pos.get("take_profit"),
                     "strategy": pos.get("strategy"),
+                    "opened_at": pos.get("opened_at"),
                 },
             ))
         return positions
@@ -446,6 +447,37 @@ class CoinbaseExecutor:
         cache[symbol] = (now, frame)
         return frame
 
+    def _cached_noise(self, symbol: str) -> pd.DataFrame:
+        """Fifteen-minute bars for the band snap. Reused for three minutes."""
+        cache = getattr(self, "_noise_cache", None)
+        if cache is None:
+            self._noise_cache = {}
+            cache = self._noise_cache
+        cached = cache.get(symbol)
+        now = time.time()
+        if cached and now - cached[0] < 180:
+            return cached[1]
+        try:
+            frame = self.get_market_data(symbol, granularity="FIFTEEN_MINUTE")
+        except Exception as exc:
+            logger.warning("noise candles failed for %s: %s", symbol, exc)
+            frame = pd.DataFrame()
+        cache[symbol] = (now, frame)
+        return frame
+
+    def _band_mark(self, frame) -> Optional[float]:
+        noise = attached_frame(frame, "noise")
+        if noise is None:
+            return None
+        mark = getattr(noise, "attrs", {}).get("mark_price")
+        if mark and float(mark) > 0:
+            return float(mark)
+        for column in ("close", "Close"):
+            if column in noise.columns:
+                price = float(noise[column].iloc[-1])
+                return price if price > 0 else None
+        return None
+
     def get_market_data(
         self,
         symbol: str,
@@ -470,7 +502,12 @@ class CoinbaseExecutor:
             # Calculate start and end times
             # Coinbase limits to 350 candles max, so 14 days × 24 hours = 336 candles (safe)
             end_time = int(datetime.utcnow().timestamp())
-            lookback_days = 320 if granularity == "ONE_DAY" else 14
+            if granularity == "ONE_DAY":
+                lookback_days = 320
+            elif granularity == "FIFTEEN_MINUTE":
+                lookback_days = 3
+            else:
+                lookback_days = 14
             start_time = int((datetime.utcnow() - timedelta(days=lookback_days)).timestamp())
             
             # Fetch candles from Coinbase
@@ -530,6 +567,7 @@ class CoinbaseExecutor:
             bar_seconds = {
                 "ONE_MINUTE": 60,
                 "FIVE_MINUTE": 300,
+                "FIFTEEN_MINUTE": 900,
                 "ONE_HOUR": 3600,
                 "ONE_DAY": 86400,
             }.get(granularity, 3600)
@@ -547,6 +585,9 @@ class CoinbaseExecutor:
                 daily = self._cached_daily(symbol)
                 if daily is not None and len(daily):
                     df.attrs["daily"] = AttachedFrame(daily)
+                noise = self._cached_noise(symbol)
+                if noise is not None and len(noise):
+                    df.attrs["noise"] = AttachedFrame(noise)
 
             logger.debug(f"Fetched {len(df)} candles for {symbol}")
             return df
@@ -678,6 +719,8 @@ class CoinbaseExecutor:
                         if strategy_name:
                             pos["strategy"] = strategy_name
                             order["strategy"] = strategy_name
+                        if not pos.get("opened_at"):
+                            pos["opened_at"] = datetime.utcnow().replace(microsecond=0).isoformat()
                         if signal.stop_loss:
                             pos["stop_loss"] = float(signal.stop_loss)
                             order["stop_loss"] = pos["stop_loss"]
@@ -1051,7 +1094,11 @@ class CoinbaseExecutor:
             return []
         closed = []
         for symbol, pos in list(self._sim_positions.items()):
-            price = self._mark_price(market_data.get(symbol))
+            frame = market_data.get(symbol)
+            if pos.get("strategy") == "BandSnapSetup":
+                price = self._band_mark(frame) or self._mark_price(frame)
+            else:
+                price = self._mark_price(frame)
             if price is None:
                 continue
             pos["current_price"] = price
@@ -1228,6 +1275,7 @@ class CoinbaseExecutor:
                         "stop_loss": pos.get("stop_loss"),
                         "take_profit": pos.get("take_profit"),
                         "strategy": pos.get("strategy_name"),
+                        "opened_at": pos.get("created_at"),
                     }
                     for pos in db_positions
                 }

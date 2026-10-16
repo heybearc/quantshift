@@ -42,7 +42,7 @@ test.describe('Crypto and Kraken zone setup', () => {
       expect(EARLIER).toContain(row.strategyName);
     }
     for (const row of [...crypto, ...kraken]) {
-      expect([...EARLIER, ZONE, BREAKOUT]).toContain(row.strategyName);
+      expect([...EARLIER, ZONE, BREAKOUT, 'BandSnapSetup']).toContain(row.strategyName);
     }
 
     await page.goto('/performance');

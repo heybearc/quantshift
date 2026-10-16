@@ -256,6 +256,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
 
+## D-QS-018: Crypto noise is a third setup, the band snap
+- **Decision:** Coinbase and Kraken paper trading keep the washout and the volatility break, and add BandSnapSetup. It fades a finished 15-minute tag of a Bollinger band back to the middle, risks 0.25% of that setup's slice, and closes after three hours. Coinbase stays long only and skips a snap narrower than 1.2%. Kraken may short and skips a snap narrower than 0.6%. The new setup gets about a third of each crypto book. Fills stay tagged BandSnapSetup. Position caps and cash caps stay put.
+- **Why:** The two swing setups skip most of the day's movement. A separate mean-reversion setup can use that noise without loosening the swing rules.
+- **When:** 2026-10-16
+- **Do not:** Flatten books, reset the Kraken paper gap, start live capital, or move the 2026-10-13 clock. Score the band snap on its own.
+
 ## D-QS-017: Crypto and Kraken use two setups, equity keeps seven
 - **Decision:** Coinbase and Kraken paper trading use the daily washout setup and a volatility-break setup. Equity stays on its seven strategies. Coinbase is long only. Kraken may short. Leverage stays at 1. Coinbase may hold 12 names and Kraken 8, and the cash limits still bind first. The licensed chart source stays out of the repo.
 - **Why:** The same seven equity strategies were the wrong game for those books, and the washout alone is too quiet for a market that moves all day.

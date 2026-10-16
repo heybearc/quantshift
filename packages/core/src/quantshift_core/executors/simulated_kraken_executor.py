@@ -15,7 +15,7 @@ from decimal import Decimal
 
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
-from quantshift_core.candles import AttachedFrame, drop_forming_candle
+from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
@@ -175,6 +175,8 @@ class SimulatedKrakenExecutor:
                 metadata={
                     "stop_loss": pos_data.get("stop_loss"),
                     "take_profit": pos_data.get("take_profit"),
+                    "strategy": pos_data.get("strategy"),
+                    "opened_at": pos_data.get("opened_at"),
                 },
             )
             positions.append(position)
@@ -423,6 +425,44 @@ class SimulatedKrakenExecutor:
         cache[symbol] = (now, frame)
         return frame
 
+    def _cached_noise(self, symbol: str) -> Optional[pd.DataFrame]:
+        """Fifteen-minute bars for the band snap. Reused for three minutes."""
+        cache = getattr(self, "_noise_cache", None)
+        if cache is None:
+            self._noise_cache = {}
+            cache = self._noise_cache
+        cached = cache.get(symbol)
+        now = time.time()
+        if cached and now - cached[0] < 180:
+            return cached[1]
+        frame = self.get_market_data(symbol, days=4, interval=15)
+        cache[symbol] = (now, frame)
+        return frame
+
+    def _attach_lower_frames(self, df: pd.DataFrame, symbol: str) -> pd.DataFrame:
+        if df is None or len(df) == 0:
+            return df
+        entry = self._cached_entry(symbol)
+        if entry is not None and len(entry):
+            df.attrs["entry"] = AttachedFrame(entry)
+        noise = self._cached_noise(symbol)
+        if noise is not None and len(noise):
+            df.attrs["noise"] = AttachedFrame(noise)
+        return df
+
+    def _band_mark(self, frame) -> Optional[float]:
+        noise = attached_frame(frame, "noise")
+        if noise is None:
+            return None
+        mark = getattr(noise, "attrs", {}).get("mark_price")
+        if mark and float(mark) > 0:
+            return float(mark)
+        column = "close" if "close" in noise.columns else ("Close" if "Close" in noise.columns else None)
+        if column is None:
+            return None
+        price = float(noise[column].iloc[-1])
+        return price if price > 0 else None
+
     def get_market_data(self, symbol: str, days: int = 30, interval: int = 1440) -> Optional[pd.DataFrame]:
         """
         Fetch real historical market data from Kraken.
@@ -443,10 +483,7 @@ class SimulatedKrakenExecutor:
             now = time.time()
             if cached and now - cached[0] < 3600 and cached[1] is not None and len(cached[1]):
                 df = cached[1].copy()
-                entry = self._cached_entry(symbol)
-                if entry is not None and len(entry):
-                    df.attrs["entry"] = AttachedFrame(entry)
-                return df
+                return self._attach_lower_frames(df, symbol)
 
         try:
             since = int((datetime.now() - timedelta(days=days)).timestamp())
@@ -487,16 +524,17 @@ class SimulatedKrakenExecutor:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
             
             df.set_index('timestamp', inplace=True)
+            mark = float(df["close"].iloc[-1]) if len(df) else None
             df = drop_forming_candle(df, interval * 60)
+            if mark and len(df):
+                df.attrs["mark_price"] = mark
             if interval == 1440 and len(df):
                 cache = getattr(self, "_daily_cache", None)
                 if cache is None:
                     self._daily_cache = {}
                     cache = self._daily_cache
                 cache[symbol] = (time.time(), df.copy())
-                entry = self._cached_entry(symbol)
-                if entry is not None and len(entry):
-                    df.attrs["entry"] = AttachedFrame(entry)
+                df = self._attach_lower_frames(df, symbol)
             
             return df
             
@@ -550,11 +588,12 @@ class SimulatedKrakenExecutor:
             frame = market_data.get(symbol)
             if frame is None or len(frame) == 0:
                 continue
-            column = "close" if "close" in frame.columns else ("Close" if "Close" in frame.columns else None)
-            if column is None:
-                continue
-            price = float(frame[column].iloc[-1])
-            if price <= 0:
+            if pos.get("strategy") == "BandSnapSetup":
+                price = self._band_mark(frame)
+            else:
+                column = "close" if "close" in frame.columns else ("Close" if "Close" in frame.columns else None)
+                price = float(frame[column].iloc[-1]) if column else None
+            if price is None or price <= 0:
                 continue
             pos["current_price"] = price
             stop = pos.get("stop_loss")
@@ -629,9 +668,14 @@ class SimulatedKrakenExecutor:
             "margin": margin,
             "stop_loss": float(signal.stop_loss) if signal.stop_loss else None,
             "take_profit": float(signal.take_profit) if signal.take_profit else None,
+            "strategy": (signal.metadata or {}).get("strategy"),
+            "opened_at": datetime.utcnow().replace(microsecond=0).isoformat(),
         }
         logger.info("[SIMULATED] opened %s %s qty=%s @ %.4f", side, signal.symbol, qty, price)
-        return self._order_record(signal.symbol, "BUY" if side == "long" else "SELL", qty, price, signal.reason or "")
+        order = self._order_record(signal.symbol, "BUY" if side == "long" else "SELL", qty, price, signal.reason or "")
+        if self._positions[signal.symbol].get("strategy"):
+            order["strategy"] = self._positions[signal.symbol]["strategy"]
+        return order
 
     def _reduce_position(self, symbol: str, qty: float, price: float, order_side: str, reason: str) -> Optional[Dict[str, Any]]:
         pos = self._positions.get(symbol)
@@ -651,7 +695,10 @@ class SimulatedKrakenExecutor:
         if pos["quantity"] <= 1e-12:
             del self._positions[symbol]
         logger.info("[SIMULATED] reduced %s qty=%s @ %.4f pnl=%.2f", symbol, qty, price, pnl)
-        return self._order_record(symbol, order_side, qty, price, reason)
+        order = self._order_record(symbol, order_side, qty, price, reason)
+        if pos.get("strategy"):
+            order["strategy"] = pos.get("strategy")
+        return order
 
     def execute_signal(self, signal: Signal) -> Optional[Dict[str, Any]]:
         """Fill a paper Kraken order. Shorts are allowed. Nothing is sent to Kraken."""
@@ -705,6 +752,8 @@ class SimulatedKrakenExecutor:
                 "margin": margin,
                 "stop_loss": pos.get("stop_loss"),
                 "take_profit": pos.get("take_profit"),
+                "strategy": pos.get("strategy_name"),
+                "opened_at": pos.get("created_at"),
             }
         self._cash = max(0.0, float(self.simulated_capital) - margin_used)
         self._recovered_broker_count = len(self._positions)

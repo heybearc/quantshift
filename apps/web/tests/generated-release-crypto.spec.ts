@@ -16,6 +16,7 @@ const STRATEGIES = [
   'DonchianBreakoutStrategy',
   'TradeConfidentSetup',
   'VolatilityBreakoutSetup',
+  'BandSnapSetup',
 ];
 
 test.describe('Crypto strategy results', () => {

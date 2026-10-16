@@ -14,6 +14,7 @@ from .keltner_channel import KeltnerChannelStrategy
 from .vwap_reversion import VWAPReversionStrategy
 from .donchian_breakout import DonchianBreakoutStrategy
 from .trade_confident import TradeConfidentSetup, VolatilityBreakoutSetup
+from .band_snap import BandSnapSetup
 
 __all__ = [
     'BaseStrategy',
@@ -30,4 +31,5 @@ __all__ = [
     'DonchianBreakoutStrategy',
     'TradeConfidentSetup',
     'VolatilityBreakoutSetup',
+    'BandSnapSetup',
 ]

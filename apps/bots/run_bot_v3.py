@@ -48,6 +48,7 @@ from quantshift_core.strategies.vwap_reversion import VWAPReversionStrategy
 from quantshift_core.strategies.ma_crossover import MACrossoverStrategy
 from quantshift_core.strategies.donchian_breakout import DonchianBreakoutStrategy
 from quantshift_core.strategies.trade_confident import TradeConfidentSetup, VolatilityBreakoutSetup
+from quantshift_core.strategies.band_snap import BandSnapSetup
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
@@ -176,6 +177,7 @@ class QuantShiftUnifiedBot:
             'DonchianBreakoutStrategy': DonchianBreakoutStrategy,
             'TradeConfidentSetup': TradeConfidentSetup,
             'VolatilityBreakoutSetup': VolatilityBreakoutSetup,
+            'BandSnapSetup': BandSnapSetup,
         }
         
         portfolio_max_positions = self.config.get('risk_management', {}).get('max_positions', 10)

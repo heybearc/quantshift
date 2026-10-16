@@ -15,7 +15,7 @@ executor:
     min_volume: 1000000  # $1M 24h dollar volume
   simulated_capital: 5000  # Start with $5,000
 
-# Same two setups as Coinbase. Kraken may take the short side. No leverage.
+# Washout, volatility break, and a 15-minute band snap. Kraken may short. No leverage.
 strategies:
   - type: "TradeConfidentSetup"
     params:
@@ -27,11 +27,19 @@ strategies:
       risk_per_trade: 0.01
       max_notional: 0.08
       enable_shorts: true
+  - type: "BandSnapSetup"
+    params:
+      risk_per_trade: 0.0025
+      max_notional: 0.08
+      enable_shorts: true
+      min_reward_pct: 0.006
+      max_hold_minutes: 180
 
 orchestrator:
   capital_allocation:
-    TradeConfidentSetup: 0.40
-    VolatilityBreakoutSetup: 0.60
+    TradeConfidentSetup: 0.27
+    VolatilityBreakoutSetup: 0.40
+    BandSnapSetup: 0.33
 
 # Risk management - MARGIN TRADING SPECIFIC
 risk_management:

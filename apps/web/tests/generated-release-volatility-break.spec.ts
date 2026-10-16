@@ -17,6 +17,7 @@ const CRYPTO_STRATEGIES = [
   'StrategyOrchestrator',
   'TradeConfidentSetup',
   'VolatilityBreakoutSetup',
+  'BandSnapSetup',
 ];
 
 test.describe('Volatility break on crypto and Kraken', () => {
@@ -37,6 +38,7 @@ test.describe('Volatility break on crypto and Kraken', () => {
     expect(crypto.length).toBeGreaterThan(0);
     for (const row of equity) {
       expect(row.strategyName).not.toBe('VolatilityBreakoutSetup');
+      expect(row.strategyName).not.toBe('BandSnapSetup');
     }
     for (const row of [...crypto, ...kraken]) {
       expect(CRYPTO_STRATEGIES).toContain(row.strategyName);

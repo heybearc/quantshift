@@ -21,6 +21,17 @@ class AttachedFrame:
         return isinstance(other, AttachedFrame) and self.frame is other.frame
 
 
+def attached_frame(host: pd.DataFrame, key: str) -> Optional[pd.DataFrame]:
+    """Return a timeframe hung on a candle frame, if it has rows."""
+    if host is None:
+        return None
+    extra = getattr(host, "attrs", {}).get(key)
+    frame = extra.frame if isinstance(extra, AttachedFrame) else extra
+    if isinstance(frame, pd.DataFrame) and len(frame):
+        return frame
+    return None
+
+
 def drop_forming_candle(frame: pd.DataFrame, bar_seconds: int, now: Optional[datetime] = None) -> pd.DataFrame:
     """Remove the last row when that bar has not closed yet.
 
