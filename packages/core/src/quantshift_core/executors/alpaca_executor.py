@@ -617,7 +617,7 @@ class AlpacaExecutor:
         Returns a reason string if trading should be halted, None if clear.
         """
         limits = self.risk_config.get('limits', {})
-        max_daily_trades = limits.get('max_daily_trades', 10)
+        max_daily_trades = limits.get('max_daily_trades', self.risk_config.get('max_daily_trades'))
         max_daily_loss = self.risk_config.get('max_daily_loss', 0.05)
         max_drawdown = self.risk_config.get('max_drawdown', 0.15)
         max_positions = limits.get('max_positions', 5)
@@ -625,7 +625,9 @@ class AlpacaExecutor:
         if self._circuit_breaker_open:
             return "Circuit breaker already open from earlier this session"
 
-        if self._daily_trades >= max_daily_trades:
+        # A missing cap is not a limit of 10. Equity has no trade-count cap in its
+        # config, and hitting that default was stopping the rest of the session.
+        if max_daily_trades is not None and self._daily_trades >= int(max_daily_trades):
             return f"Max daily trades reached ({self._daily_trades}/{max_daily_trades})"
 
         # Daily loss check: unrealized + realized vs equity

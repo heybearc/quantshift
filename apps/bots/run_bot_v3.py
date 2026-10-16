@@ -1458,6 +1458,28 @@ class QuantShiftUnifiedBot:
         self._save_learned_state(state)
         logger.info("strategy_weights_updated", symbol=symbol, weights=weights)
 
+    def _refresh_closed_market_regime(self) -> None:
+        """Record equity's regime from the last daily bars while the market is closed.
+
+        The strategy cycle does not run after the close, so the regime reading
+        would otherwise freeze at the last open-market pass.
+        """
+        if not getattr(self, "_book_ready", False):
+            return
+        if not hasattr(self.executor, "get_market_data"):
+            return
+        if SYSTEMD_AVAILABLE:
+            daemon.notify("WATCHDOG=1")
+        frame = self.executor.get_market_data("SPY", days=200)
+        if frame is None or len(getattr(frame, "index", [])) < 30:
+            logger.warning("closed_market_regime_skipped", reason="not enough SPY history")
+            return
+        account = self.executor.get_account()
+        positions = self.executor.get_positions() or []
+        # Signals are discarded. This pass only stores the regime reading.
+        self.strategy.generate_signals({"_regime_SPY": frame}, account, positions)
+        logger.info("closed_market_regime_refreshed")
+
     def run(self):
         """Main bot loop with hot-standby failover support."""
         self.running = True
@@ -1599,6 +1621,11 @@ class QuantShiftUnifiedBot:
                             raise
                     else:
                         logger.debug("market_closed")
+                        if "equity" in (self.bot_name or ""):
+                            try:
+                                self._refresh_closed_market_regime()
+                            except Exception as exc:
+                                logger.warning("closed_market_regime_failed", error=str(exc))
                     
                     last_cycle_time = current_time
 
