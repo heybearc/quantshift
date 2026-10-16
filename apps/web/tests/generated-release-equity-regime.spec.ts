@@ -29,6 +29,7 @@ test.describe('Equity regime after the close', () => {
     expect(ageMs).toBeLessThan(30 * 60 * 1000);
 
     await page.goto('/regime');
-    await expect(page.getByText(/Bull Trending|Bear Trending|High Volatility|Low Volatility|Crisis|Unknown/).first()).toBeVisible();
+    await expect(page.getByText('Latest equity regime reading')).toBeVisible();
+    await expect(page.getByText(/Bull Trending|Bear Trending|High Vol Choppy|Low Vol Range|Crisis|Unknown/).first()).toBeVisible();
   });
 });
