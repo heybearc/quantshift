@@ -14,6 +14,7 @@ const STRATEGIES = [
   'BreakoutMomentum',
   'MACrossoverStrategy',
   'DonchianBreakoutStrategy',
+  'TradeConfidentSetup',
 ];
 
 test.describe('Crypto strategy results', () => {
