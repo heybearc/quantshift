@@ -9,10 +9,10 @@
 ## Current Task
 **Phase 1.5.9 paper validation** — clock stays on 2026-10-13. Do not move it. Do not start live capital. Window runs through about 2026-11-10.
 
-Public https://quantshift.io is green LIVE on v1.17.0 (`f452a35`). Blue standby is on the same commit. Equity still runs its seven strategies. Crypto and Kraken run the daily washout, the volatility break, and a 15-minute band snap. Coinbase is long only. Kraken may short, with no leverage. Open positions stay open. The band snap is scored on its own. The 2026-10-13 clock does not move.
+Public https://quantshift.io was green LIVE on v1.17.0. v1.18.0 adds the 15-minute band snap on the crypto and Kraken paper books. Equity still runs its seven strategies. Coinbase is long only. Kraken may short, with no leverage. Open positions stay open. The band snap is scored on its own. The 2026-10-13 clock does not move.
 
 ### What I'm doing right now
-Band snap is being added to the crypto and Kraken paper books. Equity stays on its seven strategies. The 2026-10-13 clock stays put.
+Shipping v1.18.0. The band snap is already on the paper bots. Equity stays on its seven strategies. The 2026-10-13 clock stays put.
 
 ### Recent completions
 - ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
