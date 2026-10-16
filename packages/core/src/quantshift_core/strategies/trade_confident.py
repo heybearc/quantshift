@@ -101,23 +101,71 @@ def average_true_range(frame: pd.DataFrame, period: int = 21) -> Optional[float]
     return float(value)
 
 
-def last_pivots(frame: pd.DataFrame, length: int = 12) -> Tuple[Optional[float], Optional[float]]:
-    """Last confirmed swing low and swing high. A pivot needs `length` bars on each side."""
+def swing_levels(frame: pd.DataFrame, length: int = 12) -> Tuple[List[float], List[float]]:
+    """Confirmed swing highs and swing lows. A pivot needs `length` bars on each side."""
     data = _columns(frame)
     if data is None or len(data) < (length * 2 + 1):
-        return None, None
+        return [], []
     high = data["high"].astype(float).to_numpy()
     low = data["low"].astype(float).to_numpy()
-    support = None
-    resistance = None
+    highs: List[float] = []
+    lows: List[float] = []
     for index in range(length, len(data) - length):
-        high_window = high[index - length:index + length + 1]
-        low_window = low[index - length:index + length + 1]
-        if high[index] == high_window.max():
-            resistance = float(high[index])
-        if low[index] == low_window.min():
-            support = float(low[index])
+        if high[index] == high[index - length:index + length + 1].max():
+            highs.append(float(high[index]))
+        if low[index] == low[index - length:index + length + 1].min():
+            lows.append(float(low[index]))
+    return highs, lows
+
+
+def last_pivots(frame: pd.DataFrame, length: int = 12) -> Tuple[Optional[float], Optional[float]]:
+    """Last confirmed swing low and swing high."""
+    highs, lows = swing_levels(frame, length)
+    support = lows[-1] if lows else None
+    resistance = highs[-1] if highs else None
     return support, resistance
+
+
+def nearest_below(levels: List[float], price: float) -> Optional[float]:
+    below = [level for level in levels if level < price]
+    return max(below) if below else None
+
+
+def nearest_above(levels: List[float], price: float) -> Optional[float]:
+    above = [level for level in levels if level > price]
+    return min(above) if above else None
+
+
+def volatility_rsi(frame: pd.DataFrame, length: int = 8) -> Optional[float]:
+    """RSI of bar-range volatility. Under 15 is the compressed breakout zone."""
+    data = _columns(frame)
+    if data is None or len(data) < length * 4:
+        return None
+    high = data["high"].astype(float)
+    low = data["low"].astype(float).clip(lower=1e-12)
+    typical = (high + low + data["close"].astype(float)) / 3.0
+    logged = np.log((high / low).replace(0, np.nan)).pow(2)
+    total = logged.rolling(length).sum()
+    width = (typical / ((length * 4) * np.log(2)) * total).clip(lower=0)
+    reading = _rsi(np.sqrt(width), length).iloc[-1]
+    if pd.isna(reading):
+        return None
+    return float(reading)
+
+
+def trend_points(frame: pd.DataFrame, side: str) -> bool:
+    """The daily close is on the same side of the 200-day average as the trade."""
+    data = _columns(frame)
+    if data is None or len(data) < 200:
+        return False
+    close = data["close"].astype(float)
+    average = close.rolling(200).mean().iloc[-1]
+    if pd.isna(average):
+        return False
+    price = float(close.iloc[-1])
+    if side == "long":
+        return price > float(average)
+    return price < float(average)
 
 
 def reversal_bar(frame: pd.DataFrame, qual: int = 2, length: int = 10) -> int:
@@ -308,6 +356,7 @@ class TradeConfidentSetup(BaseStrategy):
         room: float,
         account: Account,
         name: str,
+        label: str = "trade confident",
     ) -> List[Signal]:
         if name == "long":
             stop = pivot - (0.25 * room)
@@ -340,6 +389,71 @@ class TradeConfidentSetup(BaseStrategy):
             stop_loss=stop,
             take_profit=target,
             position_size=quantity,
-            reason=f"trade confident {name}",
+            reason=f"{label} {name}",
             metadata={"strategy": self.name, "side": name, "pivot": pivot},
         )]
+
+
+class VolatilityBreakoutSetup(TradeConfidentSetup):
+    """Trade a pivot break while bar-range volatility is compressed.
+
+    The daily close only has to sit on the same side of the 200-day average.
+    A coin already held is left alone. Shorts require enable_shorts.
+    """
+
+    def generate_signals(self, market_data: pd.DataFrame, account: Account, positions: List[Position]) -> List[Signal]:
+        symbol = getattr(market_data, "symbol", None)
+        if not symbol or self.held_position(positions, symbol) is not None:
+            return []
+        daily, entry = self._frames(market_data)
+        if daily is None or entry is None:
+            return []
+        squeezed = volatility_rsi(entry)
+        room = average_true_range(entry)
+        if squeezed is None or squeezed >= 15 or room is None:
+            return []
+        data = _columns(entry)
+        close = data["close"].astype(float)
+        if len(close) < 2:
+            return []
+        price = float(close.iloc[-1])
+        previous = float(close.iloc[-2])
+        highs, lows = swing_levels(entry)
+        if trend_points(daily, "long"):
+            pivot = nearest_below(highs, price)
+            if pivot is not None and previous <= pivot < price:
+                return self._breakout_order(symbol, SignalType.BUY, price, pivot, nearest_above(highs, price), room, account, "long")
+        if self.shorts_enabled() and trend_points(daily, "short"):
+            pivot = nearest_above(lows, price)
+            if pivot is not None and previous >= pivot > price:
+                return self._breakout_order(symbol, SignalType.SELL, price, pivot, nearest_below(lows, price), room, account, "short")
+        return []
+
+    def _breakout_order(
+        self,
+        symbol: str,
+        side: SignalType,
+        price: float,
+        pivot: float,
+        opposite: Optional[float],
+        room: float,
+        account: Account,
+        name: str,
+    ) -> List[Signal]:
+        if name == "long":
+            stop = pivot - (0.25 * room)
+            if stop >= price:
+                return []
+            if opposite is not None and opposite - price < (price - stop) * 2:
+                return []
+            if opposite is None:
+                opposite = price + ((price - stop) * 2)
+        else:
+            stop = pivot + (0.25 * room)
+            if stop <= price:
+                return []
+            if opposite is not None and price - opposite < (stop - price) * 2:
+                return []
+            if opposite is None:
+                opposite = price - ((stop - price) * 2)
+        return self._order(symbol, side, price, pivot, opposite, room, account, name, "volatility breakout")

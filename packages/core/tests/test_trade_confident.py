@@ -31,9 +31,11 @@ from quantshift_core.candles import AttachedFrame
 from quantshift_core.strategies.base_strategy import Account, Position, SignalType
 from quantshift_core.strategies.trade_confident import (
     TradeConfidentSetup,
+    VolatilityBreakoutSetup,
     reversal_bar,
     trades_in_favor,
     trend_agrees,
+    volatility_rsi,
     whale_contradicts,
 )
 from quantshift_core.strategy_orchestrator import _scale_size
@@ -140,6 +142,27 @@ def test_the_hourly_bars_do_not_break_the_daily_math():
     close = daily["close"]
     span = pd.concat([(high - low), (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1)
     assert float(span.max(axis=1).iloc[-1]) > 0
+
+
+def test_a_quiet_stretch_is_the_breakout_zone():
+    closes = []
+    price = 100.0
+    for index in range(80):
+        price += 0.8 if index < 30 else 0.02
+        closes.append(price)
+    frame = _frame(closes, spread=1.0)
+    frame.loc[frame.index[:30], "high"] = frame.loc[frame.index[:30], "close"] + 4
+    frame.loc[frame.index[:30], "low"] = frame.loc[frame.index[:30], "close"] - 4
+    frame.loc[frame.index[30:], "high"] = frame.loc[frame.index[30:], "close"] + 0.05
+    frame.loc[frame.index[30:], "low"] = frame.loc[frame.index[30:], "close"] - 0.05
+    reading = volatility_rsi(frame)
+    assert reading is not None
+    assert reading < 15
+
+
+def test_coinbase_breakout_does_not_open_a_short():
+    strategy = VolatilityBreakoutSetup(config={"enable_shorts": False})
+    assert strategy.shorts_enabled() is False
 
 
 def test_trend_needs_a_full_daily_history():

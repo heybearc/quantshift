@@ -1141,23 +1141,22 @@ class CoinbaseExecutor:
                     self.risk_config.get('limits', {}).get('max_positions', 8),
                 )
             )
-            at_max_positions = len(positions) >= max_positions
-            
-            if at_max_positions:
+            open_count = len(positions)
+            if open_count >= max_positions:
                 logger.warning(
                     "At max positions (%s/%s) - blocking BUY signals",
-                    len(positions),
+                    open_count,
                     max_positions,
                 )
             
             # 4. Execute signals
             for signal in signals:
                 # Skip BUY signals if at max positions
-                if signal.signal_type == SignalType.BUY and at_max_positions:
+                if signal.signal_type == SignalType.BUY and open_count >= max_positions:
                     logger.warning(
                         "BUY blocked at max positions for %s (%s/%s): %s",
                         signal.symbol,
-                        len(positions),
+                        open_count,
                         max_positions,
                         signal.reason,
                     )
@@ -1174,6 +1173,8 @@ class CoinbaseExecutor:
 
                 order = self.execute_signal(signal)
                 if order:
+                    if signal.signal_type == SignalType.BUY:
+                        open_count += 1
                     if bar_key:
                         self._traded_bar[signal.symbol] = bar_key
                     executed_orders.append(order)

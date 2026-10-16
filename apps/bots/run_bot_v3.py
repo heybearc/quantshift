@@ -47,7 +47,7 @@ from quantshift_core.strategies.keltner_channel import KeltnerChannelStrategy
 from quantshift_core.strategies.vwap_reversion import VWAPReversionStrategy
 from quantshift_core.strategies.ma_crossover import MACrossoverStrategy
 from quantshift_core.strategies.donchian_breakout import DonchianBreakoutStrategy
-from quantshift_core.strategies.trade_confident import TradeConfidentSetup
+from quantshift_core.strategies.trade_confident import TradeConfidentSetup, VolatilityBreakoutSetup
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
@@ -175,6 +175,7 @@ class QuantShiftUnifiedBot:
             'MACrossoverStrategy': MACrossoverStrategy,
             'DonchianBreakoutStrategy': DonchianBreakoutStrategy,
             'TradeConfidentSetup': TradeConfidentSetup,
+            'VolatilityBreakoutSetup': VolatilityBreakoutSetup,
         }
         
         portfolio_max_positions = self.config.get('risk_management', {}).get('max_positions', 10)
@@ -249,7 +250,11 @@ class QuantShiftUnifiedBot:
         saved_weights = self._load_learned_state().get("weights")
         if isinstance(saved_weights, dict) and saved_weights:
             self.strategy.learned_weights = saved_weights
-            self.strategy.capital_allocation = saved_weights
+            loaded = {strategy.name for strategy in self.strategies}
+            kept = {name: float(weight) for name, weight in saved_weights.items() if name in loaded}
+            total = sum(kept.values())
+            if total > 0:
+                self.strategy.capital_allocation = {name: weight / total for name, weight in kept.items()}
     
     def _init_executor(self):
         """Initialize broker-specific executor."""

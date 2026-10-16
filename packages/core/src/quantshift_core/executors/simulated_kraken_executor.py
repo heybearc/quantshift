@@ -780,11 +780,26 @@ class SimulatedKrakenExecutor:
             if not signals:
                 logger.debug("[SIMULATED] No signals generated")
                 return executed_orders
+
+            max_positions = int(self.risk_config.get("max_positions", 8))
+            open_count = len(positions)
             
             # 5. Execute signals (simulated)
             for signal in signals:
+                held = next((item for item in positions if item.symbol == signal.symbol), None)
+                opens_new = held is None and signal.signal_type in (SignalType.BUY, SignalType.SELL)
+                if opens_new and open_count >= max_positions:
+                    logger.warning(
+                        "[SIMULATED] new position blocked at max for %s (%s/%s)",
+                        signal.symbol,
+                        open_count,
+                        max_positions,
+                    )
+                    continue
                 order = self.execute_signal(signal)
                 if order:
+                    if opens_new:
+                        open_count += 1
                     executed_orders.append(order)
                     self._daily_trades += 1
             

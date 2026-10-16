@@ -13,9 +13,14 @@ executor:
     min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: 10000  # Paper trading with $10,000 simulated capital
 
-# One setup. Coinbase stays long only.
+# Washout setup plus a volatility break. Coinbase stays long only.
 strategies:
   - type: "TradeConfidentSetup"
+    params:
+      risk_per_trade: 0.01
+      max_notional: 0.20
+      enable_shorts: false
+  - type: "VolatilityBreakoutSetup"
     params:
       risk_per_trade: 0.01
       max_notional: 0.20
@@ -24,7 +29,8 @@ strategies:
 # Strategy orchestrator configuration
 orchestrator:
   capital_allocation:
-    TradeConfidentSetup: 1.0
+    TradeConfidentSetup: 0.40
+    VolatilityBreakoutSetup: 0.60
   
   use_regime_detection: true
   use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)
@@ -78,7 +84,7 @@ risk_management:
   # SAFE PAPER TRADING LIMITS (No Leverage)
   max_leverage: 1.0  # NO LEVERAGE - cash only
   max_position_size: 0.20  # Max 20% per position (strategies have 15% internal cap)
-  max_positions: 8  # Max 8 concurrent positions
+  max_positions: 12  # Count cap. Cash still stops at 80% deployed.
   max_capital_deployed: 0.80  # Max 80% of capital deployed (crypto is 24/7)
   
   # Portfolio risk limits

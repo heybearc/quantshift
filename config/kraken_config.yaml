@@ -15,13 +15,23 @@ executor:
     min_volume: 1000000  # $1M 24h dollar volume
   simulated_capital: 5000  # Start with $5,000
 
-# Same setup as Coinbase. Kraken may take the short side. No leverage.
+# Same two setups as Coinbase. Kraken may take the short side. No leverage.
 strategies:
   - type: "TradeConfidentSetup"
     params:
       risk_per_trade: 0.01
       max_notional: 0.08
       enable_shorts: true
+  - type: "VolatilityBreakoutSetup"
+    params:
+      risk_per_trade: 0.01
+      max_notional: 0.08
+      enable_shorts: true
+
+orchestrator:
+  capital_allocation:
+    TradeConfidentSetup: 0.40
+    VolatilityBreakoutSetup: 0.60
 
 # Risk management - MARGIN TRADING SPECIFIC
 risk_management:
@@ -32,7 +42,7 @@ risk_management:
   
   # Position limits (more conservative for margin)
   max_position_size: 0.08  # Max 8% per position (lower for margin risk)
-  max_positions: 6  # Max 6 concurrent positions
+  max_positions: 8  # 8 x 8% stays inside the 70% capital cap
   max_capital_deployed: 0.70  # Max 70% of capital deployed
   
   # Portfolio risk limits
