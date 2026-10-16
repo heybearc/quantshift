@@ -8,96 +8,25 @@ bot_type: "crypto"
 executor:
   type: "kraken"
   simulation_mode: true  # Set to false when ready for live trading
-  max_leverage: 2.0  # Conservative 2x leverage (max 5x available)
+  max_leverage: 1.0
   use_dynamic_symbols: true  # Re-rank the curated USD list by live dollar volume
   symbol_universe:
     max_symbols: 25
     min_volume: 1000000  # $1M 24h dollar volume
   simulated_capital: 5000  # Start with $5,000
 
-# Strategy configuration - same seven as crypto, with shorts and take-profit
+# Same setup as Coinbase. Kraken may take the short side. No leverage.
 strategies:
-  - type: "BollingerBounce"
+  - type: "TradeConfidentSetup"
     params:
-      bb_period: 20
-      bb_std: 2.5
-      rsi_period: 14
-      rsi_entry_threshold: 50
-      atr_period: 14
-      atr_sl_multiplier: 2.0
-      risk_per_trade: 0.02
-      enable_shorts: true
-
-  - type: "RSIMeanReversion"
-    params:
-      rsi_period: 14
-      rsi_oversold: 25
-      rsi_overbought: 75
-      atr_period: 14
-      atr_sl_multiplier: 2.5
-      atr_tp_multiplier: 4.0
-      risk_per_trade: 0.02
-      enable_shorts: true
-
-  - type: "KeltnerChannelStrategy"
-    params:
-      ema_period: 20
-      atr_period: 14
-      atr_multiplier: 2.5
-      rsi_period: 14
-      rsi_buy_threshold: 40
-      rsi_sell_threshold: 60
-      risk_per_trade: 0.02
-      volume_confirmation: true
-      enable_shorts: true
-
-  - type: "VWAPReversionStrategy"
-    params:
-      vwap_std_multiplier: 2.5
-      volume_spike_threshold: 1.5
-      atr_period: 14
-      atr_sl_multiplier: 2.5
-      atr_tp_multiplier: 4.0
-      risk_per_trade: 0.02
-      enable_shorts: true
-
-  - type: "BreakoutMomentum"
-    params:
-      breakout_period: 15
-      volume_multiplier: 2.0
-      atr_period: 14
-      atr_trail_multiplier: 2.0
-      breakdown_period: 10
-      risk_per_trade: 0.02
-      enable_shorts: true
-
-  - type: "MACrossoverStrategy"
-    params:
-      short_window: 10
-      long_window: 30
-      atr_period: 14
-      risk_per_trade: 0.02
-      volume_confirmation: true
-      trend_confirmation: false
-      support_resistance_filter: true
-      enable_shorts: true
-
-  - type: "DonchianBreakoutStrategy"
-    params:
-      entry_period: 20
-      exit_period: 10
-      atr_period: 14
-      atr_sl_multiplier: 2.5
-      atr_trail_multiplier: 3.0
-      risk_per_trade: 0.02
-      volume_confirmation: true
-      min_atr_filter: 0.0
+      risk_per_trade: 0.01
+      max_notional: 0.08
       enable_shorts: true
 
 # Risk management - MARGIN TRADING SPECIFIC
 risk_management:
   # Leverage and margin limits
-  max_leverage: 2.0  # Conservative 2x (can go up to 5x)
+  max_leverage: 1.0
   max_margin_usage: 0.70  # Use max 70% of available margin
   liquidation_buffer: 0.30  # Keep 30% buffer from liquidation price
   

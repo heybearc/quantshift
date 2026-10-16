@@ -30,6 +30,14 @@ def _db_float(value: Any) -> Optional[float]:
         return None
 
 
+def _scale_size(size: float, factor: float) -> float:
+    """Scale a position. Whole share counts stay whole. A fractional coin quantity stays fractional."""
+    scaled = float(size) * float(factor)
+    if float(size) == int(float(size)) and float(size) >= 1:
+        return int(scaled)
+    return scaled
+
+
 class StrategyOrchestrator:
     """
     Orchestrates multiple trading strategies with capital allocation.
@@ -278,6 +286,8 @@ class StrategyOrchestrator:
                 
                 # Merge regime allocation with current allocation
                 # Ensure all loaded strategies have allocation
+                loaded = {s.name for s in self.strategies}
+                allocation_dict = {k: v for k, v in allocation_dict.items() if k in loaded}
                 missing_strategies = [s.name for s in self.strategies if s.name not in allocation_dict]
                 if missing_strategies:
                     # Give missing strategies equal share of remaining allocation
@@ -298,6 +308,15 @@ class StrategyOrchestrator:
                         self.capital_allocation,
                         self.learned_weights,
                     )
+                    loaded = {s.name for s in self.strategies}
+                    self.capital_allocation = {
+                        name: weight for name, weight in self.capital_allocation.items() if name in loaded
+                    }
+                    total = sum(self.capital_allocation.values())
+                    if total > 0:
+                        self.capital_allocation = {
+                            name: weight / total for name, weight in self.capital_allocation.items()
+                        }
                 
                 self.logger.info(
                     "regime_allocation_updated",
@@ -424,7 +443,7 @@ class StrategyOrchestrator:
                         # Apply regime risk multiplier to position size
                         if self.use_regime_detection and signal.position_size:
                             original_size = signal.position_size
-                            signal.position_size = int(signal.position_size * self.regime_risk_multiplier)
+                            signal.position_size = _scale_size(signal.position_size, self.regime_risk_multiplier)
                             signal.metadata['regime'] = self.current_regime.value
                             signal.metadata['risk_multiplier'] = self.regime_risk_multiplier
                             signal.metadata['original_position_size'] = original_size
@@ -457,7 +476,7 @@ class StrategyOrchestrator:
                             # Apply confidence boost to position size
                             if signal.position_size and confidence_boost != 1.0:
                                 original_size = signal.position_size
-                                signal.position_size = int(signal.position_size * confidence_boost)
+                                signal.position_size = _scale_size(signal.position_size, confidence_boost)
                                 signal.metadata['sentiment_boost'] = confidence_boost
                                 signal.metadata['sentiment_adjusted_from'] = original_size
                     

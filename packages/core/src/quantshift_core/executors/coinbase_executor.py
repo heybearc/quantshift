@@ -428,6 +428,24 @@ class CoinbaseExecutor:
             logger.error(f"Error fetching positions: {e}", exc_info=True)
             return []
     
+    def _cached_daily(self, symbol: str) -> pd.DataFrame:
+        """Daily history for the higher-timeframe reading. Reused for an hour."""
+        cache = getattr(self, "_daily_cache", None)
+        if cache is None:
+            self._daily_cache = {}
+            cache = self._daily_cache
+        cached = cache.get(symbol)
+        now = time.time()
+        if cached and now - cached[0] < 3600:
+            return cached[1]
+        try:
+            frame = self.get_market_data(symbol, granularity="ONE_DAY")
+        except Exception as exc:
+            logger.warning("daily candles failed for %s: %s", symbol, exc)
+            frame = pd.DataFrame()
+        cache[symbol] = (now, frame)
+        return frame
+
     def get_market_data(
         self,
         symbol: str,
@@ -452,7 +470,8 @@ class CoinbaseExecutor:
             # Calculate start and end times
             # Coinbase limits to 350 candles max, so 14 days × 24 hours = 336 candles (safe)
             end_time = int(datetime.utcnow().timestamp())
-            start_time = int((datetime.utcnow() - timedelta(days=14)).timestamp())
+            lookback_days = 320 if granularity == "ONE_DAY" else 14
+            start_time = int((datetime.utcnow() - timedelta(days=lookback_days)).timestamp())
             
             # Fetch candles from Coinbase
             logger.debug(
@@ -524,6 +543,10 @@ class CoinbaseExecutor:
             # so a stop can trigger before that hour closes.
             df.symbol = symbol
             df.attrs["mark_price"] = mark_price
+            if granularity == "ONE_HOUR":
+                daily = self._cached_daily(symbol)
+                if daily is not None and len(daily):
+                    df.attrs["daily"] = daily
 
             logger.debug(f"Fetched {len(df)} candles for {symbol}")
             return df

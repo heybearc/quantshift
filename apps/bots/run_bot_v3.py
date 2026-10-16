@@ -47,6 +47,7 @@ from quantshift_core.strategies.keltner_channel import KeltnerChannelStrategy
 from quantshift_core.strategies.vwap_reversion import VWAPReversionStrategy
 from quantshift_core.strategies.ma_crossover import MACrossoverStrategy
 from quantshift_core.strategies.donchian_breakout import DonchianBreakoutStrategy
+from quantshift_core.strategies.trade_confident import TradeConfidentSetup
 from quantshift_core.strategy_orchestrator import StrategyOrchestrator
 from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
@@ -173,6 +174,7 @@ class QuantShiftUnifiedBot:
             'VWAPReversionStrategy': VWAPReversionStrategy,
             'MACrossoverStrategy': MACrossoverStrategy,
             'DonchianBreakoutStrategy': DonchianBreakoutStrategy,
+            'TradeConfidentSetup': TradeConfidentSetup,
         }
         
         portfolio_max_positions = self.config.get('risk_management', {}).get('max_positions', 10)

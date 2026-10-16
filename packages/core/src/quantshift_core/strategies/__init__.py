@@ -13,6 +13,7 @@ from .breakout_momentum import BreakoutMomentum
 from .keltner_channel import KeltnerChannelStrategy
 from .vwap_reversion import VWAPReversionStrategy
 from .donchian_breakout import DonchianBreakoutStrategy
+from .trade_confident import TradeConfidentSetup
 
 __all__ = [
     'BaseStrategy',
@@ -27,4 +28,5 @@ __all__ = [
     'KeltnerChannelStrategy',
     'VWAPReversionStrategy',
     'DonchianBreakoutStrategy',
+    'TradeConfidentSetup',
 ]

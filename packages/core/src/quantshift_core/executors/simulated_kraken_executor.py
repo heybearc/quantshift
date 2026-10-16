@@ -15,6 +15,7 @@ from decimal import Decimal
 
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
+from quantshift_core.candles import drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
@@ -408,7 +409,21 @@ class SimulatedKrakenExecutor:
             order_type='market'
         )
     
-    def get_market_data(self, symbol: str, days: int = 30) -> Optional[pd.DataFrame]:
+    def _cached_entry(self, symbol: str) -> Optional[pd.DataFrame]:
+        """Hourly bars for the entry trigger. Reused for ten minutes."""
+        cache = getattr(self, "_entry_cache", None)
+        if cache is None:
+            self._entry_cache = {}
+            cache = self._entry_cache
+        cached = cache.get(symbol)
+        now = time.time()
+        if cached and now - cached[0] < 600:
+            return cached[1]
+        frame = self.get_market_data(symbol, days=20, interval=60)
+        cache[symbol] = (now, frame)
+        return frame
+
+    def get_market_data(self, symbol: str, days: int = 30, interval: int = 1440) -> Optional[pd.DataFrame]:
         """
         Fetch real historical market data from Kraken.
         
@@ -419,8 +434,21 @@ class SimulatedKrakenExecutor:
         Returns:
             DataFrame with OHLCV data
         """
+        if interval == 1440:
+            cache = getattr(self, "_daily_cache", None)
+            if cache is None:
+                self._daily_cache = {}
+                cache = self._daily_cache
+            cached = cache.get(symbol)
+            now = time.time()
+            if cached and now - cached[0] < 3600 and cached[1] is not None and len(cached[1]):
+                df = cached[1].copy()
+                entry = self._cached_entry(symbol)
+                if entry is not None and len(entry):
+                    df.attrs["entry"] = entry
+                return df
+
         try:
-            interval = 1440  # 1 day
             since = int((datetime.now() - timedelta(days=days)).timestamp())
             
             response = kraken_public('OHLC', {
@@ -459,6 +487,16 @@ class SimulatedKrakenExecutor:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
             
             df.set_index('timestamp', inplace=True)
+            df = drop_forming_candle(df, interval * 60)
+            if interval == 1440 and len(df):
+                cache = getattr(self, "_daily_cache", None)
+                if cache is None:
+                    self._daily_cache = {}
+                    cache = self._daily_cache
+                cache[symbol] = (time.time(), df.copy())
+                entry = self._cached_entry(symbol)
+                if entry is not None and len(entry):
+                    df.attrs["entry"] = entry
             
             return df
             
