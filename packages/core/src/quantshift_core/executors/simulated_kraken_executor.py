@@ -15,7 +15,7 @@ from decimal import Decimal
 
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
-from quantshift_core.candles import drop_forming_candle
+from quantshift_core.candles import AttachedFrame, drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
@@ -445,7 +445,7 @@ class SimulatedKrakenExecutor:
                 df = cached[1].copy()
                 entry = self._cached_entry(symbol)
                 if entry is not None and len(entry):
-                    df.attrs["entry"] = entry
+                    df.attrs["entry"] = AttachedFrame(entry)
                 return df
 
         try:
@@ -496,7 +496,7 @@ class SimulatedKrakenExecutor:
                 cache[symbol] = (time.time(), df.copy())
                 entry = self._cached_entry(symbol)
                 if entry is not None and len(entry):
-                    df.attrs["entry"] = entry
+                    df.attrs["entry"] = AttachedFrame(entry)
             
             return df
             

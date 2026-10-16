@@ -6,6 +6,21 @@ from typing import Optional
 import pandas as pd
 
 
+class AttachedFrame:
+    """A second timeframe hung on a candle frame.
+
+    Pandas compares ``attrs`` while it joins columns. A raw frame in that
+    dictionary makes the comparison blow up, so the extra bars sit behind
+    an equality check that returns a plain true or false.
+    """
+
+    def __init__(self, frame: pd.DataFrame):
+        self.frame = frame
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, AttachedFrame) and self.frame is other.frame
+
+
 def drop_forming_candle(frame: pd.DataFrame, bar_seconds: int, now: Optional[datetime] = None) -> pd.DataFrame:
     """Remove the last row when that bar has not closed yet.
 

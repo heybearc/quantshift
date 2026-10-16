@@ -27,6 +27,7 @@ except ImportError:
     _stub("sklearn.preprocessing", StandardScaler=_Unused)
     _stub("sklearn.metrics", classification_report=_Unused, accuracy_score=_Unused)
 
+from quantshift_core.candles import AttachedFrame
 from quantshift_core.strategies.base_strategy import Account, Position, SignalType
 from quantshift_core.strategies.trade_confident import (
     TradeConfidentSetup,
@@ -128,6 +129,17 @@ def test_an_open_position_is_left_alone():
     )
     account = Account(equity=10000, cash=10000, buying_power=10000)
     assert strategy.generate_signals(frame, account, [held]) == []
+
+
+def test_the_hourly_bars_do_not_break_the_daily_math():
+    daily = _frame([100 + index for index in range(40)])
+    hourly = _frame([100 + index * 0.1 for index in range(40)])
+    daily.attrs["entry"] = AttachedFrame(hourly)
+    high = daily["high"]
+    low = daily["low"]
+    close = daily["close"]
+    span = pd.concat([(high - low), (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1)
+    assert float(span.max(axis=1).iloc[-1]) > 0
 
 
 def test_trend_needs_a_full_daily_history():

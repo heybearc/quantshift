@@ -11,6 +11,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from ..candles import AttachedFrame
 from .base_strategy import Account, BaseStrategy, Position, Signal, SignalType
 
 
@@ -22,6 +23,13 @@ def _columns(frame: pd.DataFrame) -> Optional[pd.DataFrame]:
     if not needed.issubset(renamed.columns):
         return None
     return renamed
+
+
+def _unwrap(value) -> Optional[pd.DataFrame]:
+    frame = value.frame if isinstance(value, AttachedFrame) else value
+    if isinstance(frame, pd.DataFrame) and len(frame):
+        return frame
+    return None
 
 
 def _is_daily(frame: pd.DataFrame) -> bool:
@@ -279,8 +287,8 @@ class TradeConfidentSetup(BaseStrategy):
         return budget / risk
 
     def _frames(self, market_data: pd.DataFrame) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
-        daily = market_data.attrs.get("daily")
-        entry = market_data.attrs.get("entry")
+        daily = _unwrap(market_data.attrs.get("daily"))
+        entry = _unwrap(market_data.attrs.get("entry"))
         if daily is None and _is_daily(market_data):
             daily = market_data
         if entry is None and not _is_daily(market_data):

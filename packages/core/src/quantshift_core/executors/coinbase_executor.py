@@ -18,7 +18,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from coinbase.rest import RESTClient
 
-from quantshift_core.candles import drop_forming_candle
+from quantshift_core.candles import AttachedFrame, drop_forming_candle
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 
@@ -546,7 +546,7 @@ class CoinbaseExecutor:
             if granularity == "ONE_HOUR":
                 daily = self._cached_daily(symbol)
                 if daily is not None and len(daily):
-                    df.attrs["daily"] = daily
+                    df.attrs["daily"] = AttachedFrame(daily)
 
             logger.debug(f"Fetched {len(df)} candles for {symbol}")
             return df
