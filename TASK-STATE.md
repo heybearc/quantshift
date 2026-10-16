@@ -1,46 +1,40 @@
 # QuantShift Task State
 
-**Last updated:** 2026-10-13  
-**Current branch:** main  
-**Working on:** Phase 1.5.9 paper validation — day 1 of the window that started 2026-10-13
+**Last updated:** 2026-10-16
+**Current branch:** main
+**Working on:** Phase 1.5.9 paper validation — day 4 of the window that started 2026-10-13
 
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — clock restarted 2026-10-13. The prior window failed must-pass checks: crypto had no stored stops, and equity was over its 10-position cap.
+**Phase 1.5.9 paper validation** — clock stays on 2026-10-13. Do not move it. Do not start live capital. Window runs through about 2026-11-10.
 
-Crypto paper cash starts at $10,000. Kraken paper cash starts at $5,000 and stays in simulation. Alpaca paper equity is the broker account after the old book was closed. It was not rewritten to $100,000. Do not start live capital. Window runs through about 2026-11-10.
+Public https://quantshift.io is green LIVE on v1.17.0 (`f452a35`). Blue standby is on the same commit. Equity still runs its seven strategies. Crypto and Kraken run the daily washout setup and the volatility break. Coinbase is long only. Kraken may short, with no leverage. Open positions were not closed when those setups changed.
 
 ### What I'm doing right now
-The three bots are running on `8ad01c1`. Crypto holds 3 positions, all with stops. Kraken holds 2 positions, both with stops. Equity was flattened at the open on 2026-10-13 after shorts appeared, then it opened 6 new longs. Those equity rows still have no stop stored in the database.
-
-Public https://quantshift.io is still green LIVE on v1.13.3 (`5b715db`). The regime page, the −1.27% drawdown, and the Kraken optimization row are on blue standby from `0a6d733`. They have not been switched live.
+Nothing is in progress. v1.17.0 is live and both web nodes match. Crypto and Kraken were restarted on the new setups. Equity was left running.
 
 ### Recent completions
-- ✅ Restarted the paper window on 2026-10-13 (`1f247ec`, `8ad01c1`)
-- ✅ Crypto paper sells can close a fractional size, and a stored stop or target can exit the position
-- ✅ Kraken paper fills longs and shorts again (`execute_signal` was missing)
-- ✅ Strategies see open positions, and candle frames keep their symbol (the first Kraken fill had been stored as UNKNOWN)
-- ✅ Equity blocks new buys when the book is over its leverage cap or the position read comes back empty
-- ✅ Regime analysis, drawdown rounding, and the Kraken optimization row are on blue standby (`0a6d733`)
+- ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
+- ✅ Shipped v1.16.0. Crypto and Kraken left the seven equity strategies for the washout setup
+- ✅ Shipped v1.15.1. Crypto results stay with the strategy that opened them, and the equity regime reading continues after the close
+- ✅ Coinbase position cap is 12. Kraken position cap is 8. Cash limits still stop a full book first
+- ✅ Existing crypto, Kraken, and equity positions were left until their own stops or targets
 
 ### Next steps
-1. Confirm the new equity longs have working brackets at Alpaca, even though `positions.stop_loss` is still null
-2. Watch crypto, Kraken, and equity through the window that started 2026-10-13
-3. Ship the standby web fixes when a release is requested. Do not switch traffic until then
+1. Watch the three paper books through the window that ends about 2026-11-10
+2. See whether crypto or Kraken actually open a washout or a volatility-break trade
+3. Do not reset Kraken to explain the gap under the $5,000 start
 4. Do not start Phase 1.5.10 live capital until four clean weeks pass
 
 ## Known Issues
-- Equity rows opened on 2026-10-13 have `stop_loss` null in the database. Crypto and Kraken stops are stored.
-- Alpaca paper account equity was not reset to $100,000. Closing positions returned cash to that broker account.
-- Public site is still v1.13.3. Regime analysis on green still expects the old nested payload.
-- Coinbase `get_products()` can hang. Crypto uses the curated symbol list.
+- Kraken paper equity is below the $5,000 start. The gap was not diagnosed. Do not reset the book.
+- A quiet hour can still produce no new crypto or Kraken orders. The break has to be on a finished hour, in a squeeze, through a pivot.
+- Coinbase `get_products()` can hang. Crypto symbol loading already has a fallback.
 
 ## Exact Next Command
-Check the three books, then look at whether the new equity positions have Alpaca stop orders.
+Check that the three bots are still healthy, then look at whether any new crypto or Kraken order used the washout or the volatility break.
 
 ```bash
-ssh root@10.92.3.27 "systemctl is-active quantshift-equity quantshift-crypto quantshift-kraken"
+bash scripts/bot-release-check.sh
 ```
-
-Then, on the bot host with the equity service environment, list Alpaca open orders for the new longs and compare them to `positions.stop_loss`.

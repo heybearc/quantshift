@@ -256,6 +256,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
 
+## D-QS-017: Crypto and Kraken use two setups, equity keeps seven
+- **Decision:** Coinbase and Kraken paper trading use the daily washout setup and a volatility-break setup. Equity stays on its seven strategies. Coinbase is long only. Kraken may short. Leverage stays at 1. Coinbase may hold 12 names and Kraken 8, and the cash limits still bind first. The licensed chart source stays out of the repo.
+- **Why:** The same seven equity strategies were the wrong game for those books, and the washout alone is too quiet for a market that moves all day.
+- **When:** 2026-10-16
+- **Do not:** Flatten books to switch setups, start live capital, or move the 2026-10-13 paper-window clock.
+
 ## D-QS-016: Paper window restart on 2026-10-13
 - **Decision:** The Phase 1.5.9 clock restarted on 2026-10-13. Crypto simulated cash starts at $10,000. Kraken simulated cash starts at $5,000 and stays in simulation. Alpaca paper positions were closed. The Alpaca paper account balance was not rewritten to $100,000.
 - **Why:** The prior window already failed must-pass checks. Crypto had no stored stops, and equity was over its position cap.

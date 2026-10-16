@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-10-13
-**Current Status:** Phase 1.5.9 paper validation, day 1. Clock restarted 2026-10-13. No live money.
+**Last Updated:** 2026-10-16
+**Current Status:** Phase 1.5.9 paper validation, day 4. Clock stays on 2026-10-13. Live is v1.17.0. No live money.
 
 ---
 
@@ -1095,8 +1095,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 
 ### Open now — paper window
 - [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-13 (about 2026-11-10)
-- [ ] Confirm the new equity longs have Alpaca brackets. The database stop column is still null
-- [ ] Ship the standby web fixes (regime page, −1.27% drawdown, Kraken optimization row) when a release is requested
+- [ ] Watch whether crypto or Kraken open a washout or a volatility-break trade
+- [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed
 - [ ] Score that window before any Phase 1.5.10 live capital
 
 ### Open later — after the paper window
@@ -1110,16 +1110,16 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [ ] Price-direction models, including LSTM. Not during this paper window.
 
 ### Already running
-- Equity, crypto, and Kraken bots
-- Seven strategies, regime detection, sentiment scoring, and trailing stops
+- Equity on its seven strategies. Crypto and Kraken on the washout setup and the volatility break
+- Coinbase long only, cap 12. Kraken may short, cap 8, no leverage
+- Regime detection, sentiment scoring, and trailing stops
 - Portfolio heat, correlation and sector limits, daily loss limit, and the drawdown breaker
-- Trades, positions, decision reasons, and the regime panel (v1.12.0)
-- Notification settings and admin settings save
+- Public site v1.17.0 on green. Blue standby matches
 
 ## 🐛 Known Bugs
 
 ### Critical (Fix Immediately)
-- **Equity stops are not stored.** Positions opened after the 2026-10-13 flatten have `stop_loss` null. Crypto and Kraken paper stops are stored. Check the Alpaca orders before treating the equity book as protected.
+- None. Equity stops are stored. Do not treat the 2026-10-13 null-stop note as open.
 
 ### Non-Critical (Backlog)
 
@@ -1140,6 +1140,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 💡 User Feedback & Feature Requests
 
 ### From Users
+- [x] Crypto and Kraken should trade more like a volatile market, using the Trade Confident tools, and should be busier than the daily washout alone. Added the volatility break. Caps are 12 and 8. Date: 2026-10-16
 - [x] Restart the paper window and reset simulated cash. Crypto and Kraken start at configured capital. Alpaca paper balance stays at the broker. Date: 2026-10-13
 - [x] Crypto simulation must sell fractional sizes, and trailing stops must be able to exit. Date: 2026-10-13
 - [ ] Additional trading metrics requested (effort: M) - More detailed performance indicators
@@ -1154,7 +1155,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 🗺️ Roadmap (Strategic)
 
 ### Now — through the paper window
-- [ ] Phase 1.5.9 daily monitoring. Clock started 2026-10-13.
+- [ ] Phase 1.5.9 daily monitoring. Clock stays on 2026-10-13. Live is v1.17.0.
 - [ ] Equity new buys stay blocked while leverage is above the cash cap.
 
 ### After four clean weeks
@@ -1173,7 +1174,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 Phase 1.5.10 does not start until the paper window passes.
 
 ### Still required
-- [ ] 4 clean weeks from 2026-10-09, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
+- [ ] 4 clean weeks from 2026-10-13, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
 - [ ] Emergency kill switch tested on purpose
 - [ ] Alpaca live credentials configured and tested
 - [ ] Circuit-breaker email in place
@@ -1198,6 +1199,9 @@ Phase 1.5.10 does not start until the paper window passes.
 
 ## ✅ Recently Completed (Last 30 Days)
 
+- [x] v1.17.0 live on green (`f452a35`). Crypto and Kraken can trade a volatility squeeze. Coinbase cap 12, Kraken cap 8. Blue synced. Date: 2026-10-16
+- [x] v1.16.0. Crypto and Kraken use the daily washout setup. Equity kept its seven strategies. Date: 2026-10-16
+- [x] v1.15.1. Crypto results stay with the strategy that opened them. Equity regime reading continues after the close. Date: 2026-10-15
 - [x] Paper window restarted 2026-10-13. Crypto $10,000 and Kraken $5,000 simulated books cleared. Equity paper positions closed at the open. Commits `1f247ec`, `8ad01c1`. Date: 2026-10-13
 - [x] Crypto fractional sells and stored paper stops. Kraken paper `execute_signal`. Equity buy block when leveraged or the position read is empty. Date: 2026-10-13
 - [x] Regime page, drawdown shown as −1.27%, and Kraken row on optimization deployed to blue standby (`0a6d733`). Not switched live. Date: 2026-10-12
