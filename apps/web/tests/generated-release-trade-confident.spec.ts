@@ -15,6 +15,7 @@ const EARLIER = [
   'MACrossoverStrategy',
   'DonchianBreakoutStrategy',
   'StrategyOrchestrator',
+  'Unknown',
 ];
 
 const ZONE = 'TradeConfidentSetup';
