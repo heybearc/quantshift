@@ -18,6 +18,7 @@ const EARLIER = [
 ];
 
 const ZONE = 'TradeConfidentSetup';
+const BREAKOUT = 'VolatilityBreakoutSetup';
 
 test.describe('Crypto and Kraken zone setup', () => {
   test.beforeEach(async ({ page }) => {
@@ -37,10 +38,11 @@ test.describe('Crypto and Kraken zone setup', () => {
     expect(crypto.length).toBeGreaterThan(0);
     for (const row of equity) {
       expect(row.strategyName).not.toBe(ZONE);
+      expect(row.strategyName).not.toBe(BREAKOUT);
       expect(EARLIER).toContain(row.strategyName);
     }
     for (const row of [...crypto, ...kraken]) {
-      expect([...EARLIER, ZONE]).toContain(row.strategyName);
+      expect([...EARLIER, ZONE, BREAKOUT]).toContain(row.strategyName);
     }
 
     await page.goto('/performance');
