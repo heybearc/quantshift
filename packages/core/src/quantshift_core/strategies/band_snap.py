@@ -2,8 +2,10 @@
 
 A finished 15-minute bar must tag the outer Bollinger band and close back
 inside. The target is the middle of the band. The stop sits just beyond the
-tag. A position still open after three hours is closed. Shorts follow
-enable_shorts. Names already held by any setup are left alone.
+tag. A position still open after three hours is closed. After a stop, that
+same side waits until a later bar closes back through the middle. The other
+side stays eligible. Shorts follow enable_shorts. Names already held by any
+setup are left alone.
 """
 
 from datetime import datetime, timedelta
@@ -40,6 +42,15 @@ def _opened(value) -> Optional[datetime]:
     return parsed
 
 
+def remember_band_stop(owner, symbol: str, side: str) -> None:
+    """Remember a snap that just stopped, including when several setups share one book."""
+    setups = getattr(owner, "strategies", None) or [owner]
+    for setup in setups:
+        note = getattr(setup, "note_stop", None)
+        if callable(note) and setup.__class__.__name__ == "BandSnapSetup":
+            note(symbol, side)
+
+
 class BandSnapSetup(BaseStrategy):
     """Fade a closed 15-minute stretch back to the middle of the band."""
 
@@ -74,15 +85,47 @@ class BandSnapSetup(BaseStrategy):
         high = float(noise["high"].astype(float).iloc[-1])
         if price <= 0:
             return []
-        if low <= lower and lower < price < middle:
+        self._release_reset(symbol, price, middle)
+        if low <= lower and lower < price < middle and not self._cooling(symbol, "long", noise.index[-1]):
             return self._entry(symbol, SignalType.BUY, price, low, lower, middle, account, "long")
         if (
             self.shorts_enabled()
             and high >= upper
             and middle < price < upper
+            and not self._cooling(symbol, "short", noise.index[-1])
         ):
             return self._entry(symbol, SignalType.SELL, price, high, upper, middle, account, "short")
         return []
+
+    def note_stop(self, symbol: str, side: str) -> None:
+        """Hold this side until price closes back through the middle of the band."""
+        name = "short" if str(side).lower() == "short" else "long"
+        self._stop_book()[symbol] = name
+        self.logger.info("band_snap_stopped", symbol=symbol, side=name)
+
+    def _stop_book(self) -> dict:
+        book = getattr(self, "_band_stops", None)
+        if book is None:
+            self._band_stops = {}
+            book = self._band_stops
+        return book
+
+    def _release_reset(self, symbol: str, price: float, middle: float) -> None:
+        stopped = self._stop_book().get(symbol)
+        reset = (stopped == "long" and price >= middle) or (stopped == "short" and price <= middle)
+        if not reset:
+            return
+        self._stop_book().pop(symbol, None)
+        self.logger.info("band_snap_reset", symbol=symbol, side=stopped)
+
+    def _cooling(self, symbol: str, side: str, bar) -> bool:
+        if self._stop_book().get(symbol) != side:
+            return False
+        mark = (symbol, side, str(bar))
+        if getattr(self, "_cool_logged", None) != mark:
+            self._cool_logged = mark
+            self.logger.info("band_snap_cooling", symbol=symbol, side=side)
+        return True
 
     def calculate_position_size(self, signal: Signal, account: Account, atr: Optional[float] = None) -> float:
         if signal.stop_loss is None or signal.price <= 0:

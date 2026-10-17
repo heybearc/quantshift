@@ -28,7 +28,7 @@ except ImportError:
     _stub("sklearn.metrics", classification_report=_Unused, accuracy_score=_Unused)
 
 from quantshift_core.candles import AttachedFrame
-from quantshift_core.strategies.band_snap import BandSnapSetup
+from quantshift_core.strategies.band_snap import BandSnapSetup, remember_band_stop
 from quantshift_core.strategies.base_strategy import Account, Position, SignalType
 
 
@@ -155,3 +155,27 @@ def test_an_open_band_snap_exits_after_three_hours():
     assert signals[0].signal_type == SignalType.SELL
     assert signals[0].reason == "band snap time stop"
     assert signals[0].position_size == 1.25
+
+
+def test_a_stopped_long_waits_until_price_closes_back_through_the_middle():
+    strategy = BandSnapSetup(config={"enable_shorts": False, "min_reward_pct": 0.001, "risk_per_trade": 0.0025})
+    strategy.note_stop("BTC-USD", "long")
+    assert strategy.generate_signals(_long_host(), _account(), []) == []
+
+    reset = [100 + ((index % 5) - 2) * 1.5 for index in range(40)]
+    reset[-1] = max(reset) + 5
+    assert strategy.generate_signals(_host(reset), _account(), []) == []
+    assert "BTC-USD" not in strategy._stop_book()
+
+    signals = strategy.generate_signals(_long_host(), _account(), [])
+    assert len(signals) == 1
+    assert signals[0].signal_type == SignalType.BUY
+
+
+def test_a_stopped_long_can_still_take_the_short_side():
+    strategy = BandSnapSetup(config={"enable_shorts": True, "min_reward_pct": 0.001, "risk_per_trade": 0.0025})
+    owner = type("Book", (), {"strategies": [strategy]})()
+    remember_band_stop(owner, "BTC-USD", "long")
+    signals = strategy.generate_signals(_short_host(), _account(), [])
+    assert len(signals) == 1
+    assert signals[0].signal_type == SignalType.SELL

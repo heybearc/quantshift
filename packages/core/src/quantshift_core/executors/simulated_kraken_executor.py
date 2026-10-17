@@ -16,6 +16,7 @@ from decimal import Decimal
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_candle
+from quantshift_core.strategies.band_snap import remember_band_stop
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
@@ -611,6 +612,8 @@ class SimulatedKrakenExecutor:
                     reason = "paper take profit"
             if not reason:
                 continue
+            if reason == "paper stop" and pos.get("strategy") == "BandSnapSetup":
+                remember_band_stop(self.strategy, symbol, pos.get("side") or "long")
             order = self._reduce_position(symbol, float(pos["quantity"]), price, "SELL" if pos.get("side") == "long" else "BUY", reason)
             if order:
                 closed.append(order)

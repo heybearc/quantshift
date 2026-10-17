@@ -19,6 +19,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 from coinbase.rest import RESTClient
 
 from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_candle
+from quantshift_core.strategies.band_snap import remember_band_stop
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 
@@ -1111,6 +1112,8 @@ class CoinbaseExecutor:
                 reason = "paper take profit"
             if not reason:
                 continue
+            if reason == "paper stop" and pos.get("strategy") == "BandSnapSetup":
+                remember_band_stop(self.strategy, symbol, "long")
             order = self._simulate_order(symbol, "SELL", float(pos["quantity"]), price, reason)
             if order:
                 closed.append(order)
