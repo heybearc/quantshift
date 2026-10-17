@@ -25,9 +25,10 @@ export function PerformanceBooks({
   books: { closedPnl: number; openPnl: number; result: number; byBot: Record<string, PerformanceBook> };
   formatCurrency: (value: number) => string;
 }) {
-  const rows = BOOKS.map(({ id, label }) => ({ label, book: books.byBot[id] })).filter(
-    (row): row is { label: string; book: PerformanceBook } => Boolean(row.book)
-  );
+  const rows = BOOKS.flatMap(({ id, label }) => {
+    const book = books.byBot[id];
+    return book ? [{ label, book }] : [];
+  });
 
   return (
     <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
