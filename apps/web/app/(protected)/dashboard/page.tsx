@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap, BarChart2, Bitcoin } from "lucide-react";
@@ -80,16 +81,15 @@ export default function DashboardPage() {
       if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
         fetchAdminStats();
       }
-      const interval = setInterval(() => {
-        fetchAllBotStatus();
-        fetchBotMetrics();
-        if (user.role?.toUpperCase() === 'ADMIN' || user.role?.toUpperCase() === 'SUPER_ADMIN') {
-          fetchAdminStats();
-        }
-      }, 30000);
-      return () => clearInterval(interval);
     }
   }, [user]);
+
+  useLiveRefresh(() => {
+    fetchAllBotStatus();
+    fetchBotMetrics();
+    const role = user?.role?.toUpperCase();
+    if (role === "ADMIN" || role === "SUPER_ADMIN") fetchAdminStats();
+  }, Boolean(user));
 
   const sessionExpired = async (res: Response) => {
     if (res.status !== 401) return false;

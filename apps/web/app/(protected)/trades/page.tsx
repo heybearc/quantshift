@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { useRouter } from "next/navigation";
 import { Search, Calendar, BarChart2, Bitcoin } from "lucide-react";
 
@@ -45,6 +46,10 @@ export default function TradesPage() {
   useEffect(() => {
     if (user) fetchTrades();
   }, [user]);
+
+  useLiveRefresh(() => {
+    if (user) fetchTrades();
+  }, Boolean(user));
 
   const fetchTrades = async () => {
     try {

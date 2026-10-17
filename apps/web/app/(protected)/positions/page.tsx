@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { useRouter } from "next/navigation";
 import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart2, Bitcoin } from "lucide-react";
 
@@ -41,10 +42,12 @@ export default function PositionsPage() {
   useEffect(() => {
     if (user) {
       fetchPositions();
-      const interval = setInterval(fetchPositions, 30000);
-      return () => clearInterval(interval);
     }
   }, [user]);
+
+  useLiveRefresh(() => {
+    if (user) fetchPositions();
+  }, Boolean(user));
 
   const fetchPositions = async () => {
     try {

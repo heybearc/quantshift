@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Navigation } from '@/components/navigation';
 import { ReleaseBanner } from '@/components/release-banner';
 import { useAuth } from '@/lib/auth-context';
+import { useLiveRefresh } from '@/lib/use-live-refresh';
 import { Activity, TrendingUp, AlertTriangle, BarChart3, RefreshCw } from 'lucide-react';
 
 interface BotHealth {
@@ -157,9 +158,9 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000); // Refresh every 15 seconds
-    return () => clearInterval(interval);
   }, []);
+
+  useLiveRefresh(fetchData, true, 15000);
 
   const getStatusColor = (status: string) => {
     if (!status) return 'text-gray-400';

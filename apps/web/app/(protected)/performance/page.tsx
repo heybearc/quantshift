@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Navigation } from '@/components/navigation';
 import { ReleaseBanner } from '@/components/release-banner';
 import { useAuth } from '@/lib/auth-context';
+import { useLiveRefresh } from '@/lib/use-live-refresh';
 import { useRouter } from 'next/navigation';
 import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -78,9 +79,9 @@ export default function PerformancePage() {
     }
   }, [user, timeRange, botFilter]);
 
-  const fetchPerformance = async () => {
+  const fetchPerformance = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const params = new URLSearchParams({ days: timeRange });
       if (botFilter !== 'all') params.set('botName', botFilter);
       const response = await fetch(`/api/bot/performance?${params}`);
@@ -88,7 +89,7 @@ export default function PerformancePage() {
     } catch (error) {
       console.error('Error fetching performance:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -105,6 +106,11 @@ export default function PerformancePage() {
       console.error('Error fetching strategy performance:', error);
     }
   };
+
+  useLiveRefresh(() => {
+    fetchPerformance(true);
+    fetchStrategyPerformance();
+  }, Boolean(user));
 
   const fmt = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
   const fmtPct = (v: number) => `${v >= 0 ? '+' : ''}${fmt2(v)}%`;

@@ -3,6 +3,7 @@
 import { ProtectedRoute } from '@/components/protected-route';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { useState, useEffect } from 'react';
+import { useLiveRefresh } from '@/lib/use-live-refresh';
 import { AlertTriangle, TrendingDown, Shield, Activity, RefreshCw } from 'lucide-react';
 import { KellyStatsCard } from '@/components/dashboard/KellyStatsCard';
 
@@ -99,9 +100,9 @@ function RiskManagementContent() {
 
   useEffect(() => {
     fetchRiskMetrics();
-    const interval = setInterval(fetchRiskMetrics, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
   }, []);
+
+  useLiveRefresh(fetchRiskMetrics, true);
 
   if (loading && !riskMetrics) {
     return (
