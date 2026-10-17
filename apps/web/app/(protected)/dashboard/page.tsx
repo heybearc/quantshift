@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap, BarChart2, Bitcoin } from "lucide-react";
 import { WinRateCard } from "@/components/dashboard/WinRateCard";
+import { PerformanceBooks, PerformanceBook } from "@/components/dashboard/PerformanceBooks";
 import { MaxDrawdownCard } from "@/components/dashboard/MaxDrawdownCard";
 import { StrategyCard } from "@/components/dashboard/StrategyCard";
 import { RegimeIndicator } from "@/components/dashboard/RegimeIndicator";
@@ -50,7 +51,13 @@ interface BotMetrics {
   strategySuccessRate: number;
   openUnrealizedPl?: number;
   openUnrealizedByBot?: Record<string, number>;
-  byBot?: Record<string, Omit<BotMetrics, 'byBot' | 'openUnrealizedPl' | 'openUnrealizedByBot' | 'lastTradeTime'> & { lastTradeTime?: string | null }>;
+  books?: {
+    closedPnl: number;
+    openPnl: number;
+    result: number;
+    byBot: Record<string, PerformanceBook>;
+  };
+  byBot?: Record<string, Omit<BotMetrics, 'byBot' | 'openUnrealizedPl' | 'openUnrealizedByBot' | 'books' | 'lastTradeTime'> & { lastTradeTime?: string | null }>;
 }
 
 interface AdminStats {
@@ -145,7 +152,7 @@ export default function DashboardPage() {
   const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0) + (krakenBot?.portfolioValue || 0);
   const statusUnrealized = (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0);
   const openUnrealized = botMetrics?.openUnrealizedPl || 0;
-  const totalPl = (equityBot?.realizedPl || 0) + (statusUnrealized !== 0 ? statusUnrealized : openUnrealized);
+  const totalPl = botMetrics?.books?.result ?? ((equityBot?.realizedPl || 0) + (statusUnrealized !== 0 ? statusUnrealized : openUnrealized));
   const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0) + (krakenBot?.positionsCount || 0);
   const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0) + (krakenBot?.tradesCount || 0);
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
@@ -288,7 +295,7 @@ export default function DashboardPage() {
                   <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-xl p-5 border border-purple-700/50">
                     <p className="text-purple-300 text-xs font-medium mb-1">Total P&L</p>
                     <p className={`text-2xl font-bold ${totalPl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(totalPl)}</p>
-                    <p className="text-purple-400 text-xs mt-1">Realized + unrealized</p>
+                    <p className="text-purple-400 text-xs mt-1">Closed trades + open book</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
                     <p className="text-slate-400 text-xs font-medium mb-1">Open Positions</p>
@@ -301,6 +308,8 @@ export default function DashboardPage() {
                     <p className="text-slate-500 text-xs mt-1">Rows on the Trades page</p>
                   </div>
                 </div>
+
+                {botMetrics?.books && <PerformanceBooks books={botMetrics.books} formatCurrency={fmt} />}
 
                 {/* REGIME INDICATOR — Phase 5 */}
                 <RegimeIndicator botName={activeTab === 'all' ? 'quantshift-equity' : activeTab} />
@@ -357,9 +366,9 @@ export default function DashboardPage() {
                               <p className="text-white font-semibold text-sm">{fmt(bot?.portfolioValue || 0)}</p>
                             </div>
                             <div>
-                              <p className="text-slate-400 text-xs">P&L</p>
-                              <p className={`font-semibold text-sm ${(botUnrealized(bot) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {fmt(botUnrealized(bot) + (botType === 'equity' ? (bot?.realizedPl || 0) : 0))}
+                              <p className="text-slate-400 text-xs">Result</p>
+                              <p className={`font-semibold text-sm ${(botMetrics?.books?.byBot?.[tab]?.result ?? botUnrealized(bot)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {fmt(botMetrics?.books?.byBot?.[tab]?.result ?? botUnrealized(bot))}
                               </p>
                             </div>
                             <div>

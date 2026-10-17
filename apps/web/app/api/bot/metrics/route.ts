@@ -68,7 +68,6 @@ export async function GET() {
 
     const openPositions = await prisma.position.groupBy({
       by: ['botName'],
-      where: { quantity: { gt: 0 } },
       _sum: { unrealizedPl: true },
     });
     const openUnrealizedByBot: Record<string, number> = {};
@@ -79,11 +78,55 @@ export async function GET() {
       openUnrealizedPl += value;
     }
 
+    const closedByBot: Record<string, number> = {};
+    for (const row of strategyRows) {
+      closedByBot[row.botName] = (closedByBot[row.botName] || 0) + row.totalPnl;
+    }
+    const accountByBot = new Map(
+      botStatuses.map((bot) => [bot.botName, bot.portfolioValue || bot.accountEquity || 0])
+    );
+    const paperStart: Record<string, number> = {
+      'quantshift-crypto': 10000,
+      'quantshift-kraken': 5000,
+    };
+    const bookNames = ['quantshift-equity', 'quantshift-crypto', 'quantshift-kraken'];
+    const cents = (value: number) => Math.round(value * 100) / 100;
+    const booksByBot: Record<string, {
+      account: number;
+      start: number | null;
+      fromStart: number | null;
+      closedPnl: number;
+      openPnl: number;
+      result: number;
+    }> = {};
+    for (const botName of bookNames) {
+      const closedPnl = cents(closedByBot[botName] || 0);
+      const openPnl = cents(openUnrealizedByBot[botName] || 0);
+      const account = cents(accountByBot.get(botName) || 0);
+      const start = paperStart[botName] ?? null;
+      booksByBot[botName] = {
+        account,
+        start,
+        fromStart: start == null ? null : cents(account - start),
+        closedPnl,
+        openPnl,
+        result: cents(closedPnl + openPnl),
+      };
+    }
+    const closedPnl = cents(bookNames.reduce((sum, name) => sum + booksByBot[name].closedPnl, 0));
+    const openPnl = cents(bookNames.reduce((sum, name) => sum + booksByBot[name].openPnl, 0));
+
     return NextResponse.json({
       ...overall,
-      openUnrealizedPl: Math.round(openUnrealizedPl * 100) / 100,
+      openUnrealizedPl: cents(openUnrealizedPl),
       openUnrealizedByBot,
       byBot,
+      books: {
+        closedPnl,
+        openPnl,
+        result: cents(closedPnl + openPnl),
+        byBot: booksByBot,
+      },
     });
   } catch (error) {
     console.error('Error fetching bot metrics:', error);
