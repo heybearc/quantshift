@@ -60,7 +60,7 @@ interface AdminStats {
 }
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [allBotStatus, setAllBotStatus] = useState<BotStatus[]>([]);
   const [botMetrics, setBotMetrics] = useState<BotMetrics | null>(null);
@@ -91,9 +91,16 @@ export default function DashboardPage() {
     }
   }, [user]);
 
+  const sessionExpired = async (res: Response) => {
+    if (res.status !== 401) return false;
+    await logout();
+    return true;
+  };
+
   const fetchAllBotStatus = async () => {
     try {
       const res = await fetch("/api/bot/status/all");
+      if (await sessionExpired(res)) return;
       if (res.ok) { setAllBotStatus((await res.json()).bots || []); setError(null); }
       else setError("Failed to fetch bot status");
     } catch { setError("Error connecting to bots"); }
@@ -103,6 +110,7 @@ export default function DashboardPage() {
   const fetchBotMetrics = async () => {
     try {
       const res = await fetch("/api/bot/metrics");
+      if (await sessionExpired(res)) return;
       if (res.ok) setBotMetrics(await res.json());
     } catch { /* silent */ }
   };
@@ -110,6 +118,7 @@ export default function DashboardPage() {
   const fetchAdminStats = async () => {
     try {
       const res = await fetch("/api/admin/stats");
+      if (await sessionExpired(res)) return;
       if (res.ok) setAdminStats(await res.json());
     } catch { /* silent */ }
   };

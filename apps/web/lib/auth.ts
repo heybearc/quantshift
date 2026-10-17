@@ -47,23 +47,30 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
+const cookieBase = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+};
+
+export async function setAccessCookie(accessToken: string) {
+  const cookieStore = await cookies();
+  cookieStore.set('access_token', accessToken, {
+    ...cookieBase,
+    maxAge: 60 * 15,
+  });
+}
+
 export async function setAuthCookies(accessToken: string, refreshToken: string) {
   const cookieStore = await cookies();
-  
   cookieStore.set('access_token', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 15, // 15 minutes
-    path: '/',
+    ...cookieBase,
+    maxAge: 60 * 15,
   });
-
   cookieStore.set('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/',
+    ...cookieBase,
+    maxAge: 60 * 60 * 24 * 7,
   });
 }
 
@@ -85,28 +92,17 @@ export async function getRefreshToken(): Promise<string | undefined> {
 
 export async function getCurrentUser() {
   let token = await getAccessToken();
-  
-  // If no access token or invalid, try to refresh
+
+  // Renew the short access cookie from the stored refresh session.
+  // Leave the refresh cookie alone. Replacing it here used to write a token
+  // the database did not know, so the next renewal failed and the page stayed open.
   if (!token || !verifyToken(token)) {
     const refreshToken = await getRefreshToken();
-    if (refreshToken) {
-      const user = await verifyRefreshToken(refreshToken);
-      if (user) {
-        // Create new tokens
-        const newAccessToken = createAccessToken(user.id, user.email, user.role);
-        const newRefreshToken = createRefreshToken(user.id);
-        
-        // Set new cookies
-        await setAuthCookies(newAccessToken, newRefreshToken);
-        
-        // Use the new access token
-        token = newAccessToken;
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
+    if (!refreshToken) return null;
+    const sessionUser = await verifyRefreshToken(refreshToken);
+    if (!sessionUser) return null;
+    token = createAccessToken(sessionUser.id, sessionUser.email, sessionUser.role);
+    await setAccessCookie(token);
   }
 
   const payload = verifyToken(token);

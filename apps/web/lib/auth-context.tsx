@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -27,13 +27,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const endingSession = useRef(false);
 
-  // Check authentication on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
@@ -42,16 +38,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-      } else {
-        setUser(null);
+        return true;
       }
+      setUser(null);
+      return response.status === 401;
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const logout = useCallback(async () => {
+    if (endingSession.current) return;
+    endingSession.current = true;
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setUser(null);
+      router.push('/login');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (!user) return;
+    let stopped = false;
+    const watchSession = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (stopped || response.ok) return;
+        if (response.status === 401) await logout();
+      } catch {
+        // A network blip is not a dead session.
+      }
+    };
+    const interval = setInterval(watchSession, 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') watchSession();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user, logout]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch('/api/auth/login', {
@@ -69,22 +111,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data = await response.json();
+    endingSession.current = false;
     setUser(data.user);
     router.push('/dashboard');
-  };
-
-  const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setUser(null);
-      router.push('/login');
-    }
   };
 
   const refreshAuth = async () => {
@@ -96,12 +125,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         await checkAuth();
-      } else {
-        setUser(null);
+      } else if (response.status === 401) {
+        await logout();
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
-      setUser(null);
     }
   };
 
