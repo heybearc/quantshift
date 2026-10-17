@@ -12,7 +12,7 @@ Restart=always
 RestartSec=10s
 
 # Environment variables
-Environment="DATABASE_URL=postgresql://quantshift:Cloudy_92!@10.92.3.21:5432/quantshift"
+Environment="DATABASE_URL=postgresql://quantshift:Cloudy_92!@10.92.3.23:5432/quantshift"
 Environment="REDIS_HOST=localhost"
 Environment="REDIS_PORT=6379"
 Environment="REDIS_PASSWORD=Cloudy_92!"

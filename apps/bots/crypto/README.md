@@ -36,7 +36,7 @@ COINBASE_API_KEY=your_api_key
 COINBASE_API_SECRET=your_api_secret
 
 # Database and Redis (inherited from core)
-DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.21:5432/quantshift
+DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.23:5432/quantshift
 REDIS_URL=redis://:Cloudy_92!@localhost:6379/0
 ```
 
@@ -105,7 +105,7 @@ WorkingDirectory=/opt/quantshift/apps/bots/crypto
 Environment="PYTHONPATH=/opt/quantshift/apps/bots/crypto"
 Environment="COINBASE_API_KEY=your_key"
 Environment="COINBASE_API_SECRET=your_secret"
-Environment="DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.21:5432/quantshift"
+Environment="DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.23:5432/quantshift"
 ExecStart=/opt/quantshift/venv/bin/python -m quantshift_crypto.main
 Restart=always
 RestartSec=10

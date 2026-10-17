@@ -36,7 +36,7 @@ Create `.env` file in monorepo root:
 ALPACA_API_KEY=your_key
 ALPACA_SECRET_KEY=your_secret
 ALPACA_BASE_URL=https://paper-api.alpaca.markets
-DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.21:5432/quantshift
+DATABASE_URL=postgresql://quantshift_bot:password@10.92.3.23:5432/quantshift
 ```
 
 ## 📁 Structure

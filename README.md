@@ -127,7 +127,7 @@ cd /opt/quantshift
 **Infrastructure:**
 - LXC Containers (not Docker - avoids dev-to-prod issues)
 - HA Proxy (load balancing + health checks)
-- PostgreSQL (10.92.3.21)
+- PostgreSQL (10.92.3.23)
 - NPM Proxy Manager (SSL termination)
 
 ## 🌐 Domains

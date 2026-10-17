@@ -8,7 +8,7 @@ echo "Checking database for positions..."
 echo ""
 
 export PGPASSWORD='Cloudy_92!'
-psql -h 10.92.3.21 -U quantshift -d quantshift << 'EOF'
+psql -h 10.92.3.23 -U quantshift -d quantshift << 'EOF'
 \echo '--- Total Positions Count ---'
 SELECT COUNT(*) as total_positions FROM positions;
 
