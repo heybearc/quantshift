@@ -36,7 +36,7 @@ case "$AREA" in
     exec npx playwright test tests/release-gate.spec.ts tests/admin-pages.spec.ts tests/generated-release-risk.spec.ts --workers=1
     ;;
   trading)
-    exec npx playwright test tests/release-gate.spec.ts tests/trading-features.spec.ts tests/generated-release-monitoring.spec.ts tests/generated-release-regime.spec.ts tests/generated-release-performance.spec.ts tests/generated-release-kraken.spec.ts tests/generated-release-crypto.spec.ts tests/generated-release-equity-regime.spec.ts tests/generated-release-trade-confident.spec.ts tests/generated-release-volatility-break.spec.ts tests/generated-release-band-snap.spec.ts tests/generated-release-band-cooldown.spec.ts tests/generated-release-live-refresh.spec.ts --workers=1
+    exec npx playwright test tests/release-gate.spec.ts tests/trading-features.spec.ts tests/generated-release-monitoring.spec.ts tests/generated-release-regime.spec.ts tests/generated-release-performance.spec.ts tests/generated-release-kraken.spec.ts tests/generated-release-crypto.spec.ts tests/generated-release-equity-regime.spec.ts tests/generated-release-trade-confident.spec.ts tests/generated-release-volatility-break.spec.ts tests/generated-release-band-snap.spec.ts tests/generated-release-band-cooldown.spec.ts tests/generated-release-live-refresh.spec.ts tests/generated-release-books.spec.ts --workers=1
     ;;
   full)
     export CI="${CI:-1}"
