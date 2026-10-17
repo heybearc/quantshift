@@ -30,7 +30,7 @@ case "$AREA" in
     exec npx playwright test tests/release-gate.spec.ts --workers=1
     ;;
   auth)
-    exec npx playwright test tests/release-gate.spec.ts tests/auth-pages.spec.ts --workers=1
+    exec npx playwright test tests/release-gate.spec.ts tests/auth-pages.spec.ts tests/generated-release-session.spec.ts --workers=1
     ;;
   admin)
     exec npx playwright test tests/release-gate.spec.ts tests/admin-pages.spec.ts tests/generated-release-risk.spec.ts --workers=1
