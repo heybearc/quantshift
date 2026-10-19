@@ -1114,7 +1114,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - Coinbase long only, cap 12. Kraken may short, cap 8, no leverage
 - Regime detection, sentiment scoring, and trailing stops
 - Portfolio heat, correlation and sector limits, daily loss limit, and the drawdown breaker
-- Public site v1.17.0 on green. Blue standby matches
+- Public site v1.18.4 on blue. Green standby matches. No saved custom dashboard.
 
 ## 🐛 Known Bugs
 

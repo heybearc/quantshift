@@ -256,6 +256,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
 
+## D-QS-019: No saved custom dashboards
+- **Decision:** Do not add a user-saved dashboard layout. The default dashboard is the product.
+- **Why:** One operator. The missing piece was the whole result (closed plus open), which v1.18.4 shows. A layout builder does not answer whether the books are making money.
+- **When:** 2026-10-19
+- **Do not:** Put it on the plan ahead of the paper window, sparklines, or the daily email.
+
 ## D-QS-018: Crypto noise is a third setup, the band snap
 - **Decision:** Coinbase and Kraken paper trading keep the washout and the volatility break, and add BandSnapSetup. It fades a finished 15-minute tag of a Bollinger band back to the middle, risks 0.25% of that setup's slice, and closes after three hours. Coinbase stays long only and skips a snap narrower than 1.2%. Kraken may short and skips a snap narrower than 0.6%. The new setup gets about a third of each crypto book. Fills stay tagged BandSnapSetup. Position caps and cash caps stay put.
 - **Why:** The two swing setups skip most of the day's movement. A separate mean-reversion setup can use that noise without loosening the swing rules.
