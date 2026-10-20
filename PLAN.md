@@ -1114,11 +1114,11 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [ ] Price-direction models, including LSTM. Not during this paper window.
 
 ### Already running
-- Equity on its seven strategies. Crypto and Kraken on the washout setup and the volatility break
+- Equity on its seven strategies. Coinbase on the washout and the volatility break, long only. Kraken keeps those plus the 15-minute band snap, and stands the snap down when the hourly bar breaks out
 - Coinbase long only, cap 12. Kraken may short, cap 8, no leverage
 - Regime detection, sentiment scoring, and trailing stops
 - Portfolio heat, correlation and sector limits, daily loss limit, and the drawdown breaker
-- Public site v1.18.4 on blue. Green standby matches. No saved custom dashboard.
+- Public site v1.18.5 on green. Blue standby matches. No saved custom dashboard.
 
 ## 🐛 Known Bugs
 
