@@ -55,6 +55,8 @@ interface BotMetrics {
     closedPnl: number;
     openPnl: number;
     result: number;
+    estimatedCost: number;
+    afterCost: number;
     byBot: Record<string, PerformanceBook>;
   };
   byBot?: Record<string, Omit<BotMetrics, 'byBot' | 'openUnrealizedPl' | 'openUnrealizedByBot' | 'books' | 'lastTradeTime'> & { lastTradeTime?: string | null }>;

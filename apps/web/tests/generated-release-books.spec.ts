@@ -17,4 +17,6 @@ test('the dashboard shows closed and open results for each book', async ({ page 
   await expect(page.getByRole('columnheader', { name: 'Closed' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Open' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Result' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Est. cost' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'After cost' })).toBeVisible();
 });

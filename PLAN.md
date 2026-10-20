@@ -1099,6 +1099,10 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed
 - [ ] Score that window before any Phase 1.5.10 live capital
 
+### Open later — before live capital
+- [x] The dashboard reports an estimated fill cost beside the result. It is not taken from the account.
+- [ ] Put the spread and the commission inside the paper fill before live capital. That changes cash and which trades survive, so it waits until this window ends.
+
 ### Open later — after the paper window
 - [ ] Email when a circuit breaker trips
 - [ ] Turn Kelly sizing on after 20 trades (`use_kelly_sizing` is false)

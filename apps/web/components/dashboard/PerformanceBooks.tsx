@@ -5,6 +5,8 @@ export interface PerformanceBook {
   closedPnl: number;
   openPnl: number;
   result: number;
+  estimatedCost: number;
+  afterCost: number;
 }
 
 const BOOKS = [
@@ -22,7 +24,14 @@ export function PerformanceBooks({
   books,
   formatCurrency,
 }: {
-  books: { closedPnl: number; openPnl: number; result: number; byBot: Record<string, PerformanceBook> };
+  books: {
+    closedPnl: number;
+    openPnl: number;
+    result: number;
+    estimatedCost: number;
+    afterCost: number;
+    byBot: Record<string, PerformanceBook>;
+  };
   formatCurrency: (value: number) => string;
 }) {
   const rows = BOOKS.flatMap(({ id, label }) => {
@@ -34,7 +43,7 @@ export function PerformanceBooks({
     <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-700">
         <p className="text-white font-semibold">Performance</p>
-        <p className="text-slate-400 text-xs mt-1">Closed trades plus the open book. Crypto and Kraken also show the account against the paper start.</p>
+        <p className="text-slate-400 text-xs mt-1">Closed trades plus the open book. The cost is an estimate and is not taken from the account. Equity is 1 bp of slippage. Coinbase is 60 bp. Kraken is 40 bp.</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -45,7 +54,9 @@ export function PerformanceBooks({
               <th className="text-right font-medium px-3 py-3">From start</th>
               <th className="text-right font-medium px-3 py-3">Closed</th>
               <th className="text-right font-medium px-3 py-3">Open</th>
-              <th className="text-right font-medium px-5 py-3">Result</th>
+              <th className="text-right font-medium px-3 py-3">Result</th>
+              <th className="text-right font-medium px-3 py-3">Est. cost</th>
+              <th className="text-right font-medium px-5 py-3">After cost</th>
             </tr>
           </thead>
           <tbody>
@@ -58,7 +69,9 @@ export function PerformanceBooks({
                 </td>
                 <td className="px-3 py-3 text-right">{signed(book.closedPnl, formatCurrency)}</td>
                 <td className="px-3 py-3 text-right">{signed(book.openPnl, formatCurrency)}</td>
-                <td className="px-5 py-3 text-right font-semibold">{signed(book.result, formatCurrency)}</td>
+                <td className="px-3 py-3 text-right font-semibold">{signed(book.result, formatCurrency)}</td>
+                <td className="px-3 py-3 text-right text-slate-300">{formatCurrency(book.estimatedCost)}</td>
+                <td className="px-5 py-3 text-right font-semibold">{signed(book.afterCost, formatCurrency)}</td>
               </tr>
             ))}
             <tr className="border-t border-slate-600">
@@ -69,7 +82,9 @@ export function PerformanceBooks({
               <td className="px-3 py-3 text-right text-slate-500">—</td>
               <td className="px-3 py-3 text-right font-semibold">{signed(books.closedPnl, formatCurrency)}</td>
               <td className="px-3 py-3 text-right font-semibold">{signed(books.openPnl, formatCurrency)}</td>
-              <td className="px-5 py-3 text-right font-semibold">{signed(books.result, formatCurrency)}</td>
+              <td className="px-3 py-3 text-right font-semibold">{signed(books.result, formatCurrency)}</td>
+              <td className="px-3 py-3 text-right font-semibold text-slate-200">{formatCurrency(books.estimatedCost)}</td>
+              <td className="px-5 py-3 text-right font-semibold">{signed(books.afterCost, formatCurrency)}</td>
             </tr>
           </tbody>
         </table>

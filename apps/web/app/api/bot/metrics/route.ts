@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { estimateFillCost, PAPER_COST_FROM } from '@/lib/fill-cost';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
@@ -91,6 +92,18 @@ export async function GET() {
     };
     const bookNames = ['quantshift-equity', 'quantshift-crypto', 'quantshift-kraken'];
     const cents = (value: number) => Math.round(value * 100) / 100;
+    const fills = await prisma.trade.findMany({
+      where: {
+        botName: { in: bookNames },
+        enteredAt: { gte: PAPER_COST_FROM },
+        strategy: { notIn: ['unknown', 'Unknown'] },
+      },
+      select: { botName: true, quantity: true, entryPrice: true },
+    });
+    const notionalByBot: Record<string, number> = {};
+    for (const fill of fills) {
+      notionalByBot[fill.botName] = (notionalByBot[fill.botName] || 0) + Math.abs(fill.quantity * fill.entryPrice);
+    }
     const booksByBot: Record<string, {
       account: number;
       start: number | null;
@@ -98,23 +111,30 @@ export async function GET() {
       closedPnl: number;
       openPnl: number;
       result: number;
+      estimatedCost: number;
+      afterCost: number;
     }> = {};
     for (const botName of bookNames) {
       const closedPnl = cents(closedByBot[botName] || 0);
       const openPnl = cents(openUnrealizedByBot[botName] || 0);
       const account = cents(accountByBot.get(botName) || 0);
       const start = paperStart[botName] ?? null;
+      const result = cents(closedPnl + openPnl);
+      const estimatedCost = estimateFillCost(botName, notionalByBot[botName] || 0);
       booksByBot[botName] = {
         account,
         start,
         fromStart: start == null ? null : cents(account - start),
         closedPnl,
         openPnl,
-        result: cents(closedPnl + openPnl),
+        result,
+        estimatedCost,
+        afterCost: cents(result - estimatedCost),
       };
     }
     const closedPnl = cents(bookNames.reduce((sum, name) => sum + booksByBot[name].closedPnl, 0));
     const openPnl = cents(bookNames.reduce((sum, name) => sum + booksByBot[name].openPnl, 0));
+    const estimatedCost = cents(bookNames.reduce((sum, name) => sum + booksByBot[name].estimatedCost, 0));
 
     return NextResponse.json({
       ...overall,
@@ -125,6 +145,8 @@ export async function GET() {
         closedPnl,
         openPnl,
         result: cents(closedPnl + openPnl),
+        estimatedCost,
+        afterCost: cents(closedPnl + openPnl - estimatedCost),
         byBot: booksByBot,
       },
     });

@@ -26,6 +26,7 @@ Coinbase trades the washout and the volatility break, long only. Kraken keeps th
 2. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
 3. Do not reset Kraken to explain the gap under the $5,000 start
 4. Do not start Phase 1.5.10 live capital until four clean weeks pass
+5. The dashboard now shows an estimated fill cost beside the result. Putting that cost inside the fill waits until this window ends.
 
 ## Known Issues
 - Kraken paper equity is below the $5,000 start. The gap was not diagnosed. Do not reset the book.
