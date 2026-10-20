@@ -1097,7 +1097,7 @@ class CoinbaseExecutor:
         for symbol, pos in list(self._sim_positions.items()):
             frame = market_data.get(symbol)
             if pos.get("strategy") == "BandSnapSetup":
-                price = self._band_mark(frame) or self._mark_price(frame)
+                price = self._band_mark(frame)
             else:
                 price = self._mark_price(frame)
             if price is None:

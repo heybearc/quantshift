@@ -61,6 +61,22 @@ def test_coinbase_paper_stop_closes_the_position():
     assert "DOGE-USD" not in executor._sim_positions
 
 
+def test_coinbase_band_snap_ignores_the_hourly_price():
+    executor = _coinbase()
+    executor._sim_positions["DOGE-USD"] = {
+        "quantity": 10,
+        "entry_price": 1.0,
+        "current_price": 1.0,
+        "stop_loss": 0.9,
+        "strategy": "BandSnapSetup",
+    }
+
+    closed = executor._close_paper_brackets({"DOGE-USD": pd.DataFrame({"close": [0.85]})})
+
+    assert closed == []
+    assert "DOGE-USD" in executor._sim_positions
+
+
 def test_kraken_paper_execute_signal_opens_long_and_short():
     executor = SimulatedKrakenExecutor.__new__(SimulatedKrakenExecutor)
     executor._cash = 5000.0

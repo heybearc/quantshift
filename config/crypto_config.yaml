@@ -13,7 +13,8 @@ executor:
     min_volume: 1000000  # Minimum $1M daily volume
   simulated_capital: 10000  # Paper trading with $10,000 simulated capital
 
-# Washout, volatility break, and a 15-minute band snap. Coinbase stays long only.
+# Washout and volatility break. Coinbase stays long only.
+# The 15-minute band snap stays on Kraken. Fading the wide stretch was the losing Coinbase book.
 strategies:
   - type: "TradeConfidentSetup"
     params:
@@ -25,20 +26,12 @@ strategies:
       risk_per_trade: 0.01
       max_notional: 0.20
       enable_shorts: false
-  - type: "BandSnapSetup"
-    params:
-      risk_per_trade: 0.0025
-      max_notional: 0.20
-      enable_shorts: false
-      min_reward_pct: 0.012
-      max_hold_minutes: 180
 
 # Strategy orchestrator configuration
 orchestrator:
   capital_allocation:
-    TradeConfidentSetup: 0.27
-    VolatilityBreakoutSetup: 0.40
-    BandSnapSetup: 0.33
+    TradeConfidentSetup: 0.40
+    VolatilityBreakoutSetup: 0.60
   
   use_regime_detection: true
   use_ml_regime: true  # Use ML-based regime classifier (91.7% accuracy)

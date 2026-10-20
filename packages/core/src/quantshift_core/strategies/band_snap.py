@@ -15,6 +15,7 @@ import pandas as pd
 
 from ..candles import attached_frame
 from .base_strategy import Account, BaseStrategy, Position, Signal, SignalType
+from .trade_confident import expansion_side
 
 
 def _columns(frame: pd.DataFrame) -> Optional[pd.DataFrame]:
@@ -66,6 +67,8 @@ class BandSnapSetup(BaseStrategy):
         held = self.held_position(positions, symbol)
         if held is not None:
             return self._time_stop(symbol, held, market_data)
+        if self.config.get("stand_down_on_expansion", True) and expansion_side(market_data, self.shorts_enabled()):
+            return []
         noise = _columns(attached_frame(market_data, "noise"))
         if noise is None:
             return []

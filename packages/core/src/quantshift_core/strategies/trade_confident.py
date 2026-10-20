@@ -136,6 +136,41 @@ def nearest_above(levels: List[float], price: float) -> Optional[float]:
     return min(above) if above else None
 
 
+def expansion_side(market_data: pd.DataFrame, shorts_enabled: bool) -> Optional[str]:
+    """The side of a squeezed hourly close through a pivot, or None.
+
+    This is the volatility break's entry, without the reward check. The band
+    snap uses it to stand down so the fade does not take the expansion.
+    """
+    if market_data is None or not hasattr(market_data, "attrs"):
+        return None
+    daily = _unwrap(market_data.attrs.get("daily"))
+    entry = _unwrap(market_data.attrs.get("entry"))
+    if daily is None or entry is None:
+        return None
+    squeezed = volatility_rsi(entry)
+    if squeezed is None or squeezed >= 15 or average_true_range(entry) is None:
+        return None
+    data = _columns(entry)
+    if data is None:
+        return None
+    close = data["close"].astype(float)
+    if len(close) < 2:
+        return None
+    price = float(close.iloc[-1])
+    previous = float(close.iloc[-2])
+    highs, lows = swing_levels(entry)
+    if trend_points(daily, "long"):
+        pivot = nearest_below(highs, price)
+        if pivot is not None and previous <= pivot < price:
+            return "long"
+    if shorts_enabled and trend_points(daily, "short"):
+        pivot = nearest_above(lows, price)
+        if pivot is not None and previous >= pivot > price:
+            return "short"
+    return None
+
+
 def volatility_rsi(frame: pd.DataFrame, length: int = 8) -> Optional[float]:
     """RSI of bar-range volatility. Under 15 is the compressed breakout zone."""
     data = _columns(frame)
@@ -405,29 +440,28 @@ class VolatilityBreakoutSetup(TradeConfidentSetup):
         symbol = getattr(market_data, "symbol", None)
         if not symbol or self.held_position(positions, symbol) is not None:
             return []
-        daily, entry = self._frames(market_data)
-        if daily is None or entry is None:
+        side = expansion_side(market_data, self.shorts_enabled())
+        if side is None:
             return []
-        squeezed = volatility_rsi(entry)
-        room = average_true_range(entry)
-        if squeezed is None or squeezed >= 15 or room is None:
+        _daily, entry = self._frames(market_data)
+        room = average_true_range(entry) if entry is not None else None
+        data = _columns(entry) if entry is not None else None
+        if room is None or data is None:
             return []
-        data = _columns(entry)
         close = data["close"].astype(float)
         if len(close) < 2:
             return []
         price = float(close.iloc[-1])
-        previous = float(close.iloc[-2])
         highs, lows = swing_levels(entry)
-        if trend_points(daily, "long"):
+        if side == "long":
             pivot = nearest_below(highs, price)
-            if pivot is not None and previous <= pivot < price:
-                return self._breakout_order(symbol, SignalType.BUY, price, pivot, nearest_above(highs, price), room, account, "long")
-        if self.shorts_enabled() and trend_points(daily, "short"):
-            pivot = nearest_above(lows, price)
-            if pivot is not None and previous >= pivot > price:
-                return self._breakout_order(symbol, SignalType.SELL, price, pivot, nearest_below(lows, price), room, account, "short")
-        return []
+            if pivot is None:
+                return []
+            return self._breakout_order(symbol, SignalType.BUY, price, pivot, nearest_above(highs, price), room, account, "long")
+        pivot = nearest_above(lows, price)
+        if pivot is None:
+            return []
+        return self._breakout_order(symbol, SignalType.SELL, price, pivot, nearest_below(lows, price), room, account, "short")
 
     def _breakout_order(
         self,

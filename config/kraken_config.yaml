@@ -34,6 +34,7 @@ strategies:
       enable_shorts: true
       min_reward_pct: 0.006
       max_hold_minutes: 180
+      stand_down_on_expansion: true
 
 orchestrator:
   capital_allocation:

@@ -172,6 +172,40 @@ def test_a_stopped_long_waits_until_price_closes_back_through_the_middle():
     assert signals[0].signal_type == SignalType.BUY
 
 
+def test_kraken_does_not_fade_a_bar_the_volatility_break_wants(monkeypatch):
+    monkeypatch.setattr(
+        "quantshift_core.strategies.band_snap.expansion_side",
+        lambda _frame, _shorts: "long",
+    )
+    strategy = BandSnapSetup(config={"enable_shorts": True, "min_reward_pct": 0.001, "risk_per_trade": 0.0025})
+    assert strategy.generate_signals(_long_host(), _account(), []) == []
+
+
+def test_a_held_band_snap_still_exits_when_the_hour_breaks_out(monkeypatch):
+    monkeypatch.setattr(
+        "quantshift_core.strategies.band_snap.expansion_side",
+        lambda _frame, _shorts: "long",
+    )
+    opened = (datetime.utcnow() - timedelta(hours=4)).replace(microsecond=0).isoformat()
+    held = Position(
+        symbol="BTC-USD",
+        quantity=1.25,
+        entry_price=100,
+        current_price=101,
+        market_value=126.25,
+        unrealized_pl=1.25,
+        unrealized_plpc=0.01,
+        side="long",
+        metadata={"strategy": "BandSnapSetup", "opened_at": opened},
+    )
+    host = _long_host()
+    host.attrs["noise"].frame.attrs["mark_price"] = 101
+    strategy = BandSnapSetup(config={"max_hold_minutes": 180, "stand_down_on_expansion": True})
+    signals = strategy.generate_signals(host, _account(), [held])
+    assert len(signals) == 1
+    assert signals[0].reason == "band snap time stop"
+
+
 def test_a_stopped_long_can_still_take_the_short_side():
     strategy = BandSnapSetup(config={"enable_shorts": True, "min_reward_pct": 0.001, "risk_per_trade": 0.0025})
     owner = type("Book", (), {"strategies": [strategy]})()

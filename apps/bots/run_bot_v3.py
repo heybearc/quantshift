@@ -100,6 +100,7 @@ class QuantShiftUnifiedBot:
         self.state_manager = None
         self.executor = None
         self.db_conn = None
+        self._performance_stop_at = 0.0
         self.performance_tracker = None
         self.trailing_stop_manager = None
         self.bot_name = self.config.get('bot_name', 'quantshift-bot')
@@ -1489,6 +1490,59 @@ class QuantShiftUnifiedBot:
         self.strategy.generate_signals({"_regime_SPY": frame}, account, positions)
         logger.info("closed_market_regime_refreshed")
 
+    def _apply_performance_stops(self):
+        """Stop a crypto setup whose closed book is both a low hit rate and a loss.
+
+        Win rate in strategy_performance is stored as a percent. A profitable
+        low hit rate, such as the Kraken band snap, stays on.
+        """
+        settings = self.config.get("adaptive_optimization") or {}
+        if self.config.get("bot_type") != "crypto" or not settings.get("enable_auto_disable", False):
+            return
+        if self.strategy is None or time.time() - self._performance_stop_at < 900:
+            return
+        self._performance_stop_at = time.time()
+        floor = float(settings.get("min_win_rate", 0.35))
+        minimum = int(settings.get("min_trades_for_optimization", 30))
+        try:
+            if not self.db_conn or getattr(self.db_conn, "closed", 1):
+                self.db_conn = psycopg2.connect(require_database_url())
+            cursor = self.db_conn.cursor()
+            cursor.execute(
+                """
+                SELECT strategy_name, total_trades, win_rate, profit_factor, losing_trades
+                FROM strategy_performance
+                WHERE bot_name = %s
+                """,
+                (self.bot_name,),
+            )
+            rows = cursor.fetchall()
+            self.db_conn.commit()
+        except Exception as exc:
+            logger.error("performance_stop_failed", error=str(exc))
+            if self.db_conn:
+                self.db_conn.rollback()
+            return
+        loaded = {strategy.name for strategy in self.strategy.strategies}
+        for name, trades, win_rate, profit_factor, losing in rows:
+            if name not in loaded or int(trades or 0) < minimum or int(losing or 0) <= 0:
+                continue
+            rate = float(win_rate or 0)
+            if rate > 1:
+                rate = rate / 100.0
+            if rate >= floor or profit_factor is None or float(profit_factor) >= 1:
+                continue
+            if name in self.strategy.disabled_strategies:
+                continue
+            self.strategy.disabled_strategies.add(name)
+            logger.info(
+                "strategy_disabled_for_performance",
+                strategy=name,
+                win_rate=rate,
+                profit_factor=float(profit_factor),
+                trades=int(trades),
+            )
+
     def run(self):
         """Main bot loop with hot-standby failover support."""
         self.running = True
@@ -1582,6 +1636,7 @@ class QuantShiftUnifiedBot:
                     
                     # Check if market is open (for equity) or always run (for crypto)
                     if self.executor.is_market_open():
+                        self._apply_performance_stops()
                         logger.info("strategy_cycle_starting")
                         
                         # Time the cycle for metrics
