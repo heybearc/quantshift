@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-10-16
-**Current Status:** Phase 1.5.9 paper validation, day 4. Clock stays on 2026-10-13. Live is v1.17.0. No live money.
+**Last Updated:** 2026-10-20
+**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-10-19 and runs through about 2026-11-16. Live is v1.18.5 on green. No live money.
 
 ---
 
@@ -1094,8 +1094,8 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 Only items that are still open. Completed phases above stay as history. Duplicate lists that described multi-strategy, regime detection, and the Coinbase bot as unbuilt were removed on 2026-10-10.
 
 ### Open now — paper window
-- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-13 (about 2026-11-10)
-- [ ] Watch whether crypto or Kraken open a washout or a volatility-break trade
+- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-19 (about 2026-11-16). The 2026-10-13 clock ended when Coinbase and Kraken stopped placing the same trades.
+- [ ] Watch whether Coinbase opens a washout or a volatility-break trade. Score Kraken's band snap on its own.
 - [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed
 - [ ] Score that window before any Phase 1.5.10 live capital
 
@@ -1144,6 +1144,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 💡 User Feedback & Feature Requests
 
 ### From Users
+- [x] Show an estimated fill cost beside the paper result, and leave that cost out of the account until this window ends. Shipped in v1.18.5. Date: 2026-10-20
+- [x] Coinbase and Kraken should not use the same crypto book. Coinbase stays long only on the washout and the volatility break. Kraken keeps the 15-minute band snap. Do not shorten that bar, and do not build a day-trading book. Date: 2026-10-20
 - [x] Crypto and Kraken should trade more like a volatile market, using the Trade Confident tools, and should be busier than the daily washout alone. Added the volatility break. Caps are 12 and 8. Date: 2026-10-16
 - [x] Restart the paper window and reset simulated cash. Crypto and Kraken start at configured capital. Alpaca paper balance stays at the broker. Date: 2026-10-13
 - [x] Crypto simulation must sell fractional sizes, and trailing stops must be able to exit. Date: 2026-10-13
@@ -1159,7 +1161,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 🗺️ Roadmap (Strategic)
 
 ### Now — through the paper window
-- [ ] Phase 1.5.9 daily monitoring. Clock stays on 2026-10-13. Live is v1.17.0.
+- [ ] Phase 1.5.9 daily monitoring. Clock stays on 2026-10-19. Live is v1.18.5.
 - [ ] Equity new buys stay blocked while leverage is above the cash cap.
 
 ### After four clean weeks
@@ -1178,7 +1180,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 Phase 1.5.10 does not start until the paper window passes.
 
 ### Still required
-- [ ] 4 clean weeks from 2026-10-13, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
+- [ ] 4 clean weeks from 2026-10-19, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
 - [ ] Emergency kill switch tested on purpose
 - [ ] Alpaca live credentials configured and tested
 - [ ] Circuit-breaker email in place
@@ -1203,6 +1205,8 @@ Phase 1.5.10 does not start until the paper window passes.
 
 ## ✅ Recently Completed (Last 30 Days)
 
+- [x] v1.18.5 live on green (`09fccc5`). Estimated fill cost sits beside the paper result and is not taken from the account. Blue synced. Date: 2026-10-20
+- [x] Coinbase left the 15-minute band snap. Kraken kept it and stands down when the hourly bar breaks out. Paper clock restarted 2026-10-19. Date: 2026-10-20
 - [x] v1.17.0 live on green (`f452a35`). Crypto and Kraken can trade a volatility squeeze. Coinbase cap 12, Kraken cap 8. Blue synced. Date: 2026-10-16
 - [x] v1.16.0. Crypto and Kraken use the daily washout setup. Equity kept its seven strategies. Date: 2026-10-16
 - [x] v1.15.1. Crypto results stay with the strategy that opened them. Equity regime reading continues after the close. Date: 2026-10-15

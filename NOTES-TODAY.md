@@ -1,5 +1,5 @@
 ---
-date: 2026-10-19
+date: 2026-10-20
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
 
@@ -9,7 +9,7 @@ purpose: Scratchpad for today's discoveries (promote on /end-day)
 - 
 
 ### Discoveries / Notes
-- Coinbase left the 15-minute band snap. Kraken kept it and stands down when the volatility break wants the symbol. Paper clock restarted 2026-10-19. 
+- 
 
 ### Decisions to Promote
 - 

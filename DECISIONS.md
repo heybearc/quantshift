@@ -256,6 +256,19 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - `.cloudy-work/_cloudy-ops/policy/live-standby-indicator.md`
 - `.cloudy-work/_cloudy-ops/scripts/setup-blue-green-ssh.sh`
 
+## D-QS-021: Estimated fill cost stays outside the paper account
+- **Decision:** The dashboard shows an estimated cost beside each paper result. Equity uses 1 bp of slippage. Coinbase uses 60 bp. Kraken uses 40 bp. That cost is not taken from cash, and it does not change which orders are placed. Putting the spread and the commission inside the fill waits until the current paper window ends.
+- **Why:** A costed fill would change cash and which trades survive, and that would restart the paper clock again. The operator still needs to see the cost.
+- **When:** 2026-10-20. Shipped in v1.18.5 (`09fccc5`).
+- **Do not:** Charge the estimate during this window, or restart the bots to make the dashboard change.
+
+## D-QS-020: Coinbase and Kraken no longer share one crypto book
+- **Decision:** Coinbase paper trading is long only and runs the washout and the volatility break. Kraken runs those two plus the 15-minute band snap, may short, and uses no leverage. The snap stands down when the hourly bar breaks out of a squeeze. A loaded crypto setup turns off only after 30 closes, a hit rate under 35%, and a profit factor under 1. The paper clock restarted on 2026-10-19 and runs through about 2026-11-16.
+- **Why:** The Coinbase band snap was a long-only fade of wide stretches and was losing. The same snap on Kraken, with shorts and a tighter reward, was not. A faster bar was considered and rejected. A day-trading book was considered and rejected.
+- **When:** 2026-10-20
+- **Do not:** Put the band snap back on Coinbase, shorten the Kraken bar, build a day-trading book, reset the Kraken gap under $5,000, or start live capital.
+- **Supersedes:** The "both books run the band snap" part of D-QS-018.
+
 ## D-QS-019: No saved custom dashboards
 - **Decision:** Do not add a user-saved dashboard layout. The default dashboard is the product.
 - **Why:** One operator. The missing piece was the whole result (closed plus open), which v1.18.4 shows. A layout builder does not answer whether the books are making money.
@@ -263,6 +276,7 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Do not:** Put it on the plan ahead of the paper window, sparklines, or the daily email.
 
 ## D-QS-018: Crypto noise is a third setup, the band snap
+- **Status:** Superseded in part by D-QS-020. Coinbase no longer runs the band snap.
 - **Decision:** Coinbase and Kraken paper trading keep the washout and the volatility break, and add BandSnapSetup. It fades a finished 15-minute tag of a Bollinger band back to the middle, risks 0.25% of that setup's slice, and closes after three hours. Coinbase stays long only and skips a snap narrower than 1.2%. Kraken may short and skips a snap narrower than 0.6%. The new setup gets about a third of each crypto book. Fills stay tagged BandSnapSetup. Position caps and cash caps stay put.
 - **Why:** The two swing setups skip most of the day's movement. A separate mean-reversion setup can use that noise without loosening the swing rules.
 - **When:** 2026-10-16

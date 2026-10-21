@@ -15,18 +15,17 @@ Public https://quantshift.io is green LIVE on v1.18.5 (`09fccc5`). Blue standby 
 Coinbase trades the washout and the volatility break, long only. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
 
 ### Recent completions
+- ✅ Shipped v1.18.5 (`09fccc5`) to green LIVE and synced blue. The dashboard shows an estimated fill cost beside the result. The cost is not taken from the account.
+- ✅ Coinbase left the 15-minute band snap. Kraken kept it and stands it down when the hourly bar breaks out. A crypto setup turns off only when it has 30 closes, a hit rate under 35%, and a profit factor under 1.
+- ✅ Paper clock restarted 2026-10-19 because the two crypto books no longer place the same trades. Window runs through about 2026-11-16.
 - ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
-- ✅ Shipped v1.16.0. Crypto and Kraken left the seven equity strategies for the washout setup
-- ✅ Shipped v1.15.1. Crypto results stay with the strategy that opened them, and the equity regime reading continues after the close
-- ✅ Coinbase position cap is 12. Kraken position cap is 8. Cash limits still stop a full book first
-- ✅ Existing crypto, Kraken, and equity positions were left until their own stops or targets
 
 ### Next steps
 1. Watch the three paper books through the window that ends about 2026-11-16
 2. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
 3. Do not reset Kraken to explain the gap under the $5,000 start
 4. Do not start Phase 1.5.10 live capital until four clean weeks pass
-5. The dashboard now shows an estimated fill cost beside the result. Putting that cost inside the fill waits until this window ends.
+5. Leave the estimated cost beside the result. Putting that cost inside the fill waits until this window ends.
 
 ## Known Issues
 - Kraken paper equity is below the $5,000 start. The gap was not diagnosed. Do not reset the book.
