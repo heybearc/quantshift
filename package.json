@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Release-gate entrypoint. The app version lives in apps/web/package.json.",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

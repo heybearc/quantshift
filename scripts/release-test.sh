@@ -26,6 +26,19 @@ export BASE_URL="${BASE_URL:-http://localhost:3001}"
 echo "Release tests ($AREA) against $BASE_URL"
 
 case "$AREA" in
+  detect)
+    base="${BASE_REV:?BASE_REV is required for detect}"
+    names="$(git diff --name-only "${base}..HEAD")"
+    if printf '%s\n' "$names" | grep -Eq 'packages/core/|apps/bots/|config/(crypto|kraken)|generated-release-(candle|volatility|trade-confident|band|crypto|kraken|books|equity|fill-cost)'; then
+      echo trading
+    elif printf '%s\n' "$names" | grep -Eq 'admin/'; then
+      echo admin
+    elif printf '%s\n' "$names" | grep -Eq 'auth|login'; then
+      echo auth
+    else
+      echo gate
+    fi
+    ;;
   gate)
     exec npx playwright test tests/release-gate.spec.ts --workers=1
     ;;
