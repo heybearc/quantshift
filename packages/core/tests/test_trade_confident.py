@@ -32,7 +32,9 @@ from quantshift_core.strategies.base_strategy import Account, Position, SignalTy
 from quantshift_core.strategies.trade_confident import (
     TradeConfidentSetup,
     VolatilityBreakoutSetup,
+    expansion_side,
     reversal_bar,
+    resolve_frames,
     trades_in_favor,
     trend_agrees,
     volatility_rsi,
@@ -163,6 +165,62 @@ def test_a_quiet_stretch_is_the_breakout_zone():
 def test_coinbase_breakout_does_not_open_a_short():
     strategy = VolatilityBreakoutSetup(config={"enable_shorts": False})
     assert strategy.shorts_enabled() is False
+
+
+def _hourly(closes, spread=0.05):
+    start = datetime(2026, 1, 1)
+    rows = []
+    for index, close in enumerate(closes):
+        rows.append({
+            "timestamp": start + timedelta(hours=index),
+            "open": close,
+            "high": close + spread,
+            "low": close - spread,
+            "close": close,
+            "volume": 1000 + index,
+        })
+    return pd.DataFrame(rows).set_index("timestamp")
+
+
+def _rising_daily(count=220):
+    return _frame([100 + index * 0.4 for index in range(count)])
+
+
+def _squeezed_break():
+    closes = [100.0] * 80
+    frame = _hourly(closes, spread=0.05)
+    frame.loc[frame.index[:30], "high"] = 104.0
+    frame.loc[frame.index[:30], "low"] = 96.0
+    pivot = frame.index[55]
+    frame.loc[pivot, "high"] = 100.2
+    previous = frame.index[-2]
+    last = frame.index[-1]
+    frame.loc[previous, ["open", "high", "low", "close"]] = [100.05, 100.12, 100.0, 100.1]
+    frame.loc[last, ["open", "high", "low", "close"]] = [100.1, 100.28, 100.08, 100.25]
+    return frame
+
+
+def _with_squeeze(host):
+    import quantshift_core.strategies.trade_confident as module
+    module.volatility_rsi = lambda frame, length=8: 5.0
+    try:
+        return expansion_side(host, False)
+    finally:
+        module.volatility_rsi = volatility_rsi
+
+
+def test_coinbase_hourly_host_supplies_the_missing_entry_frame():
+    host = _squeezed_break()
+    host.attrs["daily"] = AttachedFrame(_rising_daily())
+    assert resolve_frames(host)[1] is host
+    assert _with_squeeze(host) == "long"
+
+
+def test_kraken_daily_host_supplies_the_missing_daily_frame():
+    host = _rising_daily()
+    host.attrs["entry"] = AttachedFrame(_squeezed_break())
+    assert resolve_frames(host)[0] is host
+    assert _with_squeeze(host) == "long"
 
 
 def test_trend_needs_a_full_daily_history():

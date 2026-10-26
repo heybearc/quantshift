@@ -583,6 +583,9 @@ class CoinbaseExecutor:
             df.symbol = symbol
             df.attrs["mark_price"] = mark_price
             if granularity == "ONE_HOUR":
+                hourly = df.copy()
+                hourly.attrs = {}
+                df.attrs["entry"] = AttachedFrame(hourly)
                 daily = self._cached_daily(symbol)
                 if daily is not None and len(daily):
                     df.attrs["daily"] = AttachedFrame(daily)

@@ -136,16 +136,31 @@ def nearest_above(levels: List[float], price: float) -> Optional[float]:
     return min(above) if above else None
 
 
+def resolve_frames(market_data: pd.DataFrame) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    """Daily and hourly bars for a setup.
+
+    Coinbase hands over hourly bars with the daily frame attached. Kraken hands
+    over daily bars with the hourly frame attached. Either host can fill the
+    side that was not hung on.
+    """
+    if market_data is None or not hasattr(market_data, "attrs"):
+        return None, None
+    daily = _unwrap(market_data.attrs.get("daily"))
+    entry = _unwrap(market_data.attrs.get("entry"))
+    if daily is None and _is_daily(market_data):
+        daily = market_data
+    if entry is None and not _is_daily(market_data):
+        entry = market_data
+    return daily, entry
+
+
 def expansion_side(market_data: pd.DataFrame, shorts_enabled: bool) -> Optional[str]:
     """The side of a squeezed hourly close through a pivot, or None.
 
     This is the volatility break's entry, without the reward check. The band
     snap uses it to stand down so the fade does not take the expansion.
     """
-    if market_data is None or not hasattr(market_data, "attrs"):
-        return None
-    daily = _unwrap(market_data.attrs.get("daily"))
-    entry = _unwrap(market_data.attrs.get("entry"))
+    daily, entry = resolve_frames(market_data)
     if daily is None or entry is None:
         return None
     squeezed = volatility_rsi(entry)
@@ -370,13 +385,7 @@ class TradeConfidentSetup(BaseStrategy):
         return budget / risk
 
     def _frames(self, market_data: pd.DataFrame) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
-        daily = _unwrap(market_data.attrs.get("daily"))
-        entry = _unwrap(market_data.attrs.get("entry"))
-        if daily is None and _is_daily(market_data):
-            daily = market_data
-        if entry is None and not _is_daily(market_data):
-            entry = market_data
-        return daily, entry
+        return resolve_frames(market_data)
 
     def _touched(self, low: float, high: float, level: float, room: float) -> bool:
         return low <= level + room and high >= level - room

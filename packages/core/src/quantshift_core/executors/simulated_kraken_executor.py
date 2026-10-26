@@ -443,6 +443,10 @@ class SimulatedKrakenExecutor:
     def _attach_lower_frames(self, df: pd.DataFrame, symbol: str) -> pd.DataFrame:
         if df is None or len(df) == 0:
             return df
+        if attached_frame(df, "daily") is None:
+            daily = df.copy()
+            daily.attrs = {}
+            df.attrs["daily"] = AttachedFrame(daily)
         entry = self._cached_entry(symbol)
         if entry is not None and len(entry):
             df.attrs["entry"] = AttachedFrame(entry)
