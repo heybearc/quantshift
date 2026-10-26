@@ -1,6 +1,4 @@
-const { defineConfig, devices } = require('@playwright/test');
-
-module.exports = defineConfig({
+module.exports = {
   testDir: './apps/web/tests',
   fullyParallel: false,
   workers: 1,
@@ -12,7 +10,7 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { browserName: 'chromium' },
     },
   ],
-});
+};
