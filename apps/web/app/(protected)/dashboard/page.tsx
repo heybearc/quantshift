@@ -10,6 +10,8 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, Zap, BarChart2, Bitcoin } from "lucide-react";
 import { WinRateCard } from "@/components/dashboard/WinRateCard";
 import { PerformanceBooks, PerformanceBook } from "@/components/dashboard/PerformanceBooks";
+import { QuietHour } from "@/components/dashboard/QuietHour";
+import { Sparkline } from "@/components/dashboard/Sparkline";
 import { MaxDrawdownCard } from "@/components/dashboard/MaxDrawdownCard";
 import { StrategyCard } from "@/components/dashboard/StrategyCard";
 import { RegimeIndicator } from "@/components/dashboard/RegimeIndicator";
@@ -312,6 +314,8 @@ export default function DashboardPage() {
                 </div>
 
                 {botMetrics?.books && <PerformanceBooks books={botMetrics.books} formatCurrency={fmt} />}
+                <ResultSparkline />
+                <QuietHour />
 
                 {/* REGIME INDICATOR — Phase 5 */}
                 <RegimeIndicator botName={activeTab === 'all' ? 'quantshift-equity' : activeTab} />
@@ -425,6 +429,41 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function ResultSparkline() {
+  const [values, setValues] = useState<number[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/bot/performance?days=90")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.curve)) {
+          setValues(data.curve.map((point: { value: number }) => point.value));
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (values.length < 2) return null;
+
+  return (
+    <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-white font-semibold">Result over time</p>
+          <p className="text-slate-400 text-xs mt-1">Closed trades for the last 90 days. Estimated fill cost stays beside the result.</p>
+        </div>
+        <div className="w-40">
+          <Sparkline values={values} width={160} height={40} />
+        </div>
+      </div>
     </div>
   );
 }

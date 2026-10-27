@@ -33,6 +33,7 @@ from quantshift_core.strategies.trade_confident import (
     TradeConfidentSetup,
     VolatilityBreakoutSetup,
     expansion_side,
+    quiet_hour_gates,
     reversal_bar,
     resolve_frames,
     trades_in_favor,
@@ -221,6 +222,27 @@ def test_kraken_daily_host_supplies_the_missing_daily_frame():
     host.attrs["entry"] = AttachedFrame(_squeezed_break())
     assert resolve_frames(host)[0] is host
     assert _with_squeeze(host) == "long"
+
+
+def test_a_missing_hourly_bar_is_named():
+    report = quiet_hour_gates(_rising_daily(), False)
+    assert report["finished_hour"] is False
+    assert report["reason"] == "hourly bar is not finished"
+
+
+def test_a_quiet_hour_names_the_missing_squeeze():
+    host = _squeezed_break()
+    host.attrs["daily"] = AttachedFrame(_rising_daily())
+    import quantshift_core.strategies.trade_confident as module
+    module.volatility_rsi = lambda frame, length=8: 40.0
+    try:
+        report = quiet_hour_gates(host, False)
+    finally:
+        module.volatility_rsi = volatility_rsi
+    assert report["finished_hour"] is True
+    assert report["squeeze"] is False
+    assert report["pivot"] is None
+    assert report["reason"] == "bar range is not in a squeeze"
 
 
 def test_trend_needs_a_full_daily_history():

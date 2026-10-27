@@ -154,6 +154,32 @@ def resolve_frames(market_data: pd.DataFrame) -> Tuple[Optional[pd.DataFrame], O
     return daily, entry
 
 
+def quiet_hour_gates(market_data: pd.DataFrame, shorts_enabled: bool) -> dict:
+    """Why this hour did not open a volatility break. Does not change the gates."""
+    daily, entry = resolve_frames(market_data)
+    finished_hour = entry is not None and len(entry) > 0
+    reading = volatility_rsi(entry) if finished_hour else None
+    room = average_true_range(entry) if finished_hour else None
+    squeeze = bool(finished_hour and reading is not None and reading < 15 and room is not None)
+    pivot = None
+    if finished_hour and squeeze:
+        pivot = expansion_side(market_data, shorts_enabled) is not None
+    if not finished_hour:
+        reason = "hourly bar is not finished"
+    elif not squeeze:
+        reason = "bar range is not in a squeeze"
+    elif not pivot:
+        reason = "close did not break a pivot"
+    else:
+        reason = "finished hour, squeeze, and pivot passed"
+    return {
+        "finished_hour": finished_hour,
+        "squeeze": squeeze,
+        "pivot": pivot,
+        "reason": reason,
+    }
+
+
 def expansion_side(market_data: pd.DataFrame, shorts_enabled: bool) -> Optional[str]:
     """The side of a squeezed hourly close through a pivot, or None.
 

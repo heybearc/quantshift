@@ -12,7 +12,7 @@ This enables QuantShift to scale to 100s of symbols while staying within API lim
 
 from typing import List, Dict, Optional, Set, Tuple
 from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout, as_completed
 import json
 import urllib.request
 import structlog
@@ -234,13 +234,20 @@ class SymbolUniverse:
         """
         Fetch top crypto symbols from Coinbase.
         
-        NOTE: Coinbase get_products() API is unreliable and causes hangs.
-        Using curated fallback list for Phase 1. Will implement proper
-        API-based fetching in Phase 2 with better error handling.
+        The product list has a 5 second deadline. A hang or a timeout
+        returns the fixed curated list on purpose.
         """
         candidates = self._get_top_crypto_symbols()
         try:
             listed, volumes = self._coinbase_listing_and_volume(candidates)
+        except TimeoutError:
+            symbols = self._static_fallback()
+            self.logger.warning(
+                "coinbase_get_products_using_curated_list",
+                count=len(symbols),
+                timeout_seconds=5,
+            )
+            return symbols
         except Exception as exc:
             self.logger.warning("crypto_universe_refresh_failed", error=str(exc))
             return None
@@ -304,14 +311,29 @@ class SymbolUniverse:
             volumes[alt] = last * day_volume
         return listed, volumes
 
+    def _read_json(self, url: str, timeout: float):
+        request = urllib.request.Request(url, headers={"User-Agent": "quantshift"})
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode())
+
+    def _read_json_deadline(self, url: str, timeout: float):
+        """Stop waiting even when the socket timeout does not fire."""
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(self._read_json, url, timeout)
+        try:
+            return future.result(timeout=timeout)
+        except FuturesTimeout as exc:
+            raise TimeoutError(f"timed out after {timeout}s: {url}") from exc
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
+
     def _coinbase_listing_and_volume(self, candidates: List[str]) -> Tuple[Optional[Set[str]], Dict[str, float]]:
         """Listed USD products, plus dollar volume for the curated names. Times out."""
-        request = urllib.request.Request(
-            "https://api.exchange.coinbase.com/products",
-            headers={"User-Agent": "quantshift"},
-        )
-        with urllib.request.urlopen(request, timeout=5) as response:
-            products = json.loads(response.read().decode())
+        try:
+            products = self._read_json_deadline("https://api.exchange.coinbase.com/products", 5)
+        except TimeoutError:
+            self.logger.warning("coinbase_get_products_timeout", timeout_seconds=5, fallback="curated_list")
+            raise
         listed = {
             item.get("id")
             for item in products
@@ -323,26 +345,27 @@ class SymbolUniverse:
         volumes: Dict[str, float] = {}
 
         def one(symbol: str) -> Tuple[str, Optional[float]]:
-            stats_request = urllib.request.Request(
-                f"https://api.exchange.coinbase.com/products/{symbol}/stats",
-                headers={"User-Agent": "quantshift"},
-            )
             try:
-                with urllib.request.urlopen(stats_request, timeout=2) as response:
-                    stats = json.loads(response.read().decode())
+                stats = self._read_json(
+                    f"https://api.exchange.coinbase.com/products/{symbol}/stats",
+                    2,
+                )
                 return symbol, float(stats["volume"]) * float(stats["last"])
             except Exception:
                 return symbol, None
 
         with ThreadPoolExecutor(max_workers=8) as pool:
             futures = [pool.submit(one, symbol) for symbol in candidates if symbol in listed]
-            for future in as_completed(futures):
-                try:
-                    symbol, volume = future.result()
-                except Exception:
-                    continue
-                if volume is not None:
-                    volumes[symbol] = volume
+            try:
+                for future in as_completed(futures, timeout=12):
+                    try:
+                        symbol, volume = future.result()
+                    except Exception:
+                        continue
+                    if volume is not None:
+                        volumes[symbol] = volume
+            except FuturesTimeout:
+                self.logger.warning("coinbase_product_stats_timeout", collected=len(volumes))
         return listed, volumes
     
     def _get_sp100_symbols(self) -> List[str]:

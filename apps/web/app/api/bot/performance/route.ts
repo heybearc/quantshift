@@ -87,8 +87,39 @@ export async function GET(request: NextRequest) {
           source: 'daily' as const,
         };
 
+    const closed = await prisma.trade.findMany({
+      where: {
+        pnl: { not: null },
+        exitedAt: { gte: startDate },
+        ...(botName ? { botName } : {}),
+      },
+      orderBy: { exitedAt: 'asc' },
+      select: { exitedAt: true, pnl: true },
+    });
+    let running = 0;
+    const curve = closed.flatMap((trade) => {
+      if (trade.exitedAt == null || trade.pnl == null) return [];
+      running += trade.pnl;
+      return [{ date: trade.exitedAt.toISOString(), value: Math.round(running * 100) / 100 }];
+    });
+    const wins = closed.map((trade) => trade.pnl).filter((pnl): pnl is number => pnl != null && pnl > 0);
+    const losses = closed.map((trade) => trade.pnl).filter((pnl): pnl is number => pnl != null && pnl < 0);
+    const avgWin = wins.length ? wins.reduce((sum, pnl) => sum + pnl, 0) / wins.length : null;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((sum, pnl) => sum + pnl, 0) / losses.length) : null;
+    const decided = wins.length + losses.length;
+    const expectancy = decided && avgWin != null
+      ? ((wins.length / decided) * avgWin) - ((losses.length / decided) * (avgLoss || 0))
+      : null;
+
     return NextResponse.json({
-      summary,
+      summary: {
+        ...summary,
+        avgWin,
+        avgLoss,
+        expectancy,
+        payoff: avgWin != null && avgLoss ? avgWin / avgLoss : null,
+      },
+      curve,
       daily: metrics.map(m => ({
         date: m.date.toISOString().split('T')[0],
         totalTrades: m.totalTrades,

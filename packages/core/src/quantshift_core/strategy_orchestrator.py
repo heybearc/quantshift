@@ -222,6 +222,60 @@ class StrategyOrchestrator:
             except Exception as exc:
                 self.logger.debug("sentiment_snapshot_failed", symbol=signal.symbol, error=str(exc))
 
+    def _quiet_note(self, symbol: str, data, strategy, positions: List[Position]) -> dict:
+        held = any(
+            position.symbol == symbol and abs(float(position.quantity or 0)) > 0
+            for position in positions or []
+        )
+        if held:
+            return {
+                "symbol": symbol,
+                "finished_hour": None,
+                "squeeze": None,
+                "pivot": None,
+                "reason": "position already open",
+            }
+        from .strategies.trade_confident import quiet_hour_gates
+        gate = quiet_hour_gates(data, bool(strategy.config.get("enable_shorts", False)))
+        return {"symbol": symbol, **gate}
+
+    def _publish_quiet_hour(self, notes: List[dict]) -> None:
+        """Record why the volatility break stayed quiet. The gates are unchanged."""
+        def failed(key: str) -> int:
+            return sum(1 for note in notes if note.get(key) is False)
+
+        report = {
+            "checked": len(notes),
+            "unfinished": failed("finished_hour"),
+            "no_squeeze": failed("squeeze"),
+            "no_pivot": failed("pivot"),
+            "already_open": sum(1 for note in notes if note.get("reason") == "position already open"),
+            "passed": sum(
+                1 for note in notes
+                if note.get("finished_hour") and note.get("squeeze") and note.get("pivot")
+            ),
+            "examples": notes[:8],
+            "updated": datetime.utcnow().isoformat(),
+        }
+        self.last_quiet_hour = report
+        self.logger.info(
+            "quiet_hour",
+            checked=report["checked"],
+            unfinished=report["unfinished"],
+            no_squeeze=report["no_squeeze"],
+            no_pivot=report["no_pivot"],
+            already_open=report["already_open"],
+            passed=report["passed"],
+        )
+        client = getattr(self, "redis_client", None)
+        if not client or not getattr(self, "bot_name", None):
+            return
+        try:
+            import json
+            client.setex(f"quiet-hour:{self.bot_name}", 3600, json.dumps(report))
+        except Exception as exc:
+            self.logger.warning("quiet_hour_publish_failed", error=str(exc))
+
     def generate_signals(
         self,
         market_data: Dict[str, Any],
@@ -381,6 +435,7 @@ class StrategyOrchestrator:
                 except Exception as e:
                     self.logger.warning("failed_to_store_regime_in_redis", error=str(e))
         
+        quiet_notes = []
         # Generate signals from each strategy
         for strategy in self.strategies:
             # Skip disabled strategies
@@ -424,6 +479,8 @@ class StrategyOrchestrator:
                         allocated_account,
                         strategy_positions
                     )
+                    if strategy.__class__.__name__ == "VolatilityBreakoutSetup" and not signals:
+                        quiet_notes.append(self._quiet_note(symbol, data, strategy, strategy_positions))
                     
                     self.logger.debug(
                         "strategy_signals_generated",
@@ -526,6 +583,9 @@ class StrategyOrchestrator:
                     )
                 
                 # Continue with other strategies (don't crash the bot)
+
+        if quiet_notes:
+            self._publish_quiet_hour(quiet_notes)
         
         # Resolve conflicts
         resolved_signals = self._resolve_conflicts(all_signals)

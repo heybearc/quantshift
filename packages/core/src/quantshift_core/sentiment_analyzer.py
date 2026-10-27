@@ -14,9 +14,57 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import json
 
+_SHARED_FINBERT = {"tokenizer": None, "model": None}
+
 import structlog
 
 logger = structlog.get_logger()
+
+
+def _load_finbert(directory: str):
+    """Load FinBERT from disk. A saved copy skips the hub on the next start."""
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+    if _SHARED_FINBERT["model"] is not None:
+        return _SHARED_FINBERT["tokenizer"], _SHARED_FINBERT["model"]
+
+    def finish(tokenizer, model, save: bool):
+        model.eval()
+        if save:
+            os.makedirs(directory, exist_ok=True)
+            tokenizer.save_pretrained(directory)
+            model.save_pretrained(directory)
+            logger.info("finbert_cached", path=directory)
+        _SHARED_FINBERT["tokenizer"] = tokenizer
+        _SHARED_FINBERT["model"] = model
+        return tokenizer, model
+
+    if os.path.isfile(os.path.join(directory, "config.json")):
+        tokenizer = AutoTokenizer.from_pretrained(directory, local_files_only=True)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            directory,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        )
+        return finish(tokenizer, model, False)
+
+    try:
+        tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert", local_files_only=True)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            "ProsusAI/finbert",
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        )
+        return finish(tokenizer, model, True)
+    except Exception:
+        logger.info("finbert_cache_miss", path=directory)
+
+    tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "ProsusAI/finbert",
+        low_cpu_mem_usage=True,
+    )
+    return finish(tokenizer, model, True)
 
 
 class SentimentAnalyzer:
@@ -69,16 +117,13 @@ class SentimentAnalyzer:
         
         if self.use_finbert:
             try:
-                from transformers import AutoTokenizer, AutoModelForSequenceClassification
-                import torch
-                
-                # Load FinBERT model
-                model_name = "ProsusAI/finbert"
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-                self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
-                self.model.eval()
-                
-                logger.info("finbert_loaded", model=model_name)
+                started = time.perf_counter()
+                self.tokenizer, self.model = _load_finbert(self._finbert_dir())
+                logger.info(
+                    "finbert_loaded",
+                    model=self._finbert_dir(),
+                    seconds=round(time.perf_counter() - started, 2),
+                )
             except ImportError:
                 logger.warning(
                     "finbert_unavailable",
@@ -93,6 +138,13 @@ class SentimentAnalyzer:
             "sentiment_analyzer_initialized",
             use_finbert=self.use_finbert,
             cache_duration=self.config.get('cache_duration_minutes', 15)
+        )
+
+    def _finbert_dir(self) -> str:
+        return (
+            self.config.get("finbert_model_dir")
+            or os.environ.get("FINBERT_MODEL_DIR")
+            or "/opt/quantshift/models/finbert"
         )
     
     def get_sentiment(

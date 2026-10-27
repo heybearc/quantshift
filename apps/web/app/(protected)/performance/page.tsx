@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useLiveRefresh } from '@/lib/use-live-refresh';
 import { useRouter } from 'next/navigation';
 import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin, Zap } from 'lucide-react';
+import { Sparkline } from '@/components/dashboard/Sparkline';
 import Link from 'next/link';
 
 type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
@@ -25,6 +26,15 @@ interface PerformanceSummary {
   maxDrawdown: number | null;
   totalPnl: number;
   totalPnlPct: number | null;
+  avgWin?: number | null;
+  avgLoss?: number | null;
+  expectancy?: number | null;
+  payoff?: number | null;
+}
+
+interface CurvePoint {
+  date: string;
+  value: number;
 }
 
 interface DailyMetric {
@@ -43,6 +53,7 @@ interface DailyMetric {
 interface PerformanceData {
   summary: PerformanceSummary;
   daily: DailyMetric[];
+  curve?: CurvePoint[];
 }
 
 interface StrategyPerformance {
@@ -233,6 +244,37 @@ export default function PerformancePage() {
                     </div>
                     <p className="text-2xl font-bold text-white">{summary.sharpeRatio == null ? '—' : summary.sharpeRatio.toFixed(2)}</p>
                     <p className="text-xs text-slate-500 mt-1">Risk-adjusted return</p>
+                  </div>
+                </div>
+
+                {performance?.curve && performance.curve.length > 1 && (
+                  <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+                    <p className="text-white font-semibold">Closed result over time</p>
+                    <p className="text-slate-400 text-xs mt-1">Each point is the running sum of closed trades. Estimated fill cost is not included.</p>
+                    <div className="mt-4">
+                      <Sparkline values={performance.curve.map((point) => point.value)} width={720} height={120} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <p className="text-slate-400 text-xs font-medium mb-2">Average win</p>
+                    <p className="text-2xl font-bold text-green-400">{summary.avgWin == null ? '—' : fmt(summary.avgWin)}</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <p className="text-slate-400 text-xs font-medium mb-2">Average loss</p>
+                    <p className="text-2xl font-bold text-red-400">{summary.avgLoss == null ? '—' : fmt(summary.avgLoss)}</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <p className="text-slate-400 text-xs font-medium mb-2">Expectancy</p>
+                    <p className="text-2xl font-bold text-white">{summary.expectancy == null ? '—' : fmt(summary.expectancy)}</p>
+                    <p className="text-xs text-slate-500 mt-1">Per closed trade</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <p className="text-slate-400 text-xs font-medium mb-2">Payoff</p>
+                    <p className="text-2xl font-bold text-white">{summary.payoff == null ? '—' : summary.payoff.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 mt-1">Average win divided by average loss</p>
                   </div>
                 </div>
 
