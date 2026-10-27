@@ -325,3 +325,9 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - Investigate MCP tool HAProxy integration
 - Verify HAProxy configuration update mechanism
 - Consider manual HAProxy verification step in deployment workflow
+
+## D-QS-022: Standby takes the books only when the whole primary is quiet
+- **Decision:** The standby host has a Kraken service, left stopped. Failover starts equity, Coinbase, and Kraken together, and only after all three heartbeats are stale. Standby Redis stays a replica of the primary so a standby process cannot take the lock on its own.
+- **Why:** Kraken had no standby service. Standby Redis had become its own master, so a start there could trade the same paper books. One stale book is a process restart, not a host failure.
+- **When:** 2026-10-27. Shipped in v1.18.7 (`97ccab1`).
+- **Do not:** Leave a standby bot running beside the primary, or fail over because a single book missed a heartbeat.

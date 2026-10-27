@@ -1095,7 +1095,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 
 ### Open now — paper window
 - [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-19 (about 2026-11-16). The 2026-10-13 clock ended when Coinbase and Kraken stopped placing the same trades.
-- [ ] Watch whether Coinbase opens a washout or a volatility-break trade. Score Kraken's band snap on its own.
+- [ ] Watch whether Coinbase opens a washout or a volatility-break trade. The missing hourly or daily frame was fixed in v1.18.6. None has filled since. Score Kraken's band snap on its own.
+- [x] Standby can start Kraken. Failover runs only when equity, Coinbase, and Kraken are all quiet (v1.18.7).
 - [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed
 - [ ] Score that window before any Phase 1.5.10 live capital
 
