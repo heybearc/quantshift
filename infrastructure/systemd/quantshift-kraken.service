@@ -1,0 +1,19 @@
+[Unit]
+Description=QuantShift Kraken Bot (Simulation Mode - STANDBY)
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/quantshift
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/quantshift/venv/bin/python apps/bots/run_bot_v3.py --config config/kraken_config.yaml
+Restart=always
+RestartSec=10
+WatchdogSec=90
+NotifyAccess=main
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

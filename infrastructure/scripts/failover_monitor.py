@@ -12,6 +12,9 @@ Failover procedure:
 3. Start standby bot processes
 4. Send alert notification
 
+Failover runs only when every bot heartbeat is stale. One dead bot
+stays on the primary host, where systemd restarts that process.
+
 Usage:
     python failover_monitor.py
 
@@ -37,6 +40,12 @@ structlog.configure(
 )
 
 logger = structlog.get_logger()
+
+BOTS = (
+    "quantshift-equity",
+    "quantshift-crypto",
+    "quantshift-kraken",
+)
 
 
 class FailoverMonitor:
@@ -274,21 +283,14 @@ class FailoverMonitor:
             if not self.promote_redis_to_master():
                 raise Exception("Redis promotion failed")
             
-            # Step 2: Update database status for both bots
-            if not self.update_bot_status_to_primary('quantshift-equity'):
-                raise Exception("Failed to update equity bot status")
+            # Step 2: Update database status and start every book.
+            for bot_name in BOTS:
+                if not self.update_bot_status_to_primary(bot_name):
+                    raise Exception(f"Failed to update {bot_name} status")
+                if not self.start_bot_service(bot_name):
+                    raise Exception(f"Failed to start {bot_name}")
             
-            if not self.update_bot_status_to_primary('quantshift-crypto'):
-                raise Exception("Failed to update crypto bot status")
-            
-            # Step 3: Start bot services
-            if not self.start_bot_service('quantshift-equity'):
-                raise Exception("Failed to start equity bot")
-            
-            if not self.start_bot_service('quantshift-crypto'):
-                raise Exception("Failed to start crypto bot")
-            
-            # Step 4: Send alert
+            # Step 3: Send alert
             failover_duration = time.time() - failover_start_time
             self.send_alert(
                 f"Failover completed successfully in {failover_duration:.1f} seconds. "
@@ -318,30 +320,29 @@ class FailoverMonitor:
         
         while True:
             try:
-                # Check equity bot
-                equity_health = self.check_primary_heartbeat('quantshift-equity')
-                
-                # Check crypto bot
-                crypto_health = self.check_primary_heartbeat('quantshift-crypto')
+                health = {
+                    bot_name: self.check_primary_heartbeat(bot_name)
+                    for bot_name in BOTS
+                }
+                unhealthy = [
+                    bot_name for bot_name, item in health.items() if not item['healthy']
+                ]
                 
                 logger.debug(
                     "heartbeat_check",
-                    equity_seconds=equity_health['seconds_since_heartbeat'],
-                    equity_status=equity_health['status'],
-                    crypto_seconds=crypto_health['seconds_since_heartbeat'],
-                    crypto_status=crypto_health['status']
+                    **{
+                        bot_name: item['seconds_since_heartbeat']
+                        for bot_name, item in health.items()
+                    }
                 )
                 
-                # Trigger failover if either bot is unhealthy
-                if not equity_health['healthy'] or not crypto_health['healthy']:
-                    logger.warning(
-                        "primary_unhealthy_detected",
-                        equity_healthy=equity_health['healthy'],
-                        crypto_healthy=crypto_health['healthy']
-                    )
-                    
-                    # Perform failover
+                # One stale book is a process restart on the primary host.
+                # Promote only when the whole primary has stopped heartbeating.
+                if len(unhealthy) == len(BOTS):
+                    logger.warning("primary_unhealthy_detected", bots=unhealthy)
                     self.perform_failover()
+                elif unhealthy:
+                    logger.warning("primary_bot_unhealthy", bots=unhealthy)
                 
                 # Sleep until next check
                 time.sleep(self.check_interval)
