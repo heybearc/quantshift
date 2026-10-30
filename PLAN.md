@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-10-20
-**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-10-19 and runs through about 2026-11-16. Live is v1.18.5 on green. No live money.
+**Last Updated:** 2026-10-30
+**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-10-19 and runs through about 2026-11-16. Live is v1.18.7 on green. Blue STANDBY is `0c0effa`. No live money.
 
 ---
 
@@ -1110,8 +1110,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [ ] Sentiment charts, news feed, and per-position badges (scoring is already on)
 - [x] Invitation verification email is sent on accept
 - [x] A failed news fetch no longer scores sample headlines
-- [ ] Coinbase product list can hang, so crypto uses a fixed symbol list
-- [ ] WebSocket quotes, dashboard sparklines, and daily email reports
+- [ ] Coinbase product list can hang on the bot hosts until they pull `0c0effa`. That commit times out at 5 seconds and uses the fixed list.
+- [ ] WebSocket quotes and daily email reports. Dashboard sparklines shipped on blue STANDBY in `0c0effa` (display only).
 - [ ] Price-direction models, including LSTM. Not during this paper window.
 
 ### Already running
@@ -1150,8 +1150,8 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 - [x] Crypto and Kraken should trade more like a volatile market, using the Trade Confident tools, and should be busier than the daily washout alone. Added the volatility break. Caps are 12 and 8. Date: 2026-10-16
 - [x] Restart the paper window and reset simulated cash. Crypto and Kraken start at configured capital. Alpaca paper balance stays at the broker. Date: 2026-10-13
 - [x] Crypto simulation must sell fractional sizes, and trailing stops must be able to exit. Date: 2026-10-13
-- [ ] Additional trading metrics requested (effort: M) - More detailed performance indicators
-- [ ] Historical performance tracking (effort: L) - Performance over time view
+- [x] Additional trading metrics (average win, average loss, expectancy, payoff) on the Performance page. Display only. `0c0effa` on blue STANDBY. Date: 2026-10-27
+- [x] Historical performance tracking as a closed-trade sparkline. Display only. Estimated fill cost stays beside the result. `0c0effa`. Date: 2026-10-27
 
 ### From App (Observations)
 - Dashboard cards well-received — positive feedback on v1.4.0 statistics cards
