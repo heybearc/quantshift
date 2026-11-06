@@ -13,7 +13,7 @@ const BOOKS = [
   { id: "quantshift-equity", label: "Equity" },
   { id: "quantshift-crypto", label: "Crypto" },
   { id: "quantshift-kraken", label: "Kraken" },
-  { id: "quantshift-kraken-sprint", label: "Kraken sprint" },
+  { id: "quantshift-kraken-sprint", label: "Sprint" },
 ] as const;
 
 function signed(value: number, fmt: (value: number) => string) {
