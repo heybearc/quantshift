@@ -1,0 +1,75 @@
+# QuantShift Kraken sprint book.
+# Separate paper cash. The Coinbase and Kraken validation books are not this config.
+
+bot_name: "quantshift-kraken-sprint"
+bot_type: "crypto"
+
+executor:
+  type: "kraken"
+  simulation_mode: true
+  max_leverage: 1.0
+  use_dynamic_symbols: true
+  symbol_universe:
+    max_symbols: 25
+    min_volume: 1000000
+  simulated_capital: 5000
+
+# One setup: a 15-minute close through the prior 8-bar range.
+# The target must be at least 1% so the 40 bp Kraken cost still leaves room.
+strategies:
+  - type: "SprintBreakSetup"
+    params:
+      risk_per_trade: 0.005
+      max_notional: 0.12
+      enable_shorts: true
+      min_reward_pct: 0.01
+      reward_multiple: 2.0
+      lookback: 8
+      max_hold_minutes: 90
+      stop_buffer: 0.001
+
+orchestrator:
+  capital_allocation:
+    SprintBreakSetup: 1.0
+  use_regime_detection: false
+  use_ml_regime: false
+  use_risk_management: true
+  use_sentiment_analysis: false
+
+risk_management:
+  max_leverage: 1.0
+  max_margin_usage: 0.70
+  liquidation_buffer: 0.30
+  max_position_size: 0.12
+  max_positions: 6
+  max_capital_deployed: 0.70
+  max_portfolio_heat: 0.08
+  max_position_correlation: 0.8
+  max_sector_exposure: 0.50
+  daily_loss_limit: 0.06
+  max_drawdown_limit: 0.15
+  use_kelly_sizing: false
+  trailing_stops:
+    enabled: false
+
+market_regime:
+  enabled: false
+
+adaptive_optimization:
+  enable_parameter_optimization: false
+  enable_auto_disable: true
+  min_win_rate: 0.35
+  min_trades_for_optimization: 30
+  performance_lookback_days: 14
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+cycle_interval_seconds: 60
+heartbeat_interval_seconds: 30
+
+metrics:
+  enabled: true
+  port: 9203

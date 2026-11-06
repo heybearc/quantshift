@@ -593,7 +593,7 @@ class SimulatedKrakenExecutor:
             frame = market_data.get(symbol)
             if frame is None or len(frame) == 0:
                 continue
-            if pos.get("strategy") == "BandSnapSetup":
+            if pos.get("strategy") in ("BandSnapSetup", "SprintBreakSetup"):
                 price = self._band_mark(frame)
             else:
                 column = "close" if "close" in frame.columns else ("Close" if "Close" in frame.columns else None)

@@ -89,8 +89,9 @@ export async function GET() {
     const paperStart: Record<string, number> = {
       'quantshift-crypto': 10000,
       'quantshift-kraken': 5000,
+      'quantshift-kraken-sprint': 5000,
     };
-    const bookNames = ['quantshift-equity', 'quantshift-crypto', 'quantshift-kraken'];
+    const bookNames = ['quantshift-equity', 'quantshift-crypto', 'quantshift-kraken', 'quantshift-kraken-sprint'];
     const cents = (value: number) => Math.round(value * 100) / 100;
     const fills = await prisma.trade.findMany({
       where: {

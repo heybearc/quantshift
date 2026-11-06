@@ -8,7 +8,7 @@ import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { useRouter } from "next/navigation";
 import { Search, Calendar, BarChart2, Bitcoin } from "lucide-react";
 
-type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
+type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken' | 'quantshift-kraken-sprint';
 
 interface Trade {
   id: string;
@@ -76,7 +76,8 @@ export default function TradesPage() {
 
   const equityCount = trades.filter(t => t.botName.includes('equity')).length;
   const cryptoCount = trades.filter(t => t.botName.includes('crypto')).length;
-  const krakenCount = trades.filter(t => t.botName.includes('kraken')).length;
+  const krakenCount = trades.filter(t => t.botName === 'quantshift-kraken').length;
+  const sprintCount = trades.filter(t => t.botName === 'quantshift-kraken-sprint').length;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -117,6 +118,7 @@ export default function TradesPage() {
                 { id: 'quantshift-equity' as BotFilter, label: `Equity Bot (${equityCount})`, icon: <BarChart2 className="h-3.5 w-3.5" /> },
                 { id: 'quantshift-crypto' as BotFilter, label: `Crypto Bot (${cryptoCount})`, icon: <Bitcoin className="h-3.5 w-3.5" /> },
                 { id: 'quantshift-kraken' as BotFilter, label: `Kraken Bot (${krakenCount})`, icon: null },
+                { id: 'quantshift-kraken-sprint' as BotFilter, label: `Kraken Sprint (${sprintCount})`, icon: null },
               ]).map(({ id, label, icon }) => (
                 <button
                   key={id}

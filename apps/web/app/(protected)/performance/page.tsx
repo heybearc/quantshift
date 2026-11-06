@@ -6,11 +6,11 @@ import { ReleaseBanner } from '@/components/release-banner';
 import { useAuth } from '@/lib/auth-context';
 import { useLiveRefresh } from '@/lib/use-live-refresh';
 import { useRouter } from 'next/navigation';
-import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin, Zap } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Target, Award, AlertTriangle, BarChart2, Bitcoin, Zap, Activity } from 'lucide-react';
 import { Sparkline } from '@/components/dashboard/Sparkline';
 import Link from 'next/link';
 
-type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
+type BotFilter = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken' | 'quantshift-kraken-sprint';
 
 const fmt2 = (v: unknown) => {
   const n = typeof v === "number" ? v : Number(v);
@@ -147,7 +147,9 @@ export default function PerformancePage() {
     ? 'Coinbase paper trading'
     : botFilter === 'quantshift-kraken'
     ? 'Kraken simulation'
-    : 'Equity, crypto, and Kraken';
+    : botFilter === 'quantshift-kraken-sprint'
+    ? 'Kraken sprint paper, separate cash'
+    : 'Equity, crypto, Kraken, and the sprint book';
 
   return (
     <div className="flex h-screen bg-slate-900">
@@ -187,6 +189,7 @@ export default function PerformancePage() {
                 { id: 'quantshift-equity' as BotFilter, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" /> },
                 { id: 'quantshift-crypto' as BotFilter, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" /> },
                 { id: 'quantshift-kraken' as BotFilter, label: 'Kraken Bot', icon: <Zap className="h-3.5 w-3.5" /> },
+                { id: 'quantshift-kraken-sprint' as BotFilter, label: 'Kraken Sprint', icon: <Activity className="h-3.5 w-3.5" /> },
               ]).map(({ id, label, icon }) => (
                 <button key={id} onClick={() => setBotFilter(id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${

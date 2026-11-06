@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       'quantshift-equity': 10,
       'quantshift-crypto': 8,
       'quantshift-kraken': 6,
+      'quantshift-kraken-sprint': 6,
     };
     const maxPositions = positionCaps[botName] ?? 10;
 

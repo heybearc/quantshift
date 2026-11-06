@@ -23,7 +23,7 @@ import { EmergencyStopButton } from "@/components/emergency-stop-button";
 import EmergencyStopControl from "@/components/admin/EmergencyStopControl";
 import { SentimentOverview } from "@/components/dashboard/SentimentOverview";
 
-type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken';
+type BotTab = 'all' | 'quantshift-equity' | 'quantshift-crypto' | 'quantshift-kraken' | 'quantshift-kraken-sprint';
 
 interface BotStatus {
   botName: string;
@@ -153,12 +153,13 @@ export default function DashboardPage() {
   const equityBot = allBotStatus.find(b => b.botName === 'quantshift-equity');
   const cryptoBot = allBotStatus.find(b => b.botName === 'quantshift-crypto');
   const krakenBot = allBotStatus.find(b => b.botName === 'quantshift-kraken');
-  const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0) + (krakenBot?.portfolioValue || 0);
-  const statusUnrealized = (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0);
+  const sprintBot = allBotStatus.find(b => b.botName === 'quantshift-kraken-sprint');
+  const totalEquity = (equityBot?.accountEquity || 0) + (cryptoBot?.portfolioValue || 0) + (krakenBot?.portfolioValue || 0) + (sprintBot?.portfolioValue || 0);
+  const statusUnrealized = (equityBot?.unrealizedPl || 0) + (cryptoBot?.unrealizedPl || 0) + (krakenBot?.unrealizedPl || 0) + (sprintBot?.unrealizedPl || 0);
   const openUnrealized = botMetrics?.openUnrealizedPl || 0;
   const totalPl = botMetrics?.books?.result ?? ((equityBot?.realizedPl || 0) + (statusUnrealized !== 0 ? statusUnrealized : openUnrealized));
-  const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0) + (krakenBot?.positionsCount || 0);
-  const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0) + (krakenBot?.tradesCount || 0);
+  const totalPositions = (equityBot?.positionsCount || 0) + (cryptoBot?.positionsCount || 0) + (krakenBot?.positionsCount || 0) + (sprintBot?.positionsCount || 0);
+  const totalTrades = (equityBot?.tradesCount || 0) + (cryptoBot?.tradesCount || 0) + (krakenBot?.tradesCount || 0) + (sprintBot?.tradesCount || 0);
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER_ADMIN';
 
   const StatusDot = ({ status }: { status: string }) => {
@@ -174,13 +175,14 @@ export default function DashboardPage() {
 
   const borderFor = (s: string) => (s === 'RUNNING' || s === 'PRIMARY' || s === 'STANDBY') ? 'border-green-700/40' : s === 'STALE' ? 'border-yellow-700/40' : 'border-slate-700';
 
-  const BotDetail = ({ bot, botType }: { bot: BotStatus | undefined; botType: 'equity' | 'crypto' | 'kraken' }) => {
+  const BotDetail = ({ bot, botType }: { bot: BotStatus | undefined; botType: 'equity' | 'crypto' | 'kraken' | 'sprint' }) => {
     if (!bot) return <div className="text-center text-slate-500 py-16">No data available yet — bot may not have heartbeated.</div>;
     
     const botConfig = {
       equity: { name: 'Equity Bot', desc: 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 10 },
       crypto: { name: 'Crypto Bot', desc: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 8 },
-      kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 6 }
+      kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 6 },
+      sprint: { name: 'Kraken Sprint', desc: 'Separate $5,000 paper book · 15-minute break · 1% minimum target · No leverage', maxPos: 6 }
     }[botType];
     const unrealized = bot.unrealizedPl !== 0
       ? bot.unrealizedPl
@@ -203,7 +205,7 @@ export default function DashboardPage() {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Portfolio Value</p>
             <p className="text-white text-xl font-bold">{fmt(bot.portfolioValue)}</p>
-            <p className="text-slate-500 text-xs mt-1">{botType === 'equity' ? `Cash: ${fmt(bot.accountCash)}` : botType === 'kraken' ? 'Simulated' : 'Paper balance'}</p>
+            <p className="text-slate-500 text-xs mt-1">{botType === 'equity' ? `Cash: ${fmt(bot.accountCash)}` : botType === 'kraken' || botType === 'sprint' ? 'Simulated' : 'Paper balance'}</p>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <p className="text-slate-400 text-xs mb-1">Unrealized P&L</p>
@@ -328,6 +330,7 @@ export default function DashboardPage() {
                       { id: 'quantshift-equity' as BotTab, label: 'Equity Bot', icon: <BarChart2 className="h-3.5 w-3.5" />, bot: equityBot },
                       { id: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', icon: <Bitcoin className="h-3.5 w-3.5" />, bot: cryptoBot },
                       { id: 'quantshift-kraken' as BotTab, label: 'Kraken Bot', icon: <Zap className="h-3.5 w-3.5" />, bot: krakenBot },
+                      { id: 'quantshift-kraken-sprint' as BotTab, label: 'Kraken Sprint', icon: <Activity className="h-3.5 w-3.5" />, bot: sprintBot },
                     ]).map(({ id, label, icon, bot }) => (
                       <button
                         key={id}
@@ -354,6 +357,7 @@ export default function DashboardPage() {
                         { bot: equityBot, botType: 'equity' as const, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
                         { bot: cryptoBot, botType: 'crypto' as const, tab: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
                         { bot: krakenBot, botType: 'kraken' as const, tab: 'quantshift-kraken' as BotTab, label: 'Kraken Bot', sub: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x)', iconBg: 'bg-purple-900/50 border-purple-700/50', icon: <Zap className="h-5 w-5 text-purple-400" /> },
+                        { bot: sprintBot, botType: 'sprint' as const, tab: 'quantshift-kraken-sprint' as BotTab, label: 'Kraken Sprint', sub: 'Separate $5,000 paper · 15-minute break · 1% minimum target', iconBg: 'bg-cyan-900/50 border-cyan-700/50', icon: <Activity className="h-5 w-5 text-cyan-400" /> },
                       ]).map(({ bot, botType, tab, label, sub, iconBg, icon }) => (
                         <div key={tab} className={`bg-slate-800/50 rounded-xl p-5 border ${borderFor(bot?.status || 'UNKNOWN')}`}>
                           <div className="flex items-center justify-between mb-4">
@@ -396,6 +400,7 @@ export default function DashboardPage() {
                   {activeTab === 'quantshift-equity' && <BotDetail bot={equityBot} botType="equity" />}
                   {activeTab === 'quantshift-crypto' && <BotDetail bot={cryptoBot} botType="crypto" />}
                   {activeTab === 'quantshift-kraken' && <BotDetail bot={krakenBot} botType="kraken" />}
+                  {activeTab === 'quantshift-kraken-sprint' && <BotDetail bot={sprintBot} botType="sprint" />}
                 </div>
 
                 {/* MARKET SENTIMENT — AI-powered sentiment analysis */}

@@ -15,6 +15,7 @@ from .vwap_reversion import VWAPReversionStrategy
 from .donchian_breakout import DonchianBreakoutStrategy
 from .trade_confident import TradeConfidentSetup, VolatilityBreakoutSetup
 from .band_snap import BandSnapSetup
+from .sprint_break import SprintBreakSetup
 
 __all__ = [
     'BaseStrategy',
@@ -32,4 +33,5 @@ __all__ = [
     'TradeConfidentSetup',
     'VolatilityBreakoutSetup',
     'BandSnapSetup',
+    'SprintBreakSetup',
 ]

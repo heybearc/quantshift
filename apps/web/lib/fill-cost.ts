@@ -6,6 +6,7 @@ export const FILL_COST_RATES: Record<string, number> = {
   "quantshift-equity": 0.0001,
   "quantshift-crypto": 0.006,
   "quantshift-kraken": 0.004,
+  "quantshift-kraken-sprint": 0.004,
 };
 
 export const FILL_COST_NOTE =
