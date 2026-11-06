@@ -54,6 +54,7 @@ from quantshift_core.executors import AlpacaExecutor, CoinbaseExecutor
 from quantshift_core.state_manager import StateManager
 from quantshift_core.metrics import BotMetrics
 from quantshift_core.strategy_performance_tracker import StrategyPerformanceTracker
+from quantshift_core.trade_record import is_closing_fill
 from quantshift_core.trailing_stop_manager import TrailingStopManager
 
 import psycopg2
@@ -1029,11 +1030,11 @@ class QuantShiftUnifiedBot:
                 self.db_conn = None
     
     def _record_realized_closes(self, orders: List[Any]) -> None:
-        """Count a crypto close from its fill. A flat blink is not a loss."""
-        if "crypto" not in (self.bot_name or "") or not orders or not self.performance_tracker:
+        """Count a close from its fill for every book. A flat blink is not a loss."""
+        if not orders or not self.performance_tracker:
             return
         for order in orders:
-            if not isinstance(order, dict) or order.get("realized_pnl") is None:
+            if not is_closing_fill(order) or order.get("realized_pnl") is None:
                 continue
             pnl = float(order["realized_pnl"])
             if abs(pnl) < 0.01:
@@ -1047,14 +1048,68 @@ class QuantShiftUnifiedBot:
                 is_win=pnl > 0,
             )
 
+    def _close_open_trade(self, cursor, order: Dict[str, Any]) -> None:
+        """Mark the latest open row for this symbol closed. A second call is a no-op."""
+        fill = float(order.get("fill_price") or 0)
+        pnl = order.get("realized_pnl")
+        pnl_value = None if pnl is None else float(pnl)
+        reason = order.get("exit_reason") or order.get("signal_reason") or order.get("reason") or "position closed"
+        cursor.execute(
+            """
+            UPDATE trades SET
+                exit_price = %s,
+                status = 'CLOSED',
+                exit_reason = %s,
+                exited_at = NOW(),
+                pnl = COALESCE(%s, CASE
+                    WHEN upper(side) = 'SELL' THEN (entry_price - %s) * quantity
+                    ELSE (%s - entry_price) * quantity
+                END),
+                pnl_percent = CASE
+                    WHEN entry_price > 0 AND quantity <> 0 AND %s IS NOT NULL
+                        THEN %s / (entry_price * quantity) * 100
+                    WHEN entry_price > 0 AND upper(side) = 'SELL'
+                        THEN (entry_price - %s) / entry_price * 100
+                    WHEN entry_price > 0
+                        THEN (%s - entry_price) / entry_price * 100
+                    ELSE NULL
+                END,
+                updated_at = NOW()
+            WHERE id = (
+                SELECT id FROM trades
+                WHERE bot_name = %s AND symbol = %s AND status = 'OPEN'
+                ORDER BY entered_at DESC
+                LIMIT 1
+            )
+            """,
+            (
+                fill,
+                reason,
+                pnl_value,
+                fill,
+                fill,
+                pnl_value,
+                pnl_value,
+                fill,
+                fill,
+                self.bot_name,
+                order.get("symbol"),
+            ),
+        )
+
     def _record_trade_decisions(self, orders: List[Any]) -> None:
         """Store why each filled order happened. Does not place or change orders."""
         if not orders or not self.db_conn:
             return
+        self._recorded_close_symbols = set()
         try:
             cursor = self.db_conn.cursor()
             for order in orders:
                 if not isinstance(order, dict) or not order.get('symbol'):
+                    continue
+                if is_closing_fill(order):
+                    self._close_open_trade(cursor, order)
+                    self._recorded_close_symbols.add(order.get("symbol"))
                     continue
                 cursor.execute("""
                     INSERT INTO trades (
@@ -1135,10 +1190,11 @@ class QuantShiftUnifiedBot:
             # Get currently held symbols
             current_symbols = [pos.symbol for pos in positions] if positions else []
             
-            # A missing crypto symbol is not a closed trade. Paper positions
-            # blink out of a snapshot, and a flat blink was being stored as a loss.
-            # Crypto closes are recorded from the fill instead.
-            if self.performance_tracker and "crypto" not in (self.bot_name or ""):
+            # A missing crypto or Kraken symbol is not a closed trade. Those
+            # books record the fill. Equity stops fill at the broker between
+            # cycles, so a symbol that left the broker book is a real exit.
+            already = getattr(self, "_recorded_close_symbols", set())
+            if self.performance_tracker and "equity" in (self.bot_name or ""):
                 cursor.execute("""
                     SELECT symbol, unrealized_pl, entry_price, current_price, strategy
                     FROM positions 
@@ -1149,6 +1205,14 @@ class QuantShiftUnifiedBot:
                 
                 # Update strategy performance for each closed position
                 for symbol, unrealized_pl, entry_price, current_price, strategy_name in closed_positions:
+                    if symbol in already:
+                        continue
+                    self._close_open_trade(cursor, {
+                        "symbol": symbol,
+                        "fill_price": float(current_price or 0),
+                        "realized_pnl": None if unrealized_pl is None else float(unrealized_pl),
+                        "reason": "broker position closed",
+                    })
                     if unrealized_pl is not None and entry_price and current_price:
                         # Calculate P&L percentage
                         pnl_pct = ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0

@@ -1,13 +1,13 @@
 # QuantShift Task State
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-11-06
 **Current branch:** main
-**Working on:** Phase 1.5.9 paper validation — clock restarted 2026-10-19
+**Working on:** Phase 1.5.9 paper validation — clock restarted 2026-11-06
 
 ---
 
 ## Current Task
-**Phase 1.5.9 paper validation** — clock restarted 2026-10-19 because Coinbase and Kraken now trade different books. Do not start live capital. Window runs through about 2026-11-16.
+**Phase 1.5.9 paper validation** — clock restarted 2026-11-06. The 2026-10-19 window was discarded because the trade table never stored a close. Do not start live capital. Window runs through about 2026-12-04.
 
 Public https://quantshift.io is green LIVE on v1.18.7 (`97ccab1`). Blue STANDBY is ahead at `0c0effa` (quiet-hour panel, display-only result history). The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity still runs its seven strategies. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Open positions stay open.
 
@@ -24,22 +24,16 @@ Coinbase trades the washout and the volatility break, long only. Kraken keeps th
 - ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
 
 ### Next steps
-1. Pull `0c0effa` on the bot hosts so the product-list timeout, FinBERT cache, and quiet-hour log run. Do not switch LIVE.
-2. Watch the three paper books through the window that ends about 2026-11-16
-3. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
-4. Do not reset Kraken to explain the gap under the $5,000 start
-5. Do not start Phase 1.5.10 live capital until four clean weeks pass
-6. Leave the estimated cost beside the result. Putting that cost inside the fill waits until this window ends.
+1. Watch the three paper books through the window that ends about 2026-12-04. Score closed trades on equity, Coinbase, and Kraken.
+2. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
+3. Do not start Phase 1.5.10 live capital until four clean weeks pass.
+4. Leave the estimated cost beside the result. Putting that cost inside the fill waits until this window ends.
 
 ## Known Issues
-- Kraken paper equity is below the $5,000 start. The gap was not diagnosed. Do not reset the book.
-- No washout or volatility-break fill since the 2026-10-26 frame fix. The gates were left as they are.
-- Bot hosts have not pulled `0c0effa`. Until they do, Coinbase `get_products()` can still hang and FinBERT can still take up to three minutes (startup limit 180 seconds).
-- A quiet hour still produces no order until the hour is finished, the bar is in a squeeze, and price breaks a pivot. Those counts show on STANDBY after the bots publish them.
+- A quiet hour still produces no order until the hour is finished, the bar is in a squeeze, and price breaks a pivot. That gate was left as it is.
+- The performance page on LIVE still prefers the old summary until this web change is released. STANDBY scores closed trades in the window.
 
 ## Exact Next Command
-Pull `0c0effa` on the bot hosts, then check that the three bots are still healthy and whether any new crypto or Kraken order used the washout or the volatility break.
-
 ```bash
 bash scripts/bot-release-check.sh
 ```

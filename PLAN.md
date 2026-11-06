@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
 **Last Updated:** 2026-10-30
-**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-10-19 and runs through about 2026-11-16. Live is v1.18.7 on green. Blue STANDBY is `0c0effa`. No live money.
+**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-11-06 and runs through about 2026-12-04. The 2026-10-19 window was discarded because closes were never written onto the trade row. Live is v1.18.7 on green. No live money.
 
 ---
 
@@ -1094,7 +1094,7 @@ Build a fully adaptive, multi-strategy trading system with regime detection, adv
 Only items that are still open. Completed phases above stay as history. Duplicate lists that described multi-strategy, regime detection, and the Coinbase bot as unbuilt were removed on 2026-10-10.
 
 ### Open now — paper window
-- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-10-19 (about 2026-11-16). The 2026-10-13 clock ended when Coinbase and Kraken stopped placing the same trades.
+- [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-11-06 (about 2026-12-04). The 2026-10-19 window was discarded. Closes now land on the trade row for equity, Coinbase, and Kraken.
 - [ ] Watch whether Coinbase opens a washout or a volatility-break trade. The missing hourly or daily frame was fixed in v1.18.6. None has filled since. Score Kraken's band snap on its own.
 - [x] Standby can start Kraken. Failover runs only when equity, Coinbase, and Kraken are all quiet (v1.18.7).
 - [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed
@@ -1162,7 +1162,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 ## 🗺️ Roadmap (Strategic)
 
 ### Now — through the paper window
-- [ ] Phase 1.5.9 daily monitoring. Clock stays on 2026-10-19. Live is v1.18.5.
+- [ ] Phase 1.5.9 daily monitoring. Clock stays on 2026-11-06.
 - [ ] Equity new buys stay blocked while leverage is above the cash cap.
 
 ### After four clean weeks
@@ -1181,7 +1181,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 Phase 1.5.10 does not start until the paper window passes.
 
 ### Still required
-- [ ] 4 clean weeks from 2026-10-19, including at least 10 trades, win rate at least 45%, drawdown under 20%, and no critical bug in that window
+- [ ] 4 clean weeks from 2026-11-06, including at least 10 closed trades across equity, Coinbase, and Kraken, win rate at least 45%, drawdown under 20%, and no critical bug in that window
 - [ ] Emergency kill switch tested on purpose
 - [ ] Alpaca live credentials configured and tested
 - [ ] Circuit-breaker email in place

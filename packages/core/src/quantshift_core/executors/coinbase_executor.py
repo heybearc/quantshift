@@ -265,6 +265,7 @@ class CoinbaseExecutor:
             "signal_reason": reason,
         }
         if side == "SELL":
+            order["closing"] = True
             order["realized_pnl"] = realized
             order["pnl_pct"] = ((price - entry) / entry * 100) if entry else 0.0
             if strategy_name:

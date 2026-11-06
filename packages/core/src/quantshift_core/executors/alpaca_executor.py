@@ -887,16 +887,29 @@ class AlpacaExecutor:
                 reason,
             )
 
+            qty = float(getattr(order, "qty", instruction["qty"]) or instruction["qty"])
+            entry = float(held.entry_price or 0) if held else 0.0
+            fill = getattr(order, "filled_avg_price", None)
+            fill_price = float(fill) if fill else float(getattr(held, "current_price", None) or entry)
+            if held is not None and held.side == "short":
+                realized = (entry - fill_price) * qty
+            else:
+                realized = (fill_price - entry) * qty
+
             return {
                 'id': str(order.id),
                 'symbol': getattr(order, "symbol", symbol),
-                'qty': float(getattr(order, "qty", instruction["qty"])),
+                'qty': qty,
                 'side': order.side.value if hasattr(order.side, "value") else str(order.side),
                 'type': order.type.value if hasattr(getattr(order, "type", None), "value") else "market",
                 'status': order.status.value if hasattr(getattr(order, "status", None), "value") else "accepted",
                 'reason': reason,
                 'signal_reason': reason,
                 'entry_reason': reason,
+                'fill_price': fill_price,
+                'closing': True,
+                'realized_pnl': realized,
+                'pnl_pct': (realized / (entry * qty) * 100) if entry and qty else 0.0,
             }
 
         except Exception as e:

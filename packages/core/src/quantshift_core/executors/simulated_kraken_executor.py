@@ -699,12 +699,17 @@ class SimulatedKrakenExecutor:
         pos["quantity"] = held - qty
         pos["margin"] = float(pos.get("margin", 0.0)) * (1.0 - fraction)
         pos["current_price"] = price
+        strategy_name = pos.get("strategy")
+        entry = float(pos["entry_price"])
         if pos["quantity"] <= 1e-12:
             del self._positions[symbol]
         logger.info("[SIMULATED] reduced %s qty=%s @ %.4f pnl=%.2f", symbol, qty, price, pnl)
         order = self._order_record(symbol, order_side, qty, price, reason)
-        if pos.get("strategy"):
-            order["strategy"] = pos.get("strategy")
+        order["closing"] = True
+        order["realized_pnl"] = pnl
+        order["pnl_pct"] = (pnl / (entry * qty) * 100) if entry and qty else 0.0
+        if strategy_name:
+            order["strategy"] = strategy_name
         return order
 
     def execute_signal(self, signal: Signal) -> Optional[Dict[str, Any]]:
