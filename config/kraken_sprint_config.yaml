@@ -69,6 +69,7 @@ redis:
 
 cycle_interval_seconds: 60
 heartbeat_interval_seconds: 30
+metrics_port: 9203
 
 metrics:
   enabled: true
