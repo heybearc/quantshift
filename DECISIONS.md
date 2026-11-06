@@ -331,3 +331,9 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** Kraken had no standby service. Standby Redis had become its own master, so a start there could trade the same paper books. One stale book is a process restart, not a host failure.
 - **When:** 2026-10-27. Shipped in v1.18.7 (`97ccab1`).
 - **Do not:** Leave a standby bot running beside the primary, or fail over because a single book missed a heartbeat.
+
+## D-QS-023: A paper close is a closed trade, and the window restarted
+- **Decision:** A paper exit updates the open trade to closed, with price, time, and result, for equity, Coinbase, and Kraken. The performance page scores those closed trades. The 2026-10-19 window was discarded. The clock runs 2026-11-06 through about 2026-12-04.
+- **Why:** The bots only inserted open rows, so the gate had zero closed trades. Estimated fill cost stays beside the result.
+- **When:** 2026-11-06. Shipped in v1.18.8 (`e3d8c5d`).
+- **Do not:** Start live capital, loosen the quiet-hour gates, or put spread and commission inside the fill before this window ends.
