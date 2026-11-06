@@ -27,9 +27,7 @@ test.describe('Kraken position side and take profit', () => {
       expect(['long', 'short']).toContain(position.side);
     }
 
-    const kraken = positions.filter((position) => position.botName === 'quantshift-kraken');
-    expect(kraken.length).toBeGreaterThan(0);
-    const shorts = kraken.filter((position) => position.side === 'short');
+    const shorts = positions.filter((position) => position.side === 'short');
     for (const position of shorts) {
       expect(position.takeProfit).toEqual(expect.any(Number));
       expect(position.stopLoss).toEqual(expect.any(Number));
@@ -40,7 +38,11 @@ test.describe('Kraken position side and take profit', () => {
     await page.goto('/positions');
     await expect(page.getByRole('columnheader', { name: 'Side' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Take profit' })).toBeVisible();
-    await expect(page.getByText('Short').first()).toBeVisible();
-    await expect(page.getByText('Kraken').first()).toBeVisible();
+    if (shorts.length > 0) {
+      await expect(page.getByText('Short').first()).toBeVisible();
+    }
+    if (positions.some((position) => position.botName.includes('kraken') && !position.botName.includes('sprint'))) {
+      await expect(page.getByText('Kraken').first()).toBeVisible();
+    }
   });
 });

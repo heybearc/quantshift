@@ -175,6 +175,8 @@ export default function PositionsPage() {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {position.botName.includes('equity')
                                   ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"><BarChart2 className="h-3 w-3" />Equity</span>
+                                  : position.botName.includes('sprint')
+                                  ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-cyan-900/40 text-cyan-300">Sprint</span>
                                   : position.botName.includes('kraken')
                                   ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-violet-900/40 text-violet-300">Kraken</span>
                                   : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-900/40 text-orange-300"><Bitcoin className="h-3 w-3" />Crypto</span>
