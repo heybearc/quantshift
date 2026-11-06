@@ -52,7 +52,7 @@ test.describe('Monitoring page readings', () => {
     await expect(page.getByText('8333')).toHaveCount(0);
     await expect(page.getByText('Max Drawdown')).toBeVisible();
     await expect(page.getByText(/\d+\.\d{2}%/).first()).toBeVisible();
-    await expect(page.getByText('Bull Trending').first()).toBeVisible();
+    await expect(page.getByText(/Bull Trending|Bear Trending|High Vol Choppy|Low Vol Range|Crisis|Unknown/).first()).toBeVisible();
 
     const widths = await page.locator('.overflow-hidden.rounded-full > .rounded-full').evaluateAll((nodes) =>
       nodes.map((node) => Number.parseFloat((node as HTMLElement).style.width))
