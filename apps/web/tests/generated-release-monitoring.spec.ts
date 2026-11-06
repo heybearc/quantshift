@@ -49,6 +49,7 @@ test.describe('Monitoring page readings', () => {
     await expect(page.getByRole('heading', { name: 'Equity', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Crypto', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Kraken', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sprint', exact: true })).toBeVisible();
     await expect(page.getByText('8333')).toHaveCount(0);
     await expect(page.getByText('Max Drawdown')).toBeVisible();
     await expect(page.getByText(/\d+\.\d{2}%/).first()).toBeVisible();

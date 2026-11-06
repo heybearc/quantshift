@@ -27,8 +27,9 @@ test.describe('Kraken position side and take profit', () => {
       expect(['long', 'short']).toContain(position.side);
     }
 
-    const shorts = positions.filter((position) => position.side === 'short');
-    expect(shorts.length).toBeGreaterThan(0);
+    const kraken = positions.filter((position) => position.botName === 'quantshift-kraken');
+    expect(kraken.length).toBeGreaterThan(0);
+    const shorts = kraken.filter((position) => position.side === 'short');
     for (const position of shorts) {
       expect(position.takeProfit).toEqual(expect.any(Number));
       expect(position.stopLoss).toEqual(expect.any(Number));

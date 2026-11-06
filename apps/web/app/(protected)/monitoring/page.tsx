@@ -70,6 +70,7 @@ function regimePresentation(regime: string | null | undefined) {
 function botLabel(name: string) {
   if (name.includes('equity')) return 'Equity';
   if (name.includes('crypto')) return 'Crypto';
+  if (name.includes('sprint')) return 'Sprint';
   if (name.includes('kraken')) return 'Kraken';
   return name;
 }
