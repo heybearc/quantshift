@@ -337,3 +337,9 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** The bots only inserted open rows, so the gate had zero closed trades. Estimated fill cost stays beside the result.
 - **When:** 2026-11-06. Shipped in v1.18.8 (`e3d8c5d`).
 - **Do not:** Start live capital, loosen the quiet-hour gates, or put spread and commission inside the fill before this window ends.
+
+## D-QS-024: Kraken Sprint is a fourth paper book
+- **Decision:** `quantshift-kraken-sprint` is its own $5,000 Kraken simulation. It takes a 15-minute break only when the target is at least 1%. Shorts are allowed. Leverage stays at 1. Equity, Coinbase, and the existing Kraken book stay on their current setups.
+- **Why:** A faster book has to clear the 40 bp cost on its own cash, without restarting the validation window.
+- **When:** 2026-11-06. Shipped in v1.19.0 (`8ff3e86`).
+- **Do not:** Put the sprint setup on the other books, widen the name lists, or start live capital.

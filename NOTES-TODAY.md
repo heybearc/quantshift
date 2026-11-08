@@ -1,5 +1,5 @@
 ---
-date: 2026-11-06
+date: 2026-11-07
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
 
@@ -26,3 +26,21 @@ purpose: Scratchpad for today's discoveries (promote on /end-day)
 ### Links / Commands
 - STANDBY: http://10.92.3.30:3001
 - Next: `bash scripts/bot-release-check.sh`
+
+## 2026-11-07
+
+### Discoveries / Notes
+- LIVE is green `10.92.3.30` on v1.19.0 (`8ff3e86`). STANDBY is blue `10.92.3.29`, synced. Docs commit `ef2b89b` is on main only.
+- Day 2 of the window, about 7:06pm ET. All four heartbeats were fresh. Crypto books are flat.
+- Coinbase closed UNI at the target, +$43.62. About +$38 after the 60 bp estimate.
+- Kraken closed three band-snap shorts, +$4.40. About +$3 after the 40 bp estimate.
+- Sprint closed ADA at the target and LINK at the stop, net +$2.63. About −$2 after the 40 bp estimate. Two trades.
+- Equity closed two SPY trades for +$1.02 and still holds SPY, QQQ, NVDA, and DIA, open about −$150. Market closed until Monday.
+- No urgent feedback items.
+
+### Decisions to Promote
+- D-QS-024 records the sprint book. Do not move that setup onto the other books.
+
+### Blockers / Risks
+- Sprint does not clear its estimated cost yet. Too few closes to judge.
+- Equity's open loss is the window's main red mark until Monday.
