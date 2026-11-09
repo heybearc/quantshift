@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { prisma } from './prisma';
 import crypto from 'crypto';
 
@@ -82,7 +82,15 @@ export async function clearAuthCookies() {
 
 export async function getAccessToken(): Promise<string | undefined> {
   const cookieStore = await cookies();
-  return cookieStore.get('access_token')?.value;
+  const fromCookie = cookieStore.get('access_token')?.value;
+  if (fromCookie) return fromCookie;
+
+  const headerStore = await headers();
+  const authorization = headerStore.get('authorization');
+  if (!authorization) return undefined;
+  const [scheme, token] = authorization.split(/\s+/, 2);
+  if (scheme?.toLowerCase() !== 'bearer' || !token) return undefined;
+  return token;
 }
 
 export async function getRefreshToken(): Promise<string | undefined> {

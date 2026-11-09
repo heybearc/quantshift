@@ -294,15 +294,20 @@ class RiskManager:
         Returns:
             Circuit breaker status
         """
-        # Reset daily tracking on new day
+        # Reset daily tracking on a new day, including a breaker latched yesterday.
         if self.current_date != current_date:
             self.current_date = current_date
             self.daily_start_equity = current_equity
-            self.circuit_breaker_notified = False  # Reset notification flag
-        
+            self.circuit_breaker_notified = False
+
         # Update peak equity
         if self.peak_equity is None or current_equity > self.peak_equity:
             self.peak_equity = current_equity
+
+        # Score this call from the current book. A previous trip must not
+        # keep rejecting signals after the loss and the drawdown are back inside the limits.
+        self.circuit_breaker_status = CircuitBreakerStatus.NORMAL
+        self.circuit_breaker_reason = None
         
         # Check daily loss limit
         if self.daily_start_equity:

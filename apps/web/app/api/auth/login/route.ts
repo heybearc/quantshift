@@ -193,6 +193,8 @@ export async function POST(request: NextRequest) {
         created_at: user.createdAt.toISOString(),
         last_login: user.lastLogin?.toISOString() || null,
       },
+      access_token: accessToken,
+      refresh_token: refreshToken,
       token_type: 'bearer',
     });
   } catch (error) {
