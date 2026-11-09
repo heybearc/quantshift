@@ -5,9 +5,11 @@ This module provides a simulated Kraken executor for testing without real money.
 Uses real market data but simulates order execution and position tracking.
 """
 
+import json
 import sys
 import time
 import logging
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import pandas as pd
@@ -738,8 +740,49 @@ class SimulatedKrakenExecutor:
             return None
         return self._open_position(signal, requested, price, "short")
 
+    @staticmethod
+    def restored_paper_cash(starting, realized, margin, saved) -> float:
+        """Free cash after a restart. A missing cash file keeps closed-trade P&L."""
+        if saved is not None:
+            return max(0.0, float(saved))
+        return max(0.0, float(starting) + float(realized) - float(margin))
+
+    def _paper_cash_path(self, bot_name: str) -> Path:
+        return Path(f"/opt/quantshift/data/paper_cash/{bot_name}.json")
+
+    def load_paper_cash(self, bot_name: str) -> Optional[float]:
+        path = self._paper_cash_path(bot_name)
+        if not path.exists():
+            return None
+        try:
+            return float(json.loads(path.read_text()).get("cash"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def save_paper_cash(self, bot_name: str) -> None:
+        if not bot_name:
+            return
+        path = self._paper_cash_path(bot_name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"cash": round(float(self._cash), 6)}))
+
+    def _closed_realized_pnl(self, db_session, bot_name: str) -> float:
+        if db_session is None:
+            return 0.0
+        cursor = db_session.cursor()
+        cursor.execute(
+            """
+            SELECT COALESCE(SUM(pnl), 0)
+            FROM trades
+            WHERE bot_name = %s AND status = 'CLOSED'
+            """,
+            (bot_name,),
+        )
+        row = cursor.fetchone()
+        return float(row[0] or 0) if row else 0.0
+
     def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
-        """Reload the paper book from the database and reserve margin from starting cash."""
+        """Reload the paper book and keep closed-trade P&L in cash."""
         from quantshift_core.state_manager import StateManager
 
         db_positions = StateManager(bot_name).get_positions_atomic(bot_name)
@@ -767,7 +810,14 @@ class SimulatedKrakenExecutor:
                 "strategy": pos.get("strategy_name"),
                 "opened_at": pos.get("created_at"),
             }
-        self._cash = max(0.0, float(self.simulated_capital) - margin_used)
+        saved_cash = self.load_paper_cash(bot_name)
+        realized = 0.0 if saved_cash is not None else self._closed_realized_pnl(db_session, bot_name)
+        self._cash = self.restored_paper_cash(
+            self.simulated_capital,
+            realized,
+            margin_used,
+            saved_cash,
+        )
         self._recovered_broker_count = len(self._positions)
         logger.info(
             "[SIMULATED] recovered %s positions, cash=%.2f",

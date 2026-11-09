@@ -4,6 +4,14 @@ from quantshift_core.position_tracker import PositionTracker
 from quantshift_core.symbol_universe import refresh_curated_symbols
 
 
+def test_restart_keeps_closed_trade_pnl_in_paper_cash():
+    from quantshift_core.executors.simulated_kraken_executor import SimulatedKrakenExecutor
+
+    restored = SimulatedKrakenExecutor.restored_paper_cash(5000, 4.40, 132.8, None)
+    assert restored == 5000 + 4.40 - 132.8
+    assert SimulatedKrakenExecutor.restored_paper_cash(5000, 4.40, 132.8, 4800.0) == 4800.0
+
+
 def test_refresh_drops_delisted_and_thin_names_and_ranks_the_rest():
     selected = refresh_curated_symbols(
         ["XBTUSD", "GONEUSD", "THINUSD", "ETHUSD"],
