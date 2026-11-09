@@ -79,6 +79,7 @@ class SimulatedKrakenExecutor:
         
         # Simulation state
         self._cash = simulated_capital
+        self._cash_restored = False
         self._positions: Dict[str, Dict[str, Any]] = {}  # symbol -> position data
         self._orders: Dict[str, Dict[str, Any]] = {}  # order_id -> order data
         self._trades: List[Dict[str, Any]] = []
@@ -760,26 +761,40 @@ class SimulatedKrakenExecutor:
             return None
 
     def save_paper_cash(self, bot_name: str) -> None:
-        if not bot_name:
+        if not bot_name or not self._cash_restored:
             return
         path = self._paper_cash_path(bot_name)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"cash": round(float(self._cash), 6)}))
 
     def _closed_realized_pnl(self, db_session, bot_name: str) -> float:
-        if db_session is None:
-            return 0.0
-        cursor = db_session.cursor()
-        cursor.execute(
-            """
-            SELECT COALESCE(SUM(pnl), 0)
-            FROM trades
-            WHERE bot_name = %s AND status = 'CLOSED'
-            """,
-            (bot_name,),
-        )
-        row = cursor.fetchone()
-        return float(row[0] or 0) if row else 0.0
+        import os
+
+        import psycopg2
+
+        own_session = False
+        session = db_session
+        if session is None:
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                return 0.0
+            session = psycopg2.connect(db_url)
+            own_session = True
+        try:
+            cursor = session.cursor()
+            cursor.execute(
+                """
+                SELECT COALESCE(SUM(pnl), 0)
+                FROM trades
+                WHERE bot_name = %s AND status = 'CLOSED'
+                """,
+                (bot_name,),
+            )
+            row = cursor.fetchone()
+            return float(row[0] or 0) if row else 0.0
+        finally:
+            if own_session:
+                session.close()
 
     def recover_positions_on_startup(self, db_session, bot_name: str) -> Dict[str, Any]:
         """Reload the paper book and keep closed-trade P&L in cash."""
@@ -818,6 +833,7 @@ class SimulatedKrakenExecutor:
             margin_used,
             saved_cash,
         )
+        self._cash_restored = True
         self._recovered_broker_count = len(self._positions)
         logger.info(
             "[SIMULATED] recovered %s positions, cash=%.2f",
