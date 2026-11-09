@@ -18,6 +18,7 @@ const CRYPTO_STRATEGIES = [
   'TradeConfidentSetup',
   'VolatilityBreakoutSetup',
   'BandSnapSetup',
+  'SprintBreakSetup',
 ];
 
 test.describe('Volatility break on crypto and Kraken', () => {

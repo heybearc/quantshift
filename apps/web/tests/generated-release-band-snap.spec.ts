@@ -20,6 +20,7 @@ const CRYPTO_STRATEGIES = [
   'TradeConfidentSetup',
   'VolatilityBreakoutSetup',
   SNAP,
+  'SprintBreakSetup',
 ];
 
 test.describe('Band snap on crypto and Kraken', () => {
