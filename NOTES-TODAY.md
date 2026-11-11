@@ -1,7 +1,24 @@
 ---
-date: 2026-11-07
+date: 2026-11-11
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
+
+## 2026-11-11
+
+### Discoveries / Notes
+- LIVE is blue `10.92.3.29` on v1.19.1 (`473d88b`). STANDBY is green `10.92.3.30`, synced. Public site returned 200.
+- qa-01 full gate passed, 112 tests, plus the bearer-login test. Bot release check passed.
+- Day 4 of the window. On Monday, equity closed SPY at the target for +$4.54 and still held DIA, QQQ, and NVDA. Coinbase was flat at about $10,044.
+- Kraken's Friday latch had been blocking every signal. After the fix it was short NEAR. Sprint was flat at $5,002.63.
+- A restart had refilled Kraken cash from $5,000. Closed-trade results were restored. Kraken about +$3.39 after a −$1.01 NEAR round trip.
+- No urgent feedback items.
+
+### Decisions to Promote
+- D-QS-025 is in DECISIONS.md. Do not loosen the 5% daily-loss limit.
+
+### Blockers / Risks
+- Equity's open NVDA loss was still the window's main red mark on Monday.
+- Sprint still has too few closes to clear its estimated cost.
 
 ## Today
 

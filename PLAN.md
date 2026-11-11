@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-10-30
-**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-11-06 and runs through about 2026-12-04. The 2026-10-19 window was discarded because closes were never written onto the trade row. Live is v1.18.8 on blue. No live money.
+**Last Updated:** 2026-11-11
+**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-11-06 and runs through about 2026-12-04. Live is v1.19.1 on blue. Green standby is synced. No live money.
 
 ---
 

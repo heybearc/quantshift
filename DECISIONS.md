@@ -343,3 +343,9 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** A faster book has to clear the 40 bp cost on its own cash, without restarting the validation window.
 - **When:** 2026-11-06. Shipped in v1.19.0 (`8ff3e86`).
 - **Do not:** Put the sprint setup on the other books, widen the name lists, or start live capital.
+
+## D-QS-025: A daily-loss latch ends when the book is back inside the limit
+- **Decision:** The breaker is scored from current equity on each check, and a new day resets the daily start. A Kraken or sprint restart restores free cash from closed-trade results, then saves that cash.
+- **Why:** Friday's latch still blocked Monday while both books were green. A restart had refilled cash from the $5,000 start.
+- **When:** 2026-11-09. Shipped in v1.19.1 (`473d88b`).
+- **Do not:** Loosen the 5% daily-loss limit or the quiet-hour gates.
