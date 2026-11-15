@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+function accountDrawdown(pnls: number[], startingCapital: number): number {
+  if (startingCapital <= 0) return 0;
+  let cumulative = 0;
+  let peak = 0;
+  let worst = 0;
+  for (const pnl of pnls) {
+    cumulative += pnl;
+    if (cumulative > peak) peak = cumulative;
+    const peakEquity = startingCapital + peak;
+    const equity = startingCapital + cumulative;
+    if (peakEquity <= 0 || equity >= peakEquity) continue;
+    const decline = ((peakEquity - equity) / peakEquity) * 100;
+    if (decline > worst) worst = decline;
+  }
+  return worst;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -31,7 +48,7 @@ export async function GET(request: NextRequest) {
         ...(botName ? { botName } : {}),
       },
       orderBy: { exitedAt: 'asc' },
-      select: { exitedAt: true, pnl: true },
+      select: { botName: true, exitedAt: true, pnl: true },
     });
     let running = 0;
     const curve = closed.flatMap((trade) => {
@@ -49,14 +66,22 @@ export async function GET(request: NextRequest) {
     const expectancy = decided && avgWin != null
       ? ((wins.length / decided) * avgWin) - ((losses.length / decided) * (avgLoss || 0))
       : null;
-    let peak = 0;
-    let maxDrawdown = 0;
-    running = 0;
+    const statuses = await prisma.botStatus.findMany();
+    const pnlByBot = new Map<string, number[]>();
     for (const trade of closed) {
       if (trade.pnl == null) continue;
-      running += trade.pnl;
-      peak = Math.max(peak, running);
-      if (peak > 0) maxDrawdown = Math.max(maxDrawdown, (peak - running) / peak * 100);
+      const list = pnlByBot.get(trade.botName) ?? [];
+      list.push(trade.pnl);
+      pnlByBot.set(trade.botName, list);
+    }
+    let maxDrawdown = 0;
+    for (const [name, pnls] of pnlByBot) {
+      const status = statuses.find((row) => row.botName === name);
+      const closedPnl = pnls.reduce((sum, pnl) => sum + pnl, 0);
+      const equity = status?.accountEquity ?? 0;
+      const unrealized = status?.unrealizedPl ?? 0;
+      const starting = equity - unrealized - closedPnl;
+      maxDrawdown = Math.max(maxDrawdown, accountDrawdown(pnls, starting > 0 ? starting : equity));
     }
     const closedPnl = closed.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
 

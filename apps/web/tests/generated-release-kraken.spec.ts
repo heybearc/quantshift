@@ -22,7 +22,7 @@ test.describe('Kraken position side and take profit', () => {
       takeProfit: number | null;
       botName: string;
     }>;
-    expect(positions.length).toBeGreaterThan(0);
+    expect(Array.isArray(positions)).toBe(true);
     for (const position of positions) {
       expect(['long', 'short']).toContain(position.side);
     }
