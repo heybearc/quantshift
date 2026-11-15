@@ -9,7 +9,7 @@ import sys
 import time
 import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 
 # Add core package to path
@@ -29,6 +29,11 @@ from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
+from quantshift_core.closed_bar import (
+    as_utc,
+    closed_bar_already_traded,
+    without_forming_daily_bar,
+)
 from quantshift_core.equity_exits import (
     add_stop,
     broker_side,
@@ -104,6 +109,8 @@ class AlpacaExecutor:
             self.symbol_universe = None
             self.symbols = symbols or ['SPY']
         
+        # One equity decision per symbol for each finished daily bar.
+        self._traded_closed_bars = {}
         # Circuit breaker state (reset daily)
         self._daily_trades = 0
         self._daily_loss = 0.0
@@ -328,6 +335,11 @@ class AlpacaExecutor:
             # Sort by date
             df = df.sort_index()
             
+            # The last daily row is still printing during the session. Strategies
+            # read that row, so drop it and leave the last finished session.
+            if timeframe == TimeFrame.Day:
+                df = without_forming_daily_bar(df, datetime.now(timezone.utc))
+
             # Add symbol as attribute for strategy to access
             df.symbol = symbol
             
@@ -644,6 +656,54 @@ class AlpacaExecutor:
 
         return None
 
+    def _closed_bar_open(self, frame) -> Optional[datetime]:
+        """Open time of the last bar the strategy was allowed to read."""
+        if frame is None or len(frame) == 0:
+            return None
+        last = frame.index[-1]
+        opened = last.to_pydatetime() if hasattr(last, "to_pydatetime") else last
+        return as_utc(opened)
+
+    def _closed_bar_consumed(self, symbol: str, bar_open: Optional[datetime], fills: Dict[str, datetime]) -> bool:
+        """True when this symbol already has a trade for the finished daily bar."""
+        if bar_open is None:
+            return False
+        traded = self._traded_closed_bars.get(symbol)
+        if traded is not None and traded == bar_open:
+            return True
+        if closed_bar_already_traded(fills.get(symbol), bar_open):
+            self._traded_closed_bars[symbol] = bar_open
+            return True
+        return False
+
+    def _latest_fill_times(self) -> Dict[str, datetime]:
+        """Most recent filled time for each symbol, from closed broker orders."""
+        try:
+            orders = self.alpaca_client.get_orders(
+                filter=GetOrdersRequest(
+                    status=QueryOrderStatus.CLOSED,
+                    after=datetime.now(timezone.utc) - timedelta(days=6),
+                    limit=500,
+                )
+            ) or []
+        except Exception as e:
+            logger.warning("Could not read closed orders for the daily bar: %s", e)
+            return {}
+        latest: Dict[str, datetime] = {}
+        for order in orders:
+            status = getattr(order, "status", None)
+            status = str(getattr(status, "value", status) or "").lower()
+            if status not in ("filled", "partially_filled"):
+                continue
+            when = getattr(order, "filled_at", None) or getattr(order, "submitted_at", None)
+            symbol = getattr(order, "symbol", None)
+            if when is None or not symbol:
+                continue
+            when = as_utc(when)
+            if symbol not in latest or when > latest[symbol]:
+                latest[symbol] = when
+        return latest
+
     def run_strategy_cycle(self) -> Dict[str, Any]:
         """
         Run one complete strategy cycle:
@@ -768,7 +828,10 @@ class AlpacaExecutor:
                         positions=positions
                     )
                     
-                    # Execute signals
+                    # Execute signals. A finished daily bar is one decision.
+                    # A held name can only exit on that bar. A flat name can only enter.
+                    fills = self._latest_fill_times()
+                    held_symbols = {pos.symbol for pos in positions}
                     for signal in signals:
                         results['signals_generated'].append({
                             'symbol': signal.symbol,
@@ -776,6 +839,21 @@ class AlpacaExecutor:
                             'price': signal.price,
                             'reason': signal.reason
                         })
+
+                        holding = signal.symbol in held_symbols
+                        if holding and signal.signal_type != SignalType.SELL:
+                            continue
+                        if not holding and signal.signal_type != SignalType.BUY:
+                            continue
+
+                        bar_open = self._closed_bar_open(market_data_dict.get(signal.symbol))
+                        if self._closed_bar_consumed(signal.symbol, bar_open, fills):
+                            logger.info(
+                                "Skipping %s %s: closed daily bar already traded",
+                                signal.signal_type.value,
+                                signal.symbol,
+                            )
+                            continue
 
                         # Skip BUY signals if at max positions
                         if signal.signal_type == SignalType.BUY and at_max_positions:
@@ -793,6 +871,8 @@ class AlpacaExecutor:
                         if order:
                             results['orders_executed'].append(order)
                             self._daily_trades += 1
+                            if bar_open is not None:
+                                self._traded_closed_bars[signal.symbol] = bar_open
                     
                 except Exception as e:
                     error_msg = f"Error generating signals: {str(e)}"
