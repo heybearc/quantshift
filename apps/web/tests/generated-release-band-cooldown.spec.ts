@@ -23,6 +23,7 @@ test('snap stops stay on the crypto books', async ({ page }) => {
     botName: string;
     strategy: string;
     entryReason: string | null;
+    exitReason: string | null;
   }>;
   const snaps = trades.filter((trade) => trade.strategy === 'BandSnapSetup');
   expect(snaps.length).toBeGreaterThan(0);
@@ -30,7 +31,8 @@ test('snap stops stay on the crypto books', async ({ page }) => {
     const book = trade.botName.toLowerCase();
     expect(book.includes('crypto') || book.includes('kraken')).toBe(true);
     expect(book.includes('equity')).toBe(false);
-    expect(REASONS.has(trade.entryReason || '')).toBe(true);
+    const reason = trade.exitReason || trade.entryReason || '';
+    expect(REASONS.has(reason)).toBe(true);
   }
-  expect(snaps.some((trade) => trade.entryReason === 'paper stop')).toBe(true);
+  expect(snaps.some((trade) => trade.exitReason === 'paper stop')).toBe(true);
 });
