@@ -308,7 +308,8 @@ class QuantShiftUnifiedBot:
             simulated_capital=simulated_capital,
             risk_config=risk_config,
             use_dynamic_symbols=use_dynamic_symbols,
-            symbol_universe_config=symbol_universe_config
+            symbol_universe_config=symbol_universe_config,
+            bot_name=self.bot_name,
         )
         
         logger.info(
@@ -366,7 +367,8 @@ class QuantShiftUnifiedBot:
             simulated_capital=simulated_capital,
             risk_config=risk_config,
             use_dynamic_symbols=use_dynamic_symbols,
-            symbol_universe_config=symbol_universe_config
+            symbol_universe_config=symbol_universe_config,
+            bot_name=self.bot_name,
         )
         
         logger.info(
@@ -1676,15 +1678,17 @@ class QuantShiftUnifiedBot:
                                 )
                             except Exception as e:
                                 logger.error("position_recovery_failed", error=str(e))
+                                self._book_ready = False
                             else:
                                 self._book_ready = True
                                 self._register_open_stops()
                         elif not is_primary and was_primary:
                             logger.info("became_standby", bot_name=self.bot_name)
+                            self._book_ready = False
                     except Exception as e:
                         logger.error("primary_check_failed", error=str(e))
-                        # Default to primary if check fails to avoid downtime
-                        is_primary = True
+                        is_primary = False
+                        self._book_ready = False
                 
                 # Send heartbeat (only if primary)
                 if is_primary and current_time - last_heartbeat_time >= heartbeat_interval:

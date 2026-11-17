@@ -34,6 +34,7 @@ from quantshift_core.closed_bar import (
     closed_bar_already_traded,
     without_forming_daily_bar,
 )
+from quantshift_core.order_identity import alpaca_client_order_id
 from quantshift_core.equity_exits import (
     add_stop,
     broker_side,
@@ -69,7 +70,8 @@ class AlpacaExecutor:
         simulated_capital: Optional[float] = None,
         risk_config: Optional[Dict[str, Any]] = None,
         use_dynamic_symbols: bool = False,
-        symbol_universe_config: Optional[Dict[str, Any]] = None
+        symbol_universe_config: Optional[Dict[str, Any]] = None,
+        bot_name: str = "quantshift-equity",
     ):
         """
         Initialize Alpaca executor.
@@ -84,6 +86,7 @@ class AlpacaExecutor:
             symbol_universe_config: Config for dynamic symbol fetching
         """
         self.strategy = strategy
+        self.bot_name = bot_name
         self.alpaca_client = alpaca_client
         self.data_client = data_client
         self.use_dynamic_symbols = use_dynamic_symbols
@@ -269,14 +272,49 @@ class AlpacaExecutor:
                 logger.warning("Reduce-only close failed for %s qty=%s: %s", symbol, qty, e)
                 return None
         order_side = OrderSide.SELL if side == "sell" else OrderSide.BUY
-        return client.submit_order(
+        return self._submit_order(
             MarketOrderRequest(
                 symbol=symbol,
                 qty=float(qty),
                 side=order_side,
                 time_in_force=TimeInForce.DAY,
+                client_order_id=self._order_id(symbol, side, "reduce", "close"),
             )
         )
+
+    def _bar_token(self, signal: Signal) -> str:
+        """Closed bar stamped by the cycle, otherwise the signal time."""
+        bar = str((signal.metadata or {}).get("decision_bar") or "").strip()
+        if bar:
+            return bar
+        stamp = signal.timestamp
+        if hasattr(stamp, "strftime"):
+            return stamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return str(stamp or "unbarred")
+
+    def _order_id(self, symbol: str, side: str, bar_time: str, leg: str) -> str:
+        return alpaca_client_order_id(self.bot_name, symbol, side, bar_time, leg)
+
+    @staticmethod
+    def _duplicate_order(exc: Exception) -> bool:
+        text = str(exc).lower()
+        return "client_order_id" in text and any(
+            word in text for word in ("unique", "duplicate", "already")
+        )
+
+    def _submit_order(self, request):
+        """Submit an order. A repeated decision id loads the order already at the broker."""
+        client_order_id = getattr(request, "client_order_id", None)
+        try:
+            return self.alpaca_client.submit_order(request)
+        except Exception as exc:
+            if not client_order_id or not self._duplicate_order(exc):
+                raise
+            logger.info("alpaca order already submitted %s", client_order_id)
+            getter = getattr(self.alpaca_client, "get_order_by_client_id", None)
+            if getter is None:
+                return None
+            return getter(client_order_id)
     
     def get_market_data(
         self,
@@ -456,10 +494,11 @@ class AlpacaExecutor:
                     time_in_force=TimeInForce.DAY,
                     order_class=OrderClass.BRACKET,
                     stop_loss={'stop_price': stop_loss_price},
-                    take_profit={'limit_price': take_profit_price}
+                    take_profit={'limit_price': take_profit_price},
+                    client_order_id=self._order_id(signal.symbol, "buy", self._bar_token(signal), "entry"),
                 )
                 
-                order = self.alpaca_client.submit_order(order_request)
+                order = self._submit_order(order_request)
                 
                 # Calculate risk/reward for logging
                 entry_price = signal.price
@@ -482,9 +521,15 @@ class AlpacaExecutor:
                     symbol=signal.symbol,
                     qty=signal.position_size or 1,
                     side=side,
-                    time_in_force=TimeInForce.DAY
+                    time_in_force=TimeInForce.DAY,
+                    client_order_id=self._order_id(
+                        signal.symbol,
+                        side.value,
+                        self._bar_token(signal),
+                        "entry",
+                    ),
                 )
-                order = self.alpaca_client.submit_order(order_request)
+                order = self._submit_order(order_request)
                 logger.info(
                     f"Order submitted: {side.value} {signal.position_size} {signal.symbol} @ market"
                 )
@@ -508,9 +553,15 @@ class AlpacaExecutor:
                                 qty=filled_qty,
                                 side=OrderSide.SELL,
                                 time_in_force=TimeInForce.GTC,
-                                stop_price=round(signal.stop_loss, 2)
+                                stop_price=round(signal.stop_loss, 2),
+                                client_order_id=self._order_id(
+                                    signal.symbol,
+                                    "sell",
+                                    self._bar_token(signal),
+                                    f"stop-{round(signal.stop_loss, 2)}",
+                                ),
                             )
-                            self.alpaca_client.submit_order(sl_request)
+                            self._submit_order(sl_request)
                             logger.info(f"Stop loss placed: SELL {filled_qty} {signal.symbol} stop @ ${signal.stop_loss:.2f}")
                         except Exception as e:
                             logger.warning(f"Failed to place stop loss for {signal.symbol}: {e}")
@@ -523,9 +574,15 @@ class AlpacaExecutor:
                                 qty=filled_qty,
                                 side=OrderSide.SELL,
                                 time_in_force=TimeInForce.GTC,
-                                limit_price=round(signal.take_profit, 2)
+                                limit_price=round(signal.take_profit, 2),
+                                client_order_id=self._order_id(
+                                    signal.symbol,
+                                    "sell",
+                                    self._bar_token(signal),
+                                    f"target-{round(signal.take_profit, 2)}",
+                                ),
                             )
-                            self.alpaca_client.submit_order(tp_request)
+                            self._submit_order(tp_request)
                             logger.info(f"Take profit placed: SELL {filled_qty} {signal.symbol} limit @ ${signal.take_profit:.2f}")
                         except Exception as e:
                             logger.warning(f"Failed to place take profit for {signal.symbol}: {e}")
@@ -584,9 +641,15 @@ class AlpacaExecutor:
                 qty=abs(float(quantity)),
                 side=OrderSide.SELL,
                 time_in_force=TimeInForce.GTC,
-                stop_price=round(stop_price, 2)
+                stop_price=round(stop_price, 2),
+                client_order_id=self._order_id(
+                    symbol,
+                    "sell",
+                    "stop",
+                    f"{round(float(stop_price), 2)}",
+                ),
             )
-            order = self.alpaca_client.submit_order(sl_request)
+            order = self._submit_order(sl_request)
             logger.info(
                 f"Stop order placed: {symbol} qty={quantity} stop=${stop_price:.2f} order_id={order.id}"
             )
@@ -865,6 +928,17 @@ class AlpacaExecutor:
                                 signal.reason,
                             )
                             continue
+
+                        if bar_open is None:
+                            logger.error(
+                                "refusing %s %s without a closed bar",
+                                signal.signal_type.value,
+                                signal.symbol,
+                            )
+                            continue
+                        if signal.metadata is None:
+                            signal.metadata = {}
+                        signal.metadata["decision_bar"] = as_utc(bar_open).strftime("%Y-%m-%dT%H:%M:%SZ")
 
                         # Execute the signal
                         order = self.execute_signal(signal)

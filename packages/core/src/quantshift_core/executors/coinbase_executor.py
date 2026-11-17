@@ -22,13 +22,14 @@ from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_
 from quantshift_core.strategies.band_snap import remember_band_stop
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
+from quantshift_core.order_identity import coinbase_client_order_id
 
 logger = logging.getLogger(__name__)
 
 
-def _client_order_id(prefix: str, symbol: str) -> str:
-    safe = "".join(ch for ch in symbol if ch.isalnum()) or "order"
-    return f"{prefix}_{safe}_{int(time.time() * 1000)}"
+def _duplicate_client_order(reason: Any) -> bool:
+    text = str(reason or "").lower()
+    return any(word in text for word in ("duplicate", "already exists", "already exist"))
 
 
 def _order_attr(response: Any, key: str, default=None):
@@ -70,7 +71,8 @@ class CoinbaseExecutor:
         simulated_capital: Optional[float] = None,
         risk_config: Optional[Dict[str, Any]] = None,
         use_dynamic_symbols: bool = False,
-        symbol_universe_config: Optional[Dict[str, Any]] = None
+        symbol_universe_config: Optional[Dict[str, Any]] = None,
+        bot_name: str = "quantshift-crypto",
     ):
         """
         Initialize Coinbase executor.
@@ -85,6 +87,7 @@ class CoinbaseExecutor:
             symbol_universe_config: Config for dynamic symbol fetching
         """
         self.strategy = strategy
+        self.bot_name = bot_name
         self.coinbase_client = coinbase_client
         self.use_dynamic_symbols = use_dynamic_symbols
         self.simulated_capital = simulated_capital
@@ -243,7 +246,13 @@ class CoinbaseExecutor:
                 del self._sim_positions[symbol]
             qty = sell_qty
 
-        order_id = _client_order_id("sim", symbol)
+        order_id = coinbase_client_order_id(
+            self.bot_name,
+            symbol,
+            side,
+            "paper",
+            f"{qty}:{price}",
+        )
         logger.info(
             "[SIMULATED] %s %s %s @ %.4f cash=%.2f reason=%s",
             side,
@@ -619,18 +628,33 @@ class CoinbaseExecutor:
             time.sleep(1)
         return None
 
-    def _submit_market_order(self, symbol: str, side: str, base_size: str):
-        """Submit a Coinbase market IOC order. SDK requires client_order_id."""
+    def _bar_token(self, signal: Signal) -> str:
+        bar = str((signal.metadata or {}).get("decision_bar") or "").strip()
+        if bar:
+            return bar
+        stamp = signal.timestamp
+        if hasattr(stamp, "strftime"):
+            return stamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return str(stamp or "unbarred")
+
+    def _order_id(self, symbol: str, side: str, bar_time: str, leg: str) -> str:
+        return coinbase_client_order_id(self.bot_name, symbol, side, bar_time, leg)
+
+    def _submit_market_order(self, symbol: str, side: str, base_size: str, client_order_id: str):
+        """Submit a Coinbase market IOC order. The client order id is the decision id."""
         if self._is_paper():
             raise RuntimeError(f"refusing live Coinbase order for paper bot: {side} {symbol}")
         response = self.coinbase_client.market_order(
-            client_order_id=_client_order_id("mkt", symbol),
+            client_order_id=client_order_id,
             product_id=symbol,
             side=side,
             base_size=str(base_size),
         )
         if getattr(response, "success", True) is False:
             reason = getattr(response, "error_response", None) or getattr(response, "failure_reason", None)
+            if _duplicate_client_order(reason):
+                logger.info("coinbase order already submitted %s", client_order_id)
+                return response
             raise RuntimeError(f"Coinbase rejected {side} {symbol}: {reason}")
         return response
 
@@ -747,7 +771,10 @@ class CoinbaseExecutor:
                 reward_risk_ratio = (reward_pct / risk_pct) if risk_pct > 0 else 0
                 
                 response = self._submit_market_order(
-                    signal.symbol, "BUY", signal.position_size or 1
+                    signal.symbol,
+                    "BUY",
+                    signal.position_size or 1,
+                    self._order_id(signal.symbol, "buy", self._bar_token(signal), "entry"),
                 )
                 order_id = _order_attr(response, "order_id")
                 order_status = _order_attr(response, "status", "UNKNOWN")
@@ -776,7 +803,13 @@ class CoinbaseExecutor:
                     sl_order = self._place_stop_loss_order(
                         signal.symbol,
                         signal.position_size or 1,
-                        stop_loss_price
+                        stop_loss_price,
+                        self._order_id(
+                            signal.symbol,
+                            "sell",
+                            self._bar_token(signal),
+                            f"stop-{stop_loss_price}",
+                        ),
                     )
                     sl_success = True
                     logger.info(
@@ -793,7 +826,13 @@ class CoinbaseExecutor:
                     tp_order = self._place_take_profit_order(
                         signal.symbol,
                         signal.position_size or 1,
-                        take_profit_price
+                        take_profit_price,
+                        self._order_id(
+                            signal.symbol,
+                            "sell",
+                            self._bar_token(signal),
+                            f"target-{take_profit_price}",
+                        ),
                     )
                     tp_success = True
                     logger.info(
@@ -818,7 +857,10 @@ class CoinbaseExecutor:
                 
             else:
                 response = self._submit_market_order(
-                    signal.symbol, side, signal.position_size or 1
+                    signal.symbol,
+                    side,
+                    signal.position_size or 1,
+                    self._order_id(signal.symbol, side, self._bar_token(signal), "entry"),
                 )
                 order_id = _order_attr(response, "order_id")
                 order_status = _order_attr(response, "status", "UNKNOWN")
@@ -842,7 +884,13 @@ class CoinbaseExecutor:
                             sl_order = self._place_stop_loss_order(
                                 signal.symbol,
                                 signal.position_size or 1,
-                                signal.stop_loss
+                                signal.stop_loss,
+                                self._order_id(
+                                    signal.symbol,
+                                    "sell",
+                                    self._bar_token(signal),
+                                    f"stop-{signal.stop_loss}",
+                                ),
                             )
                             logger.info(
                                 "stop loss placed %s qty=%s stop=%s order=%s",
@@ -859,7 +907,13 @@ class CoinbaseExecutor:
                             tp_order = self._place_take_profit_order(
                                 signal.symbol,
                                 signal.position_size or 1,
-                                signal.take_profit
+                                signal.take_profit,
+                                self._order_id(
+                                    signal.symbol,
+                                    "sell",
+                                    self._bar_token(signal),
+                                    f"target-{signal.take_profit}",
+                                ),
                             )
                             logger.info(
                                 "take profit placed %s qty=%s limit=%s order=%s",
@@ -897,22 +951,16 @@ class CoinbaseExecutor:
             logger.error("signal execution failed for %s: %s", signal.symbol, e, exc_info=True)
             return None
     
-    def _place_stop_loss_order(self, symbol: str, quantity: float, stop_price: float) -> dict:
-        """
-        Place a stop-loss order for a position.
-        
-        Args:
-            symbol: Trading symbol
-            quantity: Position size to protect
-            stop_price: Stop-loss trigger price
-            
-        Returns:
-            Order response from Coinbase API
-        """
-        import time
-        
+    def _place_stop_loss_order(
+        self,
+        symbol: str,
+        quantity: float,
+        stop_price: float,
+        client_order_id: str,
+    ) -> dict:
+        """Place a stop-loss order for a position."""
         order_config = {
-            "client_order_id": f"sl_{symbol}_{int(time.time())}",
+            "client_order_id": client_order_id,
             "product_id": symbol,
             "side": "SELL",
             "order_configuration": {
@@ -925,9 +973,22 @@ class CoinbaseExecutor:
             }
         }
         
+        return self._created_order(order_config)
+
+    def _created_order(self, order_config: dict):
+        """Submit a Coinbase order. A repeated decision id is the existing order."""
         response = self.coinbase_client.create_order(**order_config)
+        if getattr(response, "success", True) is False:
+            reason = getattr(response, "error_response", None) or getattr(response, "failure_reason", None)
+            if _duplicate_client_order(reason):
+                logger.info(
+                    "coinbase order already submitted %s",
+                    order_config.get("client_order_id"),
+                )
+                return response
+            raise RuntimeError(f"Coinbase rejected {order_config.get('product_id')}: {reason}")
         return response
-    
+
     def close_position(self, symbol: str, quantity: float, reason: str = "Position closure") -> Optional[Dict[str, Any]]:
         """
         Close a position by submitting a market sell order.
@@ -945,7 +1006,12 @@ class CoinbaseExecutor:
                 pos = self._sim_positions.get(symbol)
                 price = pos["current_price"] if pos else 0
                 return self._simulate_order(symbol, "SELL", quantity, price, reason)
-            response = self._submit_market_order(symbol, "SELL", abs(quantity))
+            response = self._submit_market_order(
+                symbol,
+                "SELL",
+                abs(quantity),
+                self._order_id(symbol, "sell", datetime.utcnow().strftime("%Y%m%d"), "close"),
+            )
             
             logger.info(
                 f"Position closed: SELL {quantity} {symbol} @ market - {reason}"
@@ -979,16 +1045,14 @@ class CoinbaseExecutor:
         """
         try:
             if self._is_paper():
-                order_id = _client_order_id("simsl", symbol)
+                order_id = self._order_id(symbol, "sell", "stop", f"{float(stop_price):.8f}")
                 pos = self._sim_positions.get(symbol)
                 if pos is not None:
                     pos["stop_loss"] = float(stop_price)
                 logger.info("[SIMULATED] stop recorded %s qty=%s stop=%s", symbol, quantity, stop_price)
                 return order_id
-            import time
-            
             order_config = {
-                "client_order_id": f"trailing_sl_{symbol}_{int(time.time())}",
+                "client_order_id": self._order_id(symbol, "sell", "stop", f"{float(stop_price):.8f}"),
                 "product_id": symbol,
                 "side": "SELL",
                 "order_configuration": {
@@ -1001,7 +1065,7 @@ class CoinbaseExecutor:
                 }
             }
             
-            response = self.coinbase_client.create_order(**order_config)
+            response = self._created_order(order_config)
             order_id = _order_attr(response, "order_id")
             
             logger.info(
@@ -1031,22 +1095,16 @@ class CoinbaseExecutor:
             logger.warning(f"Failed to cancel order {order_id}: {e}")
             return False
     
-    def _place_take_profit_order(self, symbol: str, quantity: float, limit_price: float) -> dict:
-        """
-        Place a take-profit limit order for a position.
-        
-        Args:
-            symbol: Trading symbol
-            quantity: Position size to close
-            limit_price: Take-profit limit price
-            
-        Returns:
-            Order response from Coinbase API
-        """
-        import time
-        
+    def _place_take_profit_order(
+        self,
+        symbol: str,
+        quantity: float,
+        limit_price: float,
+        client_order_id: str,
+    ) -> dict:
+        """Place a take-profit limit order for a position."""
         order_config = {
-            "client_order_id": f"tp_{symbol}_{int(time.time())}",
+            "client_order_id": client_order_id,
             "product_id": symbol,
             "side": "SELL",
             "order_configuration": {
@@ -1058,8 +1116,7 @@ class CoinbaseExecutor:
             }
         }
         
-        response = self.coinbase_client.create_order(**order_config)
-        return response
+        return self._created_order(order_config)
     
     def is_market_open(self) -> bool:
         """
@@ -1217,7 +1274,17 @@ class CoinbaseExecutor:
                     continue
 
                 bar_key = self._closed_bar_key(market_data.get(signal.symbol))
-                if bar_key and self._traded_bar.get(signal.symbol) == bar_key:
+                if not bar_key:
+                    logger.error(
+                        "refusing %s %s without a closed bar",
+                        signal.symbol,
+                        signal.signal_type.value,
+                    )
+                    continue
+                if signal.metadata is None:
+                    signal.metadata = {}
+                signal.metadata["decision_bar"] = bar_key
+                if self._traded_bar.get(signal.symbol) == bar_key:
                     logger.info(
                         "signal skipped, this closed hour was already traded: %s %s",
                         signal.symbol,

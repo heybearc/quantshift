@@ -193,7 +193,7 @@ class StateManager:
                 return False
             
             logger.error("primary_check_failed", error=error_msg)
-            return True  # Default to primary if Redis fails for other reasons
+            return False
     
     @contextmanager
     def atomic_transaction(self):

@@ -57,5 +57,24 @@ def test_heartbeat():
         assert mock_client.setex.called
 
 
+def test_is_primary_fails_closed_when_redis_errors(monkeypatch):
+    """A Redis error must not let this process trade."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/quantshift")
+    monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
+    from quantshift_core import config
+    config.get_settings.cache_clear()
+
+    with patch('quantshift_core.state_manager.get_db'), patch(
+        'quantshift_core.state_manager.redis.from_url'
+    ) as mock_redis:
+        mock_client = Mock()
+        mock_client.set.side_effect = RuntimeError("connection refused")
+        mock_redis.return_value = mock_client
+
+        state = StateManager(bot_name="test-bot")
+
+        assert state.is_primary() is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

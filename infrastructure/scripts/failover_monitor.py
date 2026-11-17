@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 """
-QuantShift Automated Failover Monitor
+QuantShift bot heartbeat monitor.
 
-Runs on STANDBY bot container (CT 101).
-Monitors PRIMARY bot heartbeat from PostgreSQL database.
-Triggers failover if primary is down for > 60 seconds.
+Runs on the spare bot container (CT 101). It watches primary heartbeats and
+logs when they go stale. It does not promote Redis and it does not start bots.
 
-Failover procedure:
-1. Promote standby Redis to master
-2. Update bot status in database to PRIMARY
-3. Start standby bot processes
-4. Send alert notification
-
-Failover runs only when every bot heartbeat is stale. One dead bot
-stays on the primary host, where systemd restarts that process.
+One process per bot runs on CT100. systemd restarts that process. CT101 stays
+a spare until an operator starts it after CT100 is confirmed stopped.
 
 Usage:
     python failover_monitor.py
@@ -23,11 +16,8 @@ Systemd service:
 """
 
 import os
-import sys
 import time
-import subprocess
 import psycopg2
-from datetime import datetime, timezone
 import structlog
 
 # Configure structured logging
@@ -66,6 +56,7 @@ class FailoverMonitor:
         self.failover_in_progress = False
         self.last_failover_time = None
         self.failover_cooldown = 300  # 5 minutes between failovers
+        self._refusal_logged = False
         
         logger.info(
             "failover_monitor_initialized",
@@ -147,42 +138,9 @@ class FailoverMonitor:
             return {'healthy': False, 'seconds_since_heartbeat': 999, 'status': 'error'}
     
     def promote_redis_to_master(self):
-        """Promote standby Redis to master."""
-        try:
-            logger.info("promoting_redis_to_master")
-            
-            # Promote to master
-            result = subprocess.run(
-                ['redis-cli', '-a', self.redis_password, 'SLAVEOF', 'NO', 'ONE'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if result.returncode != 0:
-                logger.error("redis_promotion_failed", stderr=result.stderr)
-                return False
-            
-            logger.info("redis_promoted_to_master", stdout=result.stdout.strip())
-            
-            # Verify promotion
-            result = subprocess.run(
-                ['redis-cli', '-a', self.redis_password, 'INFO', 'replication'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if 'role:master' in result.stdout:
-                logger.info("redis_promotion_verified")
-                return True
-            else:
-                logger.error("redis_promotion_verification_failed", output=result.stdout)
-                return False
-                
-        except Exception as e:
-            logger.error("redis_promotion_error", error=str(e), exc_info=True)
-            return False
+        """Redis promotion is disabled. Two masters can both trade."""
+        logger.critical("redis_promotion_blocked")
+        return False
     
     def update_bot_status_to_primary(self, bot_name: str):
         """Update bot status in database to PRIMARY."""
@@ -208,40 +166,9 @@ class FailoverMonitor:
             return False
     
     def start_bot_service(self, service_name: str):
-        """Start bot systemd service."""
-        try:
-            logger.info("starting_bot_service", service=service_name)
-            
-            result = subprocess.run(
-                ['systemctl', 'start', service_name],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            if result.returncode != 0:
-                logger.error("service_start_failed", service=service_name, stderr=result.stderr)
-                return False
-            
-            # Verify service started
-            time.sleep(5)
-            result = subprocess.run(
-                ['systemctl', 'is-active', service_name],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if result.stdout.strip() == 'active':
-                logger.info("service_started_successfully", service=service_name)
-                return True
-            else:
-                logger.error("service_not_active", service=service_name, status=result.stdout.strip())
-                return False
-                
-        except Exception as e:
-            logger.error("service_start_error", service=service_name, error=str(e), exc_info=True)
-            return False
+        """Standby bot starts are disabled. The spare must not trade over the primary."""
+        logger.critical("standby_bot_start_blocked", service=service_name)
+        return False
     
     def send_alert(self, message: str):
         """Send alert notification (placeholder for future implementation)."""
@@ -250,69 +177,18 @@ class FailoverMonitor:
         # For now, just log critically
     
     def perform_failover(self):
-        """
-        Perform complete failover procedure.
-        
-        Steps:
-        1. Promote Redis to master
-        2. Update database status
-        3. Start bot services
-        4. Send alert
-        """
-        if self.failover_in_progress:
-            logger.warning("failover_already_in_progress")
-            return False
-        
-        # Check cooldown
-        if self.last_failover_time:
-            time_since_last = time.time() - self.last_failover_time
-            if time_since_last < self.failover_cooldown:
-                logger.warning(
-                    "failover_cooldown_active",
-                    seconds_remaining=self.failover_cooldown - time_since_last
-                )
-                return False
-        
-        self.failover_in_progress = True
-        failover_start_time = time.time()
-        
-        try:
-            logger.critical("FAILOVER_INITIATED", timestamp=datetime.now(timezone.utc).isoformat())
-            
-            # Step 1: Promote Redis
-            if not self.promote_redis_to_master():
-                raise Exception("Redis promotion failed")
-            
-            # Step 2: Update database status and start every book.
-            for bot_name in BOTS:
-                if not self.update_bot_status_to_primary(bot_name):
-                    raise Exception(f"Failed to update {bot_name} status")
-                if not self.start_bot_service(bot_name):
-                    raise Exception(f"Failed to start {bot_name}")
-            
-            # Step 3: Send alert
-            failover_duration = time.time() - failover_start_time
-            self.send_alert(
-                f"Failover completed successfully in {failover_duration:.1f} seconds. "
-                f"Standby is now PRIMARY."
-            )
-            
-            logger.critical(
-                "FAILOVER_COMPLETED",
-                duration_seconds=failover_duration,
-                timestamp=datetime.now(timezone.utc).isoformat()
-            )
-            
-            self.last_failover_time = time.time()
-            return True
-            
-        except Exception as e:
-            logger.critical("FAILOVER_FAILED", error=str(e), exc_info=True)
-            self.send_alert(f"Failover FAILED: {str(e)}")
-            return False
-            
-        finally:
-            self.failover_in_progress = False
+        """Log a stale primary and leave Redis and the bots where they are."""
+        logger.critical(
+            "FAILOVER_REFUSED",
+            message=(
+                "Automatic promotion is disabled. Restart the affected bot on CT100. "
+                "Start CT101 only after CT100 is confirmed stopped."
+            ),
+        )
+        self.send_alert(
+            "Primary heartbeats are stale. Redis was not promoted and no spare bots were started."
+        )
+        return False
     
     def run(self):
         """Main monitoring loop."""
@@ -336,13 +212,17 @@ class FailoverMonitor:
                     }
                 )
                 
-                # One stale book is a process restart on the primary host.
-                # Promote only when the whole primary has stopped heartbeating.
+                # A stale book is restarted on CT100 by systemd. This process
+                # only reports it. Promotion would make a second Redis master.
                 if len(unhealthy) == len(BOTS):
                     logger.warning("primary_unhealthy_detected", bots=unhealthy)
-                    self.perform_failover()
-                elif unhealthy:
-                    logger.warning("primary_bot_unhealthy", bots=unhealthy)
+                    if not self._refusal_logged:
+                        self.perform_failover()
+                        self._refusal_logged = True
+                else:
+                    self._refusal_logged = False
+                    if unhealthy:
+                        logger.warning("primary_bot_unhealthy", bots=unhealthy)
                 
                 # Sleep until next check
                 time.sleep(self.check_interval)
