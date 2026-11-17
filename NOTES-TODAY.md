@@ -1,7 +1,23 @@
 ---
-date: 2026-11-11
+date: 2026-11-17
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
+
+## 2026-11-17
+
+### Discoveries / Notes
+- LIVE is green `10.92.3.30` CT138 on v1.19.2 (`09e0992`). STANDBY is blue `10.92.3.29` CT137, synced. HAProxy backend is green.
+- Trading gate on green passed 48 tests plus the closed-bar spec before the bump. GitHub release v1.19.2 is cut.
+- Equity on primary `10.92.3.27` uses the last finished daily bar. Standby equity on `10.92.3.28` stays stopped. Crypto and Kraken were not restarted for this release.
+- Drawdown is the account-equity path. The old peak-profit formula had printed 288%.
+- Paper window is still 2026-11-06 through about 2026-12-04. Do not restart the clock or loosen the 5% daily-loss limit.
+- No urgent feedback items.
+
+### Decisions to Promote
+- None new. Daily-loss and quiet-hour gates stay as they are.
+
+### Blockers / Risks
+- Coinbase can stay quiet while the squeeze gate is unmet. That is the designed gate, not a stuck bot.
 
 ## 2026-11-11
 
