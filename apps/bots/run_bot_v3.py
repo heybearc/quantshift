@@ -411,7 +411,8 @@ class QuantShiftUnifiedBot:
                 risk_config=risk_config,
                 use_dynamic_symbols=use_dynamic_symbols,
                 symbol_universe_config=symbol_universe_config,
-                max_leverage=max_leverage
+                max_leverage=max_leverage,
+                bot_name=self.bot_name,
             )
             logger.info(
                 "simulated_kraken_executor_initialized",
@@ -432,7 +433,8 @@ class QuantShiftUnifiedBot:
                 risk_config=risk_config,
                 use_dynamic_symbols=use_dynamic_symbols,
                 symbol_universe_config=symbol_universe_config,
-                max_leverage=max_leverage
+                max_leverage=max_leverage,
+                bot_name=self.bot_name,
             )
             logger.info(
                 "kraken_executor_initialized",

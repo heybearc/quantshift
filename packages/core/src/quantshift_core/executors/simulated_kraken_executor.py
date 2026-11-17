@@ -18,7 +18,7 @@ from decimal import Decimal
 sys.path.insert(0, '/opt/quantshift/packages/core/src')
 
 from quantshift_core.candles import AttachedFrame, attached_frame, drop_forming_candle
-from quantshift_core.strategies.band_snap import remember_band_stop
+from quantshift_core.order_identity import kraken_userref
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
@@ -44,7 +44,8 @@ class SimulatedKrakenExecutor:
         risk_config: Optional[Dict[str, Any]] = None,
         use_dynamic_symbols: bool = False,
         symbol_universe_config: Optional[Dict[str, Any]] = None,
-        max_leverage: float = 2.0
+        max_leverage: float = 2.0,
+        bot_name: str = "quantshift-kraken",
     ):
         """
         Initialize simulated Kraken executor.
@@ -61,9 +62,11 @@ class SimulatedKrakenExecutor:
             max_leverage: Maximum leverage to use
         """
         self.strategy = strategy
+        self.bot_name = bot_name
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
         self.max_leverage = min(max_leverage, 5.0)
+        self._traded_bars = {}
         
         # Initialize Kraken API client (for market data only)
         try:
@@ -638,6 +641,13 @@ class SimulatedKrakenExecutor:
         self._next_order_id += 1
         return {
             "id": f"sim-kraken-{self._next_order_id}",
+            "userref": kraken_userref(
+                getattr(self, "bot_name", "quantshift-kraken"),
+                symbol,
+                side,
+                "paper",
+                f"{price}",
+            ),
             "symbol": symbol,
             "qty": qty,
             "side": side,
@@ -756,7 +766,11 @@ class SimulatedKrakenExecutor:
         if not path.exists():
             return None
         try:
-            return float(json.loads(path.read_text()).get("cash"))
+            payload = json.loads(path.read_text())
+            bars = payload.get("traded_bars")
+            if isinstance(bars, dict):
+                self._traded_bars = {str(symbol): str(bar) for symbol, bar in bars.items()}
+            return float(payload.get("cash"))
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             return None
 
@@ -765,7 +779,10 @@ class SimulatedKrakenExecutor:
             return
         path = self._paper_cash_path(bot_name)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"cash": round(float(self._cash), 6)}))
+        path.write_text(json.dumps({
+            "cash": round(float(self._cash), 6),
+            "traded_bars": getattr(self, "_traded_bars", {}),
+        }))
 
     def _closed_realized_pnl(self, db_session, bot_name: str) -> float:
         import os
@@ -846,7 +863,12 @@ class SimulatedKrakenExecutor:
             "orphaned_added": 0,
             "ghosts_removed": 0,
         }
-    
+
+    def _closed_bar_key(self, frame) -> Optional[str]:
+        if frame is None or len(frame) == 0:
+            return None
+        return str(frame.index[-1])
+
     def run_strategy_cycle(self) -> List[Dict[str, Any]]:
         """
         Run one complete strategy cycle:
@@ -923,10 +945,33 @@ class SimulatedKrakenExecutor:
                         max_positions,
                     )
                     continue
+                bar_key = self._closed_bar_key(market_data.get(signal.symbol))
+                if not bar_key:
+                    logger.error(
+                        "[SIMULATED] refusing %s %s without a closed bar",
+                        signal.symbol,
+                        signal.signal_type.value,
+                    )
+                    continue
+                traded = getattr(self, "_traded_bars", None)
+                if traded is None:
+                    self._traded_bars = {}
+                    traded = self._traded_bars
+                if traded.get(signal.symbol) == bar_key:
+                    logger.info(
+                        "[SIMULATED] signal skipped, this closed bar was already traded: %s %s",
+                        signal.symbol,
+                        signal.signal_type.value,
+                    )
+                    continue
+                if signal.metadata is None:
+                    signal.metadata = {}
+                signal.metadata["decision_bar"] = bar_key
                 order = self.execute_signal(signal)
                 if order:
                     if opens_new:
                         open_count += 1
+                    traded[signal.symbol] = bar_key
                     executed_orders.append(order)
                     self._daily_trades += 1
             

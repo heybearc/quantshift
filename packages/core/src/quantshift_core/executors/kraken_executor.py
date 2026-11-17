@@ -17,6 +17,7 @@ sys.path.insert(0, '/opt/quantshift/packages/core/src')
 from quantshift_core.strategies import BaseStrategy, Signal, SignalType, Account, Position
 from quantshift_core.risk import PositionLimits
 from quantshift_core.executors.kraken_public import kraken_public, kraken_result_value
+from quantshift_core.order_identity import kraken_txid_for_userref, kraken_userref
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,8 @@ class KrakenExecutor:
         risk_config: Optional[Dict[str, Any]] = None,
         use_dynamic_symbols: bool = False,
         symbol_universe_config: Optional[Dict[str, Any]] = None,
-        max_leverage: float = 2.0
+        max_leverage: float = 2.0,
+        bot_name: str = "quantshift-kraken",
     ):
         """
         Initialize Kraken executor.
@@ -60,6 +62,7 @@ class KrakenExecutor:
             max_leverage: Maximum leverage to use (default 2.0x, max 5.0x for margin)
         """
         self.strategy = strategy
+        self.bot_name = bot_name
         self.simulated_capital = simulated_capital
         self.risk_config = risk_config or {}
         self.max_leverage = min(max_leverage, 5.0)  # Cap at 5x for safety
@@ -207,7 +210,36 @@ class KrakenExecutor:
         except Exception as e:
             logger.error(f"Error fetching Kraken positions: {e}", exc_info=True)
             return []
-    
+
+    def _txid_for_userref(self, userref: int) -> Optional[str]:
+        """Return the existing txid, an empty string when none exists, or None when Kraken cannot be read."""
+        for endpoint, bucket in (("OpenOrders", "open"), ("ClosedOrders", "closed")):
+            try:
+                response = self.kraken_client.query_private(endpoint, {"userref": userref})
+            except Exception as exc:
+                logger.error("kraken %s failed for userref %s: %s", endpoint, userref, exc)
+                return None
+            if not isinstance(response, dict) or response.get("error"):
+                logger.error("kraken %s error for userref %s: %s", endpoint, userref, response)
+                return None
+            orders = (response.get("result") or {}).get(bucket) or {}
+            txid = kraken_txid_for_userref(orders, userref)
+            if txid:
+                return txid
+        return ""
+
+    def _add_order(self, order_params: Dict[str, Any], userref: int) -> Dict[str, Any]:
+        """Submit an order once. A repeated userref returns the order Kraken already has."""
+        existing = self._txid_for_userref(userref)
+        if existing is None:
+            return {"error": ["kraken order lookup failed"]}
+        if existing:
+            logger.info("kraken order already submitted userref=%s txid=%s", userref, existing)
+            return {"error": [], "result": {"txid": [existing]}}
+        params = dict(order_params)
+        params["userref"] = str(userref)
+        return self.kraken_client.query_private("AddOrder", params)
+
     def place_stop_order(self, symbol: str, quantity: float, stop_price: float) -> Optional[str]:
         """
         Place a stop-loss order (for trailing stop updates).
@@ -231,8 +263,14 @@ class KrakenExecutor:
                 'price': str(stop_price),
                 'volume': str(abs(quantity))
             }
-            
-            response = self.kraken_client.query_private('AddOrder', order_params)
+            userref = kraken_userref(
+                self.bot_name,
+                symbol,
+                side,
+                "stop",
+                f"{round(float(stop_price), 8)}",
+            )
+            response = self._add_order(order_params, userref)
             
             if response.get('error'):
                 logger.error(f"Kraken stop order error: {response['error']}")
@@ -325,8 +363,15 @@ class KrakenExecutor:
             elif take_profit:
                 order_params['close[ordertype]'] = 'take-profit'
                 order_params['close[price]'] = str(take_profit)
-            
-            response = self.kraken_client.query_private('AddOrder', order_params)
+
+            userref = kraken_userref(
+                self.bot_name,
+                symbol,
+                side,
+                datetime.utcnow().strftime("%Y%m%d"),
+                order_type,
+            )
+            response = self._add_order(order_params, userref)
             
             if response.get('error'):
                 logger.error(f"Kraken margin order error: {response['error']}")
@@ -375,8 +420,14 @@ class KrakenExecutor:
                 'ordertype': 'market',
                 'volume': str(abs(quantity))
             }
-            
-            response = self.kraken_client.query_private('AddOrder', order_params)
+            userref = kraken_userref(
+                self.bot_name,
+                symbol,
+                side,
+                datetime.utcnow().strftime("%Y%m%d"),
+                "close",
+            )
+            response = self._add_order(order_params, userref)
             
             if response.get('error'):
                 logger.error(f"Kraken close position error: {response['error']}")

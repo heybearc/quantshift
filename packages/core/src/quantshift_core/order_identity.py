@@ -30,3 +30,26 @@ def alpaca_client_order_id(bot_name: str, symbol: str, side: str, bar_time: str,
 def coinbase_client_order_id(bot_name: str, symbol: str, side: str, bar_time: str, leg: str) -> str:
     """Coinbase client order id. UUID5, stable for this decision."""
     return str(uuid.uuid5(uuid.NAMESPACE_URL, decision_key(bot_name, symbol, side, bar_time, leg)))
+
+
+def kraken_userref(bot_name: str, symbol: str, side: str, bar_time: str, leg: str) -> int:
+    """Kraken userref. Positive 31-bit int, stable for this decision."""
+    digest = hashlib.sha256(decision_key(bot_name, symbol, side, bar_time, leg).encode()).digest()
+    return (int.from_bytes(digest[:4], "big") & 0x7FFFFFFF) or 1
+
+
+def kraken_txid_for_userref(order_book: dict, userref: int) -> str | None:
+    """Return the txid for this userref. A canceled or expired order does not count."""
+    skipped = {"canceled", "cancelled", "expired"}
+    for txid, order in (order_book or {}).items():
+        if not isinstance(order, dict):
+            continue
+        if str(order.get("status") or "").lower() in skipped:
+            continue
+        try:
+            seen = int(order.get("userref") or 0)
+        except (TypeError, ValueError):
+            continue
+        if seen == int(userref):
+            return str(txid)
+    return None
