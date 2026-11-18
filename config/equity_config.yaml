@@ -30,6 +30,9 @@ strategies:
 
 # Strategy orchestrator configuration
 orchestrator:
+  # Score the seven older strategies beside the two live setups.
+  # A score is real closes in the current regime. The seven are journaled only.
+  use_strategy_contest: true
   capital_allocation:
     TradeConfidentSetup: 0.40
     VolatilityBreakoutSetup: 0.60

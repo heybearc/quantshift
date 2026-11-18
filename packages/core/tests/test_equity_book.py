@@ -63,6 +63,7 @@ def test_equity_config_is_the_two_long_setups():
         assert item["params"]["max_notional"] == 0.05
     allocation = config["orchestrator"]["capital_allocation"]
     assert set(allocation) == {"TradeConfidentSetup", "VolatilityBreakoutSetup"}
+    assert config["orchestrator"]["use_strategy_contest"] is True
     assert "BandSnapSetup" not in kinds
 
 

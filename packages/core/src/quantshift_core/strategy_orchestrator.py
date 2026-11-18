@@ -160,6 +160,10 @@ class StrategyOrchestrator:
         
         self.current_regime = MarketRegime.UNKNOWN
         self.regime_risk_multiplier = 1.0
+        self.contest_strategies = []
+        self.closed_trades = []
+        self.contest_min_closes = 30
+        self.last_contest = None
         
         # Strategy failure tracking
         self.strategy_failures = {strategy.name: 0 for strategy in strategies}
@@ -275,6 +279,26 @@ class StrategyOrchestrator:
             client.setex(f"quiet-hour:{self.bot_name}", 3600, json.dumps(report))
         except Exception as exc:
             self.logger.warning("quiet_hour_publish_failed", error=str(exc))
+
+    def _publish_contest(self, journal: dict) -> None:
+        """Store the latest candidate journal. Does not place an order."""
+        orders = journal.get("orders") or []
+        self.logger.info(
+            "strategy_contest",
+            regime=journal.get("regime"),
+            symbols=journal.get("symbols"),
+            orders=len(orders),
+            shadow_winners=len(journal.get("shadow_winners") or []),
+            stood_down=len(journal.get("stood_down") or []),
+        )
+        client = getattr(self, "redis_client", None)
+        if not client or not getattr(self, "bot_name", None):
+            return
+        try:
+            import json
+            client.setex(f"contest:{self.bot_name}", 3600, json.dumps(journal))
+        except Exception as exc:
+            self.logger.warning("contest_publish_failed", error=str(exc))
 
     def generate_signals(
         self,
@@ -586,6 +610,22 @@ class StrategyOrchestrator:
 
         if quiet_notes:
             self._publish_quiet_hour(quiet_notes)
+
+        if self.contest_strategies:
+            from .strategy_contest import run_contest
+            all_signals, journal = run_contest(
+                live_signals=all_signals,
+                shadows=self.contest_strategies,
+                market_data=market_data,
+                account=account,
+                positions=positions,
+                regime=self.current_regime,
+                closes=self.closed_trades or [],
+                book_names=[strategy.name for strategy in self.strategies],
+                min_closes=self.contest_min_closes,
+            )
+            self.last_contest = journal
+            self._publish_contest(journal)
         
         # Resolve conflicts
         resolved_signals = self._resolve_conflicts(all_signals)

@@ -244,6 +244,16 @@ class QuantShiftUnifiedBot:
         risk_limits = self.config.get("risk_management") or {}
         if self.strategy.risk_manager is not None and risk_limits.get("max_position_correlation") is not None:
             self.strategy.risk_manager.max_position_correlation = float(risk_limits["max_position_correlation"])
+
+        if orchestrator_config.get("use_strategy_contest"):
+            from quantshift_core.strategy_catalog import shadow_strategies
+            long_only = not any(strategy.shorts_enabled() for strategy in self.strategies)
+            self.strategy.contest_strategies = shadow_strategies(long_only=long_only)
+            logger.info(
+                "strategy_contest_enabled",
+                book=[strategy.name for strategy in self.strategies],
+                candidates=[strategy.name for strategy in self.strategy.contest_strategies],
+            )
         
         logger.info(
             "orchestrator_initialized",
@@ -1035,6 +1045,36 @@ class QuantShiftUnifiedBot:
                     pass
                 self.db_conn = None
     
+    def _load_contest_closes(self) -> List[Dict[str, Any]]:
+        """Closed trades the ranker can score. Empty when the table cannot be read."""
+        if not self.db_conn:
+            return []
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute(
+                """
+                SELECT strategy, pnl, entry_reason
+                FROM trades
+                WHERE bot_name = %s AND status = 'CLOSED' AND pnl IS NOT NULL
+                ORDER BY exited_at DESC
+                LIMIT 200
+                """,
+                (self.bot_name,),
+            )
+            rows = cursor.fetchall()
+            return [
+                {"strategy": row[0], "pnl": float(row[1]), "entry_reason": row[2]}
+                for row in rows
+                if row[1] is not None
+            ]
+        except Exception as exc:
+            logger.warning("contest_closes_unavailable", error=str(exc))
+            try:
+                self.db_conn.rollback()
+            except Exception:
+                pass
+            return []
+
     def _record_realized_closes(self, orders: List[Any]) -> None:
         """Count a close from its fill for every book. A flat blink is not a loss."""
         if not orders or not self.performance_tracker:
@@ -1715,6 +1755,8 @@ class QuantShiftUnifiedBot:
                         cycle_start = time.time()
                         
                         try:
+                            if getattr(self.strategy, "contest_strategies", None):
+                                self.strategy.closed_trades = self._load_contest_closes()
                             # Run strategy cycle via executor
                             cycle_result = self.executor.run_strategy_cycle()
                             executed_orders = (
