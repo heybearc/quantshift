@@ -171,9 +171,6 @@ class SymbolUniverse:
         3. Return top N by volume
         """
         try:
-            from alpaca.trading.requests import GetAssetsRequest
-            from alpaca.trading.enums import AssetClass, AssetStatus
-            
             # Use passed client if available, otherwise create new one
             if self.api_client:
                 client = self.api_client
@@ -188,53 +185,67 @@ class SymbolUniverse:
                 
                 client = TradingClient(api_key, api_secret, paper=True)
             
-            # Get all US equity assets
-            search_params = GetAssetsRequest(
-                status=AssetStatus.ACTIVE,
-                asset_class=AssetClass.US_EQUITY
-            )
-            
-            assets = client.get_all_assets(search_params)
-            
-            # Filter and rank by tradability
-            tradable_symbols = []
-            
-            for asset in assets:
-                # Must be tradable and not in exclude list
-                if (asset.tradable and 
-                    asset.fractionable and 
-                    asset.shortable and
-                    asset.symbol not in self.exclude_symbols):
-                    tradable_symbols.append(asset.symbol)
-            
-            # For now, use predefined list of top 100 by market cap
-            # In Phase 2, we'll add real-time volume/market cap ranking
+            rows = self._alpaca_asset_rows(client)
+            tradable_symbols = self._tradable_equity_symbols(rows)
+
+            # The scan list is the large-cap names Alpaca currently allows.
+            # A new exchange code must not reject the rest of the list.
             top_symbols = self._get_sp100_symbols()
-            
-            # Filter to only include tradable symbols
-            result = [s for s in top_symbols if s in tradable_symbols][:self.max_symbols]
-            
+            result = [symbol for symbol in top_symbols if symbol in tradable_symbols][: self.max_symbols]
+
             self.logger.info(
                 "alpaca_symbols_fetched",
-                total_assets=len(assets),
+                total_assets=len(rows),
                 tradable=len(tradable_symbols),
                 selected=len(result)
             )
-            
+
             return result
-            
+
         except Exception as e:
             self.logger.error(
                 "alpaca_fetch_failed",
                 error=str(e)
             )
-            # A new exchange code can fail the whole asset parse. The curated
-            # large-cap list is the book the equity bot is supposed to scan.
-            if "validation error" in str(e).lower():
-                symbols = self._get_sp100_symbols()[: self.max_symbols]
-                self.logger.warning("alpaca_asset_schema_rejected", count=len(symbols))
-                return symbols
             return self._get_fallback_equity_symbols()
+
+    def _alpaca_asset_rows(self, client) -> List[dict]:
+        """Active US equities as returned by Alpaca, without the exchange enum.
+
+        ``get_all_assets`` rejects the whole list when one row uses an exchange
+        the installed client does not know, such as TXSE. The raw payload still
+        has the symbol and the tradable flags.
+        """
+        from alpaca.trading.enums import AssetClass, AssetStatus
+        from alpaca.trading.requests import GetAssetsRequest
+
+        fields = GetAssetsRequest(
+            status=AssetStatus.ACTIVE,
+            asset_class=AssetClass.US_EQUITY,
+        ).to_request_fields()
+        params = {key: getattr(value, "value", value) for key, value in fields.items()}
+        rows = client.get("/assets", params)
+        if not isinstance(rows, list):
+            raise TypeError("Alpaca asset list was not a list")
+        return rows
+
+    def _tradable_equity_symbols(self, rows: List) -> Set[str]:
+        """Symbols that can be bought, sold in fractions, and sold short."""
+        symbols: Set[str] = set()
+        for row in rows:
+            if isinstance(row, dict):
+                symbol = row.get("symbol")
+                tradable = row.get("tradable")
+                fractionable = row.get("fractionable")
+                shortable = row.get("shortable")
+            else:
+                symbol = getattr(row, "symbol", None)
+                tradable = getattr(row, "tradable", False)
+                fractionable = getattr(row, "fractionable", False)
+                shortable = getattr(row, "shortable", False)
+            if tradable and fractionable and shortable and symbol not in self.exclude_symbols:
+                symbols.add(symbol)
+        return symbols
     
     def _fetch_coinbase_symbols(self) -> List[str]:
         """
