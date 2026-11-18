@@ -34,6 +34,9 @@ export function Navigation() {
 
   const platformNav = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "My Book", href: "/my-book", icon: Users },
+    { name: "Symbols", href: "/symbols", icon: TrendingUp },
+    { name: "Strategy Notes", href: "/strategies", icon: BookOpen },
     { name: "Monitoring", href: "/monitoring", icon: Activity },
     { name: "Trades", href: "/trades", icon: TrendingUp },
     { name: "Positions", href: "/positions", icon: Activity },

@@ -138,6 +138,10 @@ model User {
   auditLogs               AuditLog[]
   loginHistory            LoginHistory[]
   apiKeys                 ApiKey[]
+  desk                    UserDesk?
+  symbolPreferences       SymbolPreference[]
+  strategyIdeas           StrategyIdea[]
+  strategyComments        StrategyComment[]
   
   @@map("users")
   @@index([email])
@@ -502,4 +506,73 @@ enum EmailStatus {
   SENT
   FAILED
   CANCELLED
+}
+
+model UserDesk {
+  userId    String   @id @map("user_id")
+  mode      String   @default("house")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bots      PersonalBot[]
+
+  @@map("user_desks")
+}
+
+model PersonalBot {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  venue       String
+  status      String   @default("stopped")
+  tradingMode String   @default("paper") @map("trading_mode")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  desk        UserDesk @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, venue])
+  @@index([userId])
+  @@map("personal_bots")
+}
+
+model SymbolPreference {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  symbol    String
+  intent    String   @default("research")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@map("symbol_preferences")
+}
+
+model StrategyIdea {
+  id        String   @id @default(uuid())
+  authorId  String   @map("author_id")
+  title     String
+  body      String
+  source    String   @default("human")
+  status    String   @default("suggestion")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  StrategyComment[]
+
+  @@index([createdAt])
+  @@map("strategy_ideas")
+}
+
+model StrategyComment {
+  id        String   @id @default(uuid())
+  ideaId    String   @map("idea_id")
+  authorId  String   @map("author_id")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  idea      StrategyIdea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@map("strategy_comments")
 }
