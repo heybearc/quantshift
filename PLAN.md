@@ -1,7 +1,7 @@
 # QuantShift Production Roadmap
 
-**Last Updated:** 2026-11-11
-**Current Status:** Phase 1.5.9 paper validation. Clock restarted 2026-11-06 and runs through about 2026-12-04. Live is v1.19.1 on blue. Green standby is synced. No live money.
+**Last Updated:** 2026-11-18
+**Current Status:** Phase 1.5.9 paper validation. Clock runs 2026-11-06 through about 2026-12-04. Dashboard LIVE is v1.19.2 on green. Bot hosts are on `ab7c61e`: one process per book, no Redis promotion. No live money. Kraken stays in simulation.
 
 ---
 

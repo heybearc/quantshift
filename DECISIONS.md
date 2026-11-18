@@ -349,3 +349,9 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** Friday's latch still blocked Monday while both books were green. A restart had refilled cash from the $5,000 start.
 - **When:** 2026-11-09. Shipped in v1.19.1 (`473d88b`).
 - **Do not:** Loosen the 5% daily-loss limit or the quiet-hour gates.
+
+## D-QS-026: One process per book, no Redis promotion
+- **Decision:** Supersedes the promotion half of D-QS-022. CT100 runs one process per book. CT101 stays stopped. The spare monitor only logs stale heartbeats. It does not promote Redis or start bots. A repeated decision reuses a stable order id. Kraken stays in simulation.
+- **Why:** Promoting Redis while CT100 was still trading could make both hosts masters of the same books. A restart must not send a second order for the same bar.
+- **When:** 2026-11-17. On main at `ab7c61e`. Dashboard standby is green. Equity and Coinbase were restarted onto that commit. Both Kraken books were already on it.
+- **Do not:** Turn Kraken `simulation_mode` off. The live Kraken class has no strategy cycle. Do not start the CT101 bots.

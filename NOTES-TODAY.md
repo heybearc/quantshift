@@ -1,7 +1,23 @@
 ---
-date: 2026-11-17
+date: 2026-11-18
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
+
+## 2026-11-18
+
+### Discoveries / Notes
+- D-QS-026. One process per book on CT100. CT101 bots stay stopped. The spare monitor logs stale heartbeats and does not promote Redis.
+- `e675a1e` and `ab7c61e` are on main. Dashboard STANDBY is green `10.92.3.30`. LIVE stays green on v1.19.2 (`09e0992`).
+- Equity and Coinbase were restarted onto `ab7c61e`. First start hit the 90-second watchdog; systemd restarted them. Equity is primary with 5 Alpaca paper positions. Coinbase paper completed a cycle with 0 orders.
+- Kraken and Kraken Sprint stayed active from 22:53 UTC on `ab7c61e`. Both remain simulation. Do not flip `simulation_mode`.
+- Urgent feedback: 0.
+
+### Decisions to Promote
+- D-QS-026 is in DECISIONS.md. It supersedes the promotion half of D-QS-022.
+
+### Blockers / Risks
+- Equity is still the older seven strategies. That is the next product change, inside the paper window.
+- A slow bot start can be killed at 90 seconds before the process notifies systemd.
 
 ## 2026-11-17
 
