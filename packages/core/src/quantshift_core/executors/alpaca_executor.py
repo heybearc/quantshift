@@ -399,6 +399,14 @@ class AlpacaExecutor:
             logger.error(f"Error fetching market data for {symbol}: {e}", exc_info=True)
             raise
 
+    def _pet_watchdog(self) -> None:
+        """The first cycle can outlast the 90-second start limit while bars load."""
+        try:
+            import systemd.daemon as daemon
+            daemon.notify("WATCHDOG=1")
+        except Exception:
+            return
+
     def _entry_cache_map(self) -> Dict[str, Any]:
         cache = getattr(self, "_entry_cache", None)
         if cache is None:
@@ -421,6 +429,7 @@ class AlpacaExecutor:
         stamped = time.time()
         cache = self._entry_cache_map()
         for start in range(0, len(stale), 25):
+            self._pet_watchdog()
             chunk = stale[start:start + 25]
             try:
                 frames = self._fetch_bars(chunk, TimeFrame.Hour, days=21)
@@ -973,6 +982,7 @@ class AlpacaExecutor:
             self.prefetch_entry_bars(list(self.symbols))
             market_data_dict = {}
             for symbol in self.symbols:
+                self._pet_watchdog()
                 try:
                     results['symbols_checked'].append(symbol)
                     market_data_dict[symbol] = self.get_market_data(symbol, days=450)

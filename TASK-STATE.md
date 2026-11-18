@@ -34,7 +34,7 @@ Equity now uses the same washout and volatility break as Coinbase, long only. Op
 
 ## Known Issues
 - A quiet hour still produces no order until the hour is finished, the bar is in a squeeze, and price breaks a pivot. That gate was left as it is.
-- Equity and Coinbase startup can exceed the 90-second watchdog. The 2026-11-17 restart was killed once and systemd brought both back. They then stayed primary.
+- Equity pets the watchdog while it loads bars. A start that never reaches that loop can still be killed at 90 seconds. Coinbase startup can still exceed the watchdog.
 - Live Kraken has order identity and no strategy cycle. Both Kraken books stay `simulation_mode: true`.
 
 ## Exact Next Command
