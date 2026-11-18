@@ -1095,6 +1095,7 @@ Only items that are still open. Completed phases above stay as history. Duplicat
 
 ### Open now — paper window
 - [ ] Finish Phase 1.5.9: 4 clean weeks from 2026-11-06 (about 2026-12-04). The 2026-10-19 window was discarded. Closes now land on the trade row for equity, Coinbase, and Kraken.
+- [ ] Learning loop: equity candidates are the seven older strategies plus the washout and the volatility break. Journal every candidate, including skips, and score them in the current regime. Risk caps stay. Do not restart the paper clock.
 - [ ] Watch whether Coinbase opens a washout or a volatility-break trade. The missing hourly or daily frame was fixed in v1.18.6. None has filled since. Score Kraken's band snap on its own.
 - [x] Standby can start Kraken. Failover runs only when equity, Coinbase, and Kraken are all quiet (v1.18.7).
 - [ ] Leave the Kraken paper book alone. Equity is below the $5,000 start and the gap was not diagnosed

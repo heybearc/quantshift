@@ -3,6 +3,22 @@ date: 2026-11-18
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
 
+## 2026-11-18 mid-day
+
+### Discoveries / Notes
+- Equity on CT100 is `57b3635`, primary, 5 open paper positions. STANDBY is green `10.92.3.30`. LIVE stays blue on v1.19.2 (`09e0992`).
+- Asset list is live again: 14,429 assets, 4,980 tradable, 100 large-cap names. TXSE no longer rejects the list.
+- Washout plus volatility break will trade rarely. Coinbase and Kraken still have no fill on those setups since v1.18.6.
+- Next product work is a candidate journal and regime scoring across the owned strategies. The regime model still names the old seven and does not pick a winner.
+- Urgent feedback: 0.
+
+### Decisions to Promote
+- None recorded. Direction is the journal and the contest. Paper clock stays 2026-11-06. Live capital stays off.
+
+### Blockers / Risks
+- The two equity setups can stay flat for days. That is the gate, not a dead process.
+- A start that never reaches the bar loop can still die at 90 seconds.
+
 ## 2026-11-18
 
 ### Discoveries / Notes
