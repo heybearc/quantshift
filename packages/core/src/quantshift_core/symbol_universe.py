@@ -228,6 +228,12 @@ class SymbolUniverse:
                 "alpaca_fetch_failed",
                 error=str(e)
             )
+            # A new exchange code can fail the whole asset parse. The curated
+            # large-cap list is the book the equity bot is supposed to scan.
+            if "validation error" in str(e).lower():
+                symbols = self._get_sp100_symbols()[: self.max_symbols]
+                self.logger.warning("alpaca_asset_schema_rejected", count=len(symbols))
+                return symbols
             return self._get_fallback_equity_symbols()
     
     def _fetch_coinbase_symbols(self) -> List[str]:
