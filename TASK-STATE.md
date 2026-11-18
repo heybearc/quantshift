@@ -9,10 +9,10 @@
 ## Current Task
 **Phase 1.5.9 paper validation** — clock restarted 2026-11-06. The 2026-10-19 window was discarded because the trade table never stored a close. Do not start live capital. Window runs through about 2026-12-04.
 
-Public https://quantshift.io is green LIVE on v1.19.2 (`09e0992`). Blue is STANDBY and is synced to that release. Bot code on CT100 is `ab7c61e`, ahead of the dashboard release: one process per book, no Redis promotion, stable order ids. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity still runs its seven strategies. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
+Public https://quantshift.io is green LIVE on v1.19.2 (`09e0992`). Blue is STANDBY and is synced to that release. Bot code on CT100 is `ab7c61e`, ahead of the dashboard release: one process per book, no Redis promotion, stable order ids. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
 
 ### What I'm doing right now
-Coinbase trades the washout and the volatility break, long only. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
+Equity now uses the same washout and volatility break as Coinbase, long only. Open equity positions stay open. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
 
 ### Recent completions
 - ✅ Shipped v1.19.2 (`09e0992`) to green LIVE and synced blue. Equity uses the last closed daily bar. Drawdown is account equity. A flat Kraken book stays valid. Trading gate passed 48 tests plus the closed-bar spec.
@@ -27,11 +27,10 @@ Coinbase trades the washout and the volatility break, long only. Kraken keeps th
 - ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
 
 ### Next steps
-1. Move the equity paper book off the older seven strategies. Crypto and Kraken already use the newer setups. Equity is the only book sending broker orders.
-2. Watch the paper books through the window that ends about 2026-12-04. Score closed trades on equity, Coinbase, and Kraken.
-3. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
-4. Do not start Phase 1.5.10 live capital until four clean weeks pass.
-5. Leave the estimated cost beside the result. Putting that cost inside the fill waits until this window ends.
+1. Watch the paper books through the window that ends about 2026-12-04. Score closed trades on equity, Coinbase, and Kraken. The equity book now opens only washout and volatility-break trades.
+2. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
+3. Do not start Phase 1.5.10 live capital until four clean weeks pass.
+4. Leave the estimated cost beside the result. Putting that cost inside the fill waits until this window ends.
 
 ## Known Issues
 - A quiet hour still produces no order until the hour is finished, the bar is in a squeeze, and price breaks a pivot. That gate was left as it is.

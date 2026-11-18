@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import { login } from './test-helpers';
 
 /**
- * Generated for the crypto and Kraken zone setup.
- * Those books may name TradeConfidentSetup. Equity stays on its own strategies.
+ * Generated for the zone setup.
+ * Equity, Coinbase, and Kraken may name the washout. Equity stays long only.
  */
 
 const EARLIER = [
@@ -26,7 +26,7 @@ test.describe('Crypto and Kraken zone setup', () => {
     await login(page);
   });
 
-  test('equity keeps its strategies while crypto and Kraken may use the zone setup', async ({ page }) => {
+  test('equity may use the washout and the volatility break', async ({ page }) => {
     const response = await page.request.get('/api/bot/strategy-performance');
     expect(response.status()).toBe(200);
     const rows = (await response.json()).strategies as Array<{ botName: string; strategyName: string }>;
@@ -36,9 +36,9 @@ test.describe('Crypto and Kraken zone setup', () => {
     const kraken = rows.filter((row) => row.botName.toLowerCase().includes('kraken'));
 
     for (const row of equity) {
-      expect(row.strategyName).not.toBe(ZONE);
-      expect(row.strategyName).not.toBe(BREAKOUT);
-      expect(EARLIER).toContain(row.strategyName);
+      expect([...EARLIER, ZONE, BREAKOUT]).toContain(row.strategyName);
+      expect(row.strategyName).not.toBe('BandSnapSetup');
+      expect(row.strategyName).not.toBe('SprintBreakSetup');
     }
     for (const row of [...crypto, ...kraken]) {
       expect([...EARLIER, ZONE, BREAKOUT, 'BandSnapSetup', 'SprintBreakSetup']).toContain(row.strategyName);

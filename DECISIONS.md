@@ -283,6 +283,7 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Do not:** Flatten books, reset the Kraken paper gap, start live capital, or move the 2026-10-13 clock. Score the band snap on its own.
 
 ## D-QS-017: Crypto and Kraken use two setups, equity keeps seven
+- **Status:** Superseded for the equity book by D-QS-027. Coinbase and Kraken are unchanged.
 - **Decision:** Coinbase and Kraken paper trading use the daily washout setup and a volatility-break setup. Equity stays on its seven strategies. Coinbase is long only. Kraken may short. Leverage stays at 1. Coinbase may hold 12 names and Kraken 8, and the cash limits still bind first. The licensed chart source stays out of the repo.
 - **Why:** The same seven equity strategies were the wrong game for those books, and the washout alone is too quiet for a market that moves all day.
 - **When:** 2026-10-16
@@ -349,6 +350,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **Why:** Friday's latch still blocked Monday while both books were green. A restart had refilled cash from the $5,000 start.
 - **When:** 2026-11-09. Shipped in v1.19.1 (`473d88b`).
 - **Do not:** Loosen the 5% daily-loss limit or the quiet-hour gates.
+
+## D-QS-027: Equity paper uses the washout and the volatility break
+- **Decision:** The equity paper book leaves the seven older strategies. It runs the washout and the volatility break, long only, with no leverage. A name is sized in whole shares, at most 5% of equity. One decision per finished daily bar. The hourly bar used for the setup is the last finished hour. Open positions stay open. The band snap and the sprint stay off this book. The paper clock stays on 2026-11-06.
+- **Why:** Coinbase and Kraken already use these setups. Equity was the only book still sending broker orders from the older seven.
+- **When:** 2026-11-18
+- **Do not:** Flatten the open equity book, restart the paper clock, put the band snap on equity, or turn Kraken simulation off.
 
 ## D-QS-026: One process per book, no Redis promotion
 - **Decision:** Supersedes the promotion half of D-QS-022. CT100 runs one process per book. CT101 stays stopped. The spare monitor only logs stale heartbeats. It does not promote Redis or start bots. A repeated decision reuses a stable order id. Kraken stays in simulation.

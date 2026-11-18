@@ -179,7 +179,7 @@ export default function DashboardPage() {
     if (!bot) return <div className="text-center text-slate-500 py-16">No data available yet — bot may not have heartbeated.</div>;
     
     const botConfig = {
-      equity: { name: 'Equity Bot', desc: 'Alpaca Paper Trading · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 10 },
+      equity: { name: 'Equity Bot', desc: 'Alpaca Paper · Washout + volatility break · Long only · One decision per finished day', maxPos: 10 },
       crypto: { name: 'Crypto Bot', desc: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', maxPos: 8 },
       kraken: { name: 'Kraken Bot', desc: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x Leverage)', maxPos: 6 },
       sprint: { name: 'Kraken Sprint', desc: 'Separate $5,000 paper book · 15-minute break · 1% minimum target · No leverage', maxPos: 6 }
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                   {activeTab === 'all' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
-                        { bot: equityBot, botType: 'equity' as const, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
+                        { bot: equityBot, botType: 'equity' as const, tab: 'quantshift-equity' as BotTab, label: 'Equity Bot', sub: 'Alpaca Paper · Washout + volatility break · Long only', iconBg: 'bg-blue-900/50 border-blue-700/50', icon: <BarChart2 className="h-5 w-5 text-blue-400" /> },
                         { bot: cryptoBot, botType: 'crypto' as const, tab: 'quantshift-crypto' as BotTab, label: 'Crypto Bot', sub: 'Coinbase Dry-Run · BollingerBounce + RSIMeanReversion · Multi-Strategy', iconBg: 'bg-orange-900/50 border-orange-700/50', icon: <Bitcoin className="h-5 w-5 text-orange-400" /> },
                         { bot: krakenBot, botType: 'kraken' as const, tab: 'quantshift-kraken' as BotTab, label: 'Kraken Bot', sub: 'Kraken Simulation · RSI + Bollinger · Margin Trading (2x)', iconBg: 'bg-purple-900/50 border-purple-700/50', icon: <Zap className="h-5 w-5 text-purple-400" /> },
                         { bot: sprintBot, botType: 'sprint' as const, tab: 'quantshift-kraken-sprint' as BotTab, label: 'Kraken Sprint', sub: 'Separate $5,000 paper · 15-minute break · 1% minimum target', iconBg: 'bg-cyan-900/50 border-cyan-700/50', icon: <Activity className="h-5 w-5 text-cyan-400" /> },

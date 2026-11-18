@@ -16,7 +16,7 @@ purpose: Scratchpad for today's discoveries (promote on /end-day)
 - D-QS-026 is in DECISIONS.md. It supersedes the promotion half of D-QS-022.
 
 ### Blockers / Risks
-- Equity is still the older seven strategies. That is the next product change, inside the paper window.
+- Equity paper now runs the washout and the volatility break, long only. Open positions stay open. The paper clock stays on 2026-11-06. D-QS-027.
 - A slow bot start can be killed at 90 seconds before the process notifies systemd.
 
 ## 2026-11-17

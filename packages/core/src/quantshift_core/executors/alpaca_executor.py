@@ -29,6 +29,7 @@ from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
+from quantshift_core.candles import AttachedFrame, drop_forming_candle
 from quantshift_core.closed_bar import (
     as_utc,
     closed_bar_already_traded,
@@ -373,13 +374,23 @@ class AlpacaExecutor:
             # Sort by date
             df = df.sort_index()
             
+            # Alpaca's TimeFrame equality is not reliable across client versions.
+            # Compare the label ("1Day", "1Hour") instead.
+            bar_kind = str(getattr(timeframe, "value", timeframe))
             # The last daily row is still printing during the session. Strategies
             # read that row, so drop it and leave the last finished session.
-            if timeframe == TimeFrame.Day:
+            # An hourly bar that is still printing is dropped the same way.
+            if bar_kind == "1Day":
                 df = without_forming_daily_bar(df, datetime.now(timezone.utc))
+            elif bar_kind == "1Hour":
+                df = drop_forming_candle(df, 3600, datetime.utcnow())
 
             # Add symbol as attribute for strategy to access
             df.symbol = symbol
+
+            # Washout and volatility break read a finished hour beside the daily bars.
+            if bar_kind == "1Day":
+                df = self._attach_hourly(df, symbol)
             
             logger.debug(f"Fetched {len(df)} bars for {symbol}")
             return df
@@ -387,6 +398,99 @@ class AlpacaExecutor:
         except Exception as e:
             logger.error(f"Error fetching market data for {symbol}: {e}", exc_info=True)
             raise
+
+    def _entry_cache_map(self) -> Dict[str, Any]:
+        cache = getattr(self, "_entry_cache", None)
+        if cache is None:
+            self._entry_cache = {}
+            cache = self._entry_cache
+        return cache
+
+    def _hourly_fresh(self, symbol: str) -> bool:
+        cached = self._entry_cache_map().get(symbol)
+        return bool(cached and time.time() - cached[0] < 600 and cached[1] is not None)
+
+    def prefetch_entry_bars(self, symbols: List[str]) -> None:
+        """Load finished hourly bars for the cycle. A miss falls back per symbol."""
+        stale = [symbol for symbol in symbols or [] if not self._hourly_fresh(symbol)]
+        if not stale:
+            return
+        self._ensure_data_client()
+        if self.data_client is None:
+            return
+        stamped = time.time()
+        cache = self._entry_cache_map()
+        for start in range(0, len(stale), 25):
+            chunk = stale[start:start + 25]
+            try:
+                frames = self._fetch_bars(chunk, TimeFrame.Hour, days=21)
+            except Exception as exc:
+                logger.warning("hourly prefetch failed: %s", exc)
+                continue
+            for symbol in chunk:
+                frame = frames.get(symbol)
+                if frame is None or len(frame) == 0:
+                    continue
+                frame = drop_forming_candle(frame, 3600, datetime.utcnow())
+                frame.symbol = symbol
+                cache[symbol] = (stamped, frame)
+
+    def _ensure_data_client(self) -> None:
+        if self.data_client:
+            return
+        import os
+        api_key = os.getenv("APCA_API_KEY_ID")
+        secret_key = os.getenv("APCA_API_SECRET_KEY")
+        if not api_key or not secret_key:
+            return
+        self.data_client = StockHistoricalDataClient(api_key, secret_key)
+
+    def _fetch_bars(self, symbols: List[str], timeframe: TimeFrame, days: int) -> Dict[str, pd.DataFrame]:
+        from alpaca.data.enums import DataFeed
+
+        request = StockBarsRequest(
+            symbol_or_symbols=symbols if len(symbols) > 1 else symbols[0],
+            timeframe=timeframe,
+            start=datetime.utcnow() - timedelta(days=days),
+            end=datetime.utcnow(),
+            feed=DataFeed.IEX,
+        )
+        bars = self.data_client.get_stock_bars(request)
+        raw = bars.df
+        frames: Dict[str, pd.DataFrame] = {}
+        if raw is None or len(raw) == 0:
+            return frames
+        if hasattr(raw.index, "names") and raw.index.names and "symbol" in raw.index.names:
+            for symbol in symbols:
+                try:
+                    frames[symbol] = raw.xs(symbol, level="symbol").sort_index()
+                except KeyError:
+                    continue
+            return frames
+        if len(symbols) == 1:
+            frames[symbols[0]] = raw.sort_index()
+        return frames
+
+    def _attach_hourly(self, frame: pd.DataFrame, symbol: str) -> pd.DataFrame:
+        if frame is None or len(frame) == 0:
+            return frame
+        entry = self._hourly_frame(symbol)
+        if entry is not None and len(entry):
+            frame.attrs["entry"] = AttachedFrame(entry)
+        return frame
+
+    def _hourly_frame(self, symbol: str) -> Optional[pd.DataFrame]:
+        if self._hourly_fresh(symbol):
+            return self._entry_cache_map()[symbol][1]
+        try:
+            frame = self.get_market_data(symbol, days=21, timeframe=TimeFrame.Hour)
+        except Exception as exc:
+            logger.warning("hourly bars unavailable for %s: %s", symbol, exc)
+            return None
+        if not isinstance(frame, pd.DataFrame) or len(frame) == 0:
+            return None
+        self._entry_cache_map()[symbol] = (time.time(), frame)
+        return frame
     
     def _wait_for_fill(self, order_id: str, timeout: int = 10) -> Optional[Any]:
         """
@@ -417,6 +521,13 @@ class AlpacaExecutor:
         try:
             if signal.signal_type == SignalType.HOLD:
                 return None
+
+            if signal.signal_type == SignalType.BUY:
+                shares = int(float(signal.position_size or 0))
+                if shares < 1:
+                    logger.info("skipping %s: order is below one share", signal.symbol)
+                    return None
+                signal.position_size = shares
 
             if signal.signal_type == SignalType.SELL:
                 return self._execute_exit(signal)
@@ -857,14 +968,14 @@ class AlpacaExecutor:
                 f"Positions: {len(positions)}, Symbols: {len(self.symbols)}"
             )
             
-            # Fetch market data for all symbols. Regime detection needs 200 daily bars,
-            # so SPY is loaded with a longer history than the trading symbols.
+            # The washout needs 200 finished daily sessions, plus a finished hour.
+            # Hourly bars are fetched once per cycle and reused for ten minutes.
+            self.prefetch_entry_bars(list(self.symbols))
             market_data_dict = {}
             for symbol in self.symbols:
                 try:
                     results['symbols_checked'].append(symbol)
-                    history_days = 450 if symbol == 'SPY' else 90
-                    market_data_dict[symbol] = self.get_market_data(symbol, days=history_days)
+                    market_data_dict[symbol] = self.get_market_data(symbol, days=450)
                 except Exception as e:
                     error_msg = f"Error fetching data for {symbol}: {str(e)}"
                     logger.error(error_msg, exc_info=True)

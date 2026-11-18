@@ -2,8 +2,9 @@ import { test, expect } from '@playwright/test';
 import { login } from './test-helpers';
 
 /**
- * Generated for the volatility break on crypto and Kraken.
- * Those books may name VolatilityBreakoutSetup. Equity does not.
+ * Generated for the volatility break.
+ * Equity, Coinbase, and Kraken may name VolatilityBreakoutSetup.
+ * Equity does not run the band snap.
  */
 
 const CRYPTO_STRATEGIES = [
@@ -26,7 +27,7 @@ test.describe('Volatility break on crypto and Kraken', () => {
     await login(page);
   });
 
-  test('equity does not use the volatility break', async ({ page }) => {
+  test('equity may use the volatility break and does not use the band snap', async ({ page }) => {
     const response = await page.request.get('/api/bot/strategy-performance');
     expect(response.status()).toBe(200);
     const rows = (await response.json()).strategies as Array<{ botName: string; strategyName: string }>;
@@ -36,7 +37,9 @@ test.describe('Volatility break on crypto and Kraken', () => {
     const kraken = rows.filter((row) => row.botName.toLowerCase().includes('kraken'));
 
     for (const row of equity) {
-      expect(row.strategyName).not.toBe('VolatilityBreakoutSetup');
+      expect(CRYPTO_STRATEGIES.filter((name) => name !== 'BandSnapSetup' && name !== 'SprintBreakSetup')).toContain(
+        row.strategyName,
+      );
       expect(row.strategyName).not.toBe('BandSnapSetup');
     }
     for (const row of [...crypto, ...kraken]) {
