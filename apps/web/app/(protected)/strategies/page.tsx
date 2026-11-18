@@ -16,6 +16,8 @@ interface Idea {
   title: string;
   body: string;
   source: string;
+  status: string;
+  authorId: string;
   author: string;
   comments: Comment[];
 }
@@ -57,6 +59,28 @@ export default function StrategiesPage() {
     load();
   };
 
+  const publish = async (id: string) => {
+    setMessage("");
+    const response = await fetch(`/api/strategies/${id}/publish`, { method: "POST" });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error || "The note was not published.");
+      return;
+    }
+    load();
+  };
+
+  const tryIdea = async (id: string) => {
+    setMessage("");
+    const response = await fetch("/api/me/trials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ideaId: id, acceptRisk: true }),
+    });
+    const data = await response.json();
+    setMessage(response.ok ? "Marked on your paper book. It will not send an order until that broker adapter is running." : (data.error || "The strategy was not added."));
+  };
+
   const comment = async (id: string) => {
     const text = drafts[id] || "";
     const response = await fetch(`/api/strategies/${id}/comments`, {
@@ -81,7 +105,7 @@ export default function StrategiesPage() {
           <div>
             <h1 className="text-3xl font-bold text-white">Strategy notes</h1>
             <p className="text-slate-400 mt-2">
-              Share a pattern you noticed, or record one the ranker has started to score. A note stays a suggestion. It does not join the catalog and it does not place orders.
+              Publish a note to offer it to other people, at their own risk, on their own paper book. Publishing does not send an order and it does not change the house books.
             </p>
           </div>
           <div className="space-y-3 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
@@ -100,13 +124,21 @@ export default function StrategiesPage() {
             <article key={idea.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 space-y-3">
               <div className="flex justify-between gap-4">
                 <h2 className="text-white text-lg">{idea.title}</h2>
-                <span className="text-slate-400 text-sm">{idea.source} · suggestion</span>
+                <span className="text-slate-400 text-sm">{idea.source} · {idea.status === "published" ? "published, use at your own risk" : "draft"}</span>
               </div>
               <p className="text-slate-300 whitespace-pre-wrap">{idea.body}</p>
               <p className="text-slate-500 text-sm">{idea.author}</p>
               {idea.comments.map((note) => (
                 <p key={note.id} className="text-slate-300 text-sm border-t border-slate-700 pt-2">{note.author}: {note.body}</p>
               ))}
+              <div className="flex gap-2">
+                {idea.authorId === user.id && idea.status !== "published" && (
+                  <button onClick={() => publish(idea.id)} className="px-3 py-2 rounded-lg bg-cyan-700 text-white">Publish</button>
+                )}
+                {idea.status === "published" && (
+                  <button onClick={() => tryIdea(idea.id)} className="px-3 py-2 rounded-lg bg-slate-700 text-white">Try on my paper book</button>
+                )}
+              </div>
               <div className="flex gap-2">
                 <input value={drafts[idea.id] || ""} onChange={(event) => setDrafts({ ...drafts, [idea.id]: event.target.value })} placeholder="Add what you see" className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
                 <button onClick={() => comment(idea.id)} className="px-3 py-2 rounded-lg bg-slate-700 text-white">Reply</button>

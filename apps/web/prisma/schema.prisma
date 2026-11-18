@@ -142,6 +142,7 @@ model User {
   symbolPreferences       SymbolPreference[]
   strategyIdeas           StrategyIdea[]
   strategyComments        StrategyComment[]
+  strategyTrials          StrategyTrial[]
   
   @@map("users")
   @@index([email])
@@ -520,18 +521,35 @@ model UserDesk {
 }
 
 model PersonalBot {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  venue       String
-  status      String   @default("stopped")
-  tradingMode String   @default("paper") @map("trading_mode")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  desk        UserDesk @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  venue          String
+  displayName    String   @default("") @map("display_name")
+  status         String   @default("stopped")
+  tradingMode    String   @default("paper") @map("trading_mode")
+  adapter        String   @default("needed")
+  paperAvailable Boolean  @default(true) @map("paper_available")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  desk           UserDesk @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@unique([userId, venue])
   @@index([userId])
   @@map("personal_bots")
+}
+
+model StrategyTrial {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  ideaId       String   @map("idea_id")
+  acceptedRisk Boolean  @default(false) @map("accepted_risk")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea         StrategyIdea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId])
+  @@index([userId])
+  @@map("strategy_trials")
 }
 
 model SymbolPreference {
@@ -559,6 +577,7 @@ model StrategyIdea {
   updatedAt DateTime @updatedAt @map("updated_at")
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments  StrategyComment[]
+  trials    StrategyTrial[]
 
   @@index([createdAt])
   @@map("strategy_ideas")

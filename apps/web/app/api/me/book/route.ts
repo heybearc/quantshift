@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PERSONAL_VENUES } from "@/lib/user-desk";
+import { BROKERS, PERSONAL_VENUES, describeBot } from "@/lib/user-desk";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -11,9 +11,15 @@ export async function GET() {
     where: { userId: user.id },
     include: { bots: { orderBy: { venue: "asc" } } },
   });
+  const trials = await prisma.strategyTrial.findMany({
+    where: { userId: user.id },
+    include: { idea: { select: { title: true, status: true } } },
+  });
   return NextResponse.json({
     mode: desk?.mode || "house",
     bots: desk?.bots || [],
+    brokers: BROKERS,
+    trials: trials.filter((trial) => trial.idea.status === "published"),
   });
 }
 
@@ -40,10 +46,11 @@ export async function PUT(request: NextRequest) {
 
   if (mode === "personal") {
     for (const venue of PERSONAL_VENUES) {
+      const bot = describeBot(venue);
       await prisma.personalBot.upsert({
-        where: { userId_venue: { userId: user.id, venue } },
-        create: { userId: user.id, venue, status: "stopped", tradingMode: "paper" },
-        update: { status: "stopped", tradingMode: "paper" },
+        where: { userId_venue: { userId: user.id, venue: bot.venue } },
+        create: { userId: user.id, ...bot },
+        update: { displayName: bot.displayName, adapter: bot.adapter, tradingMode: "paper", paperAvailable: true },
       });
     }
   }

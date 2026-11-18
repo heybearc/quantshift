@@ -1,6 +1,8 @@
 """A personal desk records bots and symbols without joining the house book."""
 
 from quantshift_core.user_book import (
+    can_try_strategy,
+    describe_bot,
     normalize_symbol,
     ordered_symbols,
     personal_bot_set,
@@ -29,5 +31,19 @@ def test_trade_marks_lead_and_the_house_universe_stays_put():
 
 
 def test_a_suggestion_cannot_trade():
-    assert suggestion_can_trade("suggestion") is False
-    assert suggestion_can_trade("in_catalog") is False
+    assert suggestion_can_trade("published") is False
+    assert can_try_strategy("house", "published", True) is False
+    assert can_try_strategy("personal", "suggestion", True) is False
+    assert can_try_strategy("personal", "published", True) is True
+
+
+def test_an_unknown_broker_gets_a_paper_slot_without_an_adapter():
+    custom = describe_bot("Tastytrade")
+    assert custom["venue"] == "tastytrade"
+    assert custom["trading_mode"] == "paper"
+    assert custom["adapter"] == "needed"
+    assert custom["status"] == "needs_adapter"
+    ready = describe_bot("alpaca")
+    assert ready["adapter"] == "ready"
+    assert ready["trading_mode"] == "paper"
+    assert [bot["venue"] for bot in personal_bot_set()] == ["alpaca", "coinbase", "kraken"]

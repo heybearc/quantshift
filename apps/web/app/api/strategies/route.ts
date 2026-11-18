@@ -23,7 +23,8 @@ export async function GET() {
       title: idea.title,
       body: idea.body,
       source: idea.source,
-      status: "suggestion",
+      status: idea.status === "published" ? "published" : "suggestion",
+      authorId: idea.authorId,
       createdAt: idea.createdAt,
       author: idea.author.fullName || idea.author.email,
       comments: idea.comments.map((comment) => ({
