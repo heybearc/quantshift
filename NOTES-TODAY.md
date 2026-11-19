@@ -3,6 +3,22 @@ date: 2026-11-18
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
 
+## 2026-11-19 mid-day
+
+### Discoveries / Notes
+- Contest (`b327e88`) journals nine equity candidates and scores real closes in the current regime. Under 30 closes the book keeps today's choice. Shadows do not send orders. RL sizer and price-direction stay off.
+- 2026-11-18 session: all four books heartbeating, zero opens and zero closes. Equity unrealized about -$92 on five names.
+- CT100 disk move is a stop of the bot units, `pct move-disk`, then start on CT100. CT101 must stay stopped.
+- Personal desk (`fcdc20c`, `6d9a23a`) is on green STANDBY. House mode or a personal paper set. Published notes can be marked on a personal paper book only. Unknown brokers get a paper slot. No credentials collected. Public site is still blue.
+- Urgent feedback: 0.
+
+### Decisions to Promote
+- D-QS-028. Personal books are paper. Community strategies do not run on the house books.
+
+### Blockers / Risks
+- CT101 cannot take over if CT100 dies until an operator promotes Redis, pulls `57b3635`, and starts the four units.
+- The contest does not run until the equity process on CT100 loads `b327e88`.
+
 ## 2026-11-18 mid-day
 
 ### Discoveries / Notes

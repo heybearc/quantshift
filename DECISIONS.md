@@ -351,6 +351,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **When:** 2026-11-09. Shipped in v1.19.1 (`473d88b`).
 - **Do not:** Loosen the 5% daily-loss limit or the quiet-hour gates.
 
+## D-QS-028: A personal book is paper, and community strategies stay off the house books
+- **Decision:** A user follows the house books or gets a personal paper bot per broker. Paper is always available. Alpaca, Coinbase, and Kraken have paper executors. Any other broker gets a stopped paper slot until an adapter exists. A published strategy note can be marked on that personal paper book only. It does not place an order and it does not change the house books.
+- **Why:** The house paper window has to keep its own strategies. Credentials and balances wait for each adapter.
+- **When:** 2026-11-19. Desk is on green STANDBY at `6d9a23a`. LIVE stays blue.
+- **Do not:** Collect broker keys before the adapter exists. Do not run a community strategy on CT100.
+
 ## D-QS-027: Equity paper uses the washout and the volatility break
 - **Decision:** The equity paper book leaves the seven older strategies. It runs the washout and the volatility break, long only, with no leverage. A name is sized in whole shares, at most 5% of equity. One decision per finished daily bar. The hourly bar used for the setup is the last finished hour. Open positions stay open. The band snap and the sprint stay off this book. The paper clock stays on 2026-11-06.
 - **Why:** Coinbase and Kraken already use these setups. Equity was the only book still sending broker orders from the older seven.
