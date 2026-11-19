@@ -143,6 +143,9 @@ model User {
   strategyIdeas           StrategyIdea[]
   strategyComments        StrategyComment[]
   strategyTrials          StrategyTrial[]
+  brokerConnections       BrokerConnection[]
+  brokerOrders            BrokerOrder[]
+  brokerRequests          BrokerRequest[]
   
   @@map("users")
   @@index([email])
@@ -536,6 +539,65 @@ model PersonalBot {
   @@unique([userId, venue])
   @@index([userId])
   @@map("personal_bots")
+}
+
+model BrokerConnection {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  venue         String
+  environment   String
+  label         String    @default("")
+  status        String    @default("connected")
+  keyHint       String    @default("") @map("key_hint")
+  ciphertext    String
+  lastCheckedAt DateTime? @map("last_checked_at")
+  lastError     String?   @map("last_error")
+  lastSnapshot  Json?     @map("last_snapshot")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders        BrokerOrder[]
+
+  @@unique([userId, venue, environment])
+  @@index([userId])
+  @@map("broker_connections")
+}
+
+model BrokerOrder {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  connectionId  String   @map("connection_id")
+  venue         String
+  environment   String
+  symbol        String
+  side          String
+  quantity      String
+  status        String
+  brokerOrderId String   @default("") @map("broker_order_id")
+  message       String   @default("")
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    BrokerConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([connectionId])
+  @@map("broker_orders")
+}
+
+model BrokerRequest {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  website   String   @default("")
+  docsUrl   String   @default("") @map("docs_url")
+  notes     String   @default("")
+  status    String   @default("submitted")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("broker_requests")
 }
 
 model StrategyTrial {

@@ -1,13 +1,12 @@
+import { BROKER_CATALOG } from "./broker-catalog";
+
 const SYMBOL = /^[A-Z0-9][A-Z0-9.\-]{0,14}$/;
 
-export const BROKERS = [
-  { id: "alpaca", name: "Alpaca", adapter: "ready" },
-  { id: "coinbase", name: "Coinbase", adapter: "ready" },
-  { id: "kraken", name: "Kraken", adapter: "ready" },
-  { id: "schwab", name: "Charles Schwab", adapter: "needed" },
-  { id: "ibkr", name: "Interactive Brokers", adapter: "needed" },
-  { id: "tradier", name: "Tradier", adapter: "needed" },
-] as const;
+export const BROKERS = BROKER_CATALOG.map((broker) => ({
+  id: broker.id,
+  name: broker.name,
+  adapter: broker.adapter,
+}));
 
 export const PERSONAL_VENUES = BROKERS.filter((broker) => broker.adapter === "ready").map((broker) => broker.id);
 

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { describeBot } from "@/lib/user-desk";
+import { catalogBroker } from "@/lib/broker-catalog";
+import { BrokerError } from "@/lib/broker-gateway";
+import { submitBrokerRequest } from "@/lib/broker-store";
+import { describeBot, venueSlug } from "@/lib/user-desk";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -9,11 +12,28 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   if (body.apiKey || body.secret || body.apiSecret || body.password) {
     return NextResponse.json(
-      { error: "Credentials stay off this form. A paper login is added with each broker adapter." },
+      { error: "Store the key on the broker connection. This step only adds a paper slot or a review request." },
       { status: 400 }
     );
   }
-  const bot = describeBot(String(body.name || body.venue || ""));
+  const named = String(body.name || body.venue || "");
+  const known = catalogBroker(named) || catalogBroker(venueSlug(named));
+  if (!known) {
+    try {
+      const submitted = await submitBrokerRequest(user.id, {
+        name: named,
+        website: body.website,
+        docsUrl: body.docsUrl,
+        notes: body.notes || "Submitted from the broker desk.",
+      });
+      return NextResponse.json({ request: submitted, mode: "personal" });
+    } catch (error) {
+      const status = error instanceof BrokerError ? error.status : 400;
+      const message = error instanceof Error ? error.message : "The broker could not be submitted.";
+      return NextResponse.json({ error: message }, { status });
+    }
+  }
+  const bot = describeBot(known.id);
   if (!bot.venue) return NextResponse.json({ error: "Name the broker." }, { status: 400 });
 
   await prisma.userDesk.upsert({
