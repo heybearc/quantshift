@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { ReleaseBanner } from "@/components/release-banner";
 import { useAuth } from "@/lib/auth-context";
@@ -81,6 +81,7 @@ export default function MyBookPage() {
   const [side, setSide] = useState("buy");
   const [confirmLive, setConfirmLive] = useState(false);
   const [message, setMessage] = useState("");
+  const modeTouched = useRef(false);
 
   const loadDesk = async () => {
     const [book, linked, submitted] = await Promise.all([
@@ -88,7 +89,7 @@ export default function MyBookPage() {
       fetch("/api/me/brokers/connections").then((response) => response.json()),
       fetch("/api/me/brokers/requests").then((response) => response.json()),
     ]);
-    setMode(book.mode || "house");
+    if (!modeTouched.current) setMode(book.mode || "house");
     setBots(book.bots || []);
     setCatalog(linked.catalog || book.brokers || []);
     setConnections(linked.connections || []);
@@ -105,6 +106,8 @@ export default function MyBookPage() {
   }, [user]);
 
   const choose = async (next: string) => {
+    modeTouched.current = true;
+    setMode(next);
     setMessage("");
     const response = await fetch("/api/me/book", {
       method: "PUT",
