@@ -3,6 +3,22 @@ date: 2026-11-18
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
 
+## 2026-11-23 mid-day
+
+### Discoveries / Notes
+- v1.20.0 (`c49f8e0`) is LIVE on green `10.92.3.30`. Blue `10.92.3.29` is STANDBY on the same commit.
+- Approved connections are Alpaca (paper or live), Coinbase, and Kraken. Keys are sealed with `BROKER_VAULT_KEY` on both web nodes. The value stays off git.
+- Schwab, IBKR, and Tradier can be requested. Any unlisted broker is a review request and does not store a key.
+- Release gate on green passed 115 tests plus `generated-release-broker-desk.spec.ts`.
+- Paper window is unchanged. Contest code is still not loaded on CT100. Urgent feedback: 0.
+
+### Decisions to Promote
+- D-QS-029. Ready brokers store an encrypted user key. D-QS-028 still keeps community strategies off the house books.
+
+### Blockers / Risks
+- Replacing `BROKER_VAULT_KEY` does not reopen keys already saved.
+- CT100 is still behind the contest commit. Do not start CT101.
+
 ## 2026-11-19 mid-day
 
 ### Discoveries / Notes

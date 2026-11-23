@@ -357,6 +357,12 @@ For shared architectural decisions that apply to all apps, see `.cloudy-work/_cl
 - **When:** 2026-11-19. Desk is on green STANDBY at `6d9a23a`. LIVE stays blue.
 - **Do not:** Collect broker keys before the adapter exists. Do not run a community strategy on CT100.
 
+## D-QS-029: Ready brokers store an encrypted user key
+- **Decision:** Supersedes the credential sentence in D-QS-028. Alpaca (paper or live), Coinbase, and Kraken accept a user key. The key is checked, sealed with `BROKER_VAULT_KEY`, and used for balances and market orders. A live order needs confirmation. Schwab, IBKR, and Tradier stay listed without keys. Any other broker is a review request, not a connection.
+- **Why:** A personal desk that cannot read a balance or send an order does not connect the user to their broker.
+- **When:** 2026-11-19. Shipped in v1.20.0 (`c49f8e0`). LIVE is green. STANDBY is blue. The same vault key is on both nodes.
+- **Do not:** Commit the vault key. Do not store a key for a broker that has no adapter. Do not run a community strategy on CT100.
+
 ## D-QS-027: Equity paper uses the washout and the volatility break
 - **Decision:** The equity paper book leaves the seven older strategies. It runs the washout and the volatility break, long only, with no leverage. A name is sized in whole shares, at most 5% of equity. One decision per finished daily bar. The hourly bar used for the setup is the last finished hour. Open positions stay open. The band snap and the sprint stay off this book. The paper clock stays on 2026-11-06.
 - **Why:** Coinbase and Kraken already use these setups. Equity was the only book still sending broker orders from the older seven.

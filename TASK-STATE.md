@@ -1,6 +1,6 @@
 # QuantShift Task State
 
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-23
 **Current branch:** main
 **Working on:** Phase 1.5.9 paper validation — clock restarted 2026-11-06
 
@@ -9,12 +9,13 @@
 ## Current Task
 **Phase 1.5.9 paper validation** — clock restarted 2026-11-06. The 2026-10-19 window was discarded because the trade table never stored a close. Do not start live capital. Window runs through about 2026-12-04.
 
-LIVE is blue `10.92.3.29` on v1.19.2 (`09e0992`). STANDBY is green `10.92.3.30` on `6d9a23a`. Bot code on CT100 is `57b3635`: one process per book, no Redis promotion, stable order ids. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
+LIVE is green `10.92.3.30` on v1.20.0 (`c49f8e0`). STANDBY is blue `10.92.3.29` on the same commit. `BROKER_VAULT_KEY` is set on both web nodes. Bot code on CT100 is `57b3635`: one process per book, no Redis promotion, stable order ids. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
 
 ### What I'm doing right now
 Equity is primary on the washout and the volatility break, long only, with 5 open positions. 2026-11-18 had no opens or closes. Unrealized equity was about -$92. Next is to load the contest onto CT100 during a planned stop, and to keep the personal desk on paper. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
 
 ### Recent completions
+- ✅ Shipped v1.20.0 (`c49f8e0`) to green LIVE and synced blue. A member can connect Alpaca, Coinbase, or Kraken, read a balance, and send a market order. Unknown brokers are review requests. Full gate passed 115 tests plus the broker-desk spec.
 - ✅ Shipped v1.19.2 (`09e0992`) to green LIVE and synced blue. Equity uses the last closed daily bar. Drawdown is account equity. A flat Kraken book stays valid. Trading gate passed 48 tests plus the closed-bar spec.
 - ✅ Shipped v1.19.1 (`473d88b`) to blue LIVE and synced green. Login returns a bearer token. The daily-loss latch clears when the book is back inside the limit. A Kraken restart keeps closed-trade cash.
 - ✅ Shipped v1.19.0 (`8ff3e86`) to green LIVE and synced blue. Kraken Sprint is its own paper book.
