@@ -1,6 +1,6 @@
 # QuantShift Task State
 
-**Last updated:** 2026-11-23
+**Last updated:** 2026-11-24
 **Current branch:** main
 **Working on:** Phase 1.5.9 paper validation — clock restarted 2026-11-06
 
@@ -9,12 +9,13 @@
 ## Current Task
 **Phase 1.5.9 paper validation** — clock restarted 2026-11-06. The 2026-10-19 window was discarded because the trade table never stored a close. Do not start live capital. Window runs through about 2026-12-04.
 
-LIVE is green `10.92.3.30` on v1.20.0 (`c49f8e0`). STANDBY is blue `10.92.3.29` on the same commit. `BROKER_VAULT_KEY` is set on both web nodes. Bot code on CT100 is `57b3635`: one process per book, no Redis promotion, stable order ids. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
+LIVE is green `10.92.3.30` on v1.20.0 (`c49f8e0`). STANDBY is blue `10.92.3.29` on the same commit. `BROKER_VAULT_KEY` is set on both web nodes. Bot code on CT100 is `2b66857`: one process per book, no Redis promotion, stable order ids. The equity process journals the seven older strategies and still sends only the washout and the volatility break. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
 
 ### What I'm doing right now
-Equity is primary on the washout and the volatility break, long only, with 5 open positions. 2026-11-18 had no opens or closes. Unrealized equity was about -$92. Next is to load the contest onto CT100 during a planned stop, and to keep the personal desk on paper. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
+Equity is primary on the washout and the volatility break, long only. The contest is loaded. Shadows do not send orders. The personal desk stays on paper. CT100 was stopped after the prox1 restart and was started again on 2026-11-24. The paper clock stays on 2026-11-06. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
 
 ### Recent completions
+- ✅ Symbols page streams a live quote for a library name or a typed symbol. A trade mark still only updates the personal book list.
 - ✅ Shipped v1.20.0 (`c49f8e0`) to green LIVE and synced blue. A member can connect Alpaca, Coinbase, or Kraken, read a balance, and send a market order. Unknown brokers are review requests. Full gate passed 115 tests plus the broker-desk spec.
 - ✅ Shipped v1.19.2 (`09e0992`) to green LIVE and synced blue. Equity uses the last closed daily bar. Drawdown is account equity. A flat Kraken book stays valid. Trading gate passed 48 tests plus the closed-bar spec.
 - ✅ Shipped v1.19.1 (`473d88b`) to blue LIVE and synced green. Login returns a bearer token. The daily-loss latch clears when the book is back inside the limit. A Kraken restart keeps closed-trade cash.
@@ -28,7 +29,7 @@ Equity is primary on the washout and the volatility break, long only, with 5 ope
 - ✅ Shipped v1.17.0 (`f452a35`). Crypto and Kraken can trade a volatility squeeze as well as the daily washout
 
 ### Next steps
-1. Contest code is on main (`b327e88`) and journals the seven older strategies plus the washout and the volatility break. CT100 is still `57b3635`, so the equity process does not score yet. Load it on a planned CT100 stop. Do not start CT101. Do not restart the paper clock.
+1. Contest code is on CT100 (`2b66857`). Equity logged `strategy_contest_enabled` at 2026-11-24 21:00 UTC with the seven shadows. Do not start CT101. Do not restart the paper clock.
 2. Watch the paper books through the window that ends about 2026-12-04. Score closed trades on equity, Coinbase, and Kraken.
 3. See whether Coinbase opens a washout or a volatility break. Score Kraken's band snap on its own.
 4. Do not start Phase 1.5.10 live capital until four clean weeks pass.
