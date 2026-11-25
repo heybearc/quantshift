@@ -1,6 +1,6 @@
 # QuantShift Task State
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-25
 **Current branch:** main
 **Working on:** Phase 1.5.9 paper validation — clock restarted 2026-11-06
 
@@ -9,7 +9,7 @@
 ## Current Task
 **Phase 1.5.9 paper validation** — clock restarted 2026-11-06. The 2026-10-19 window was discarded because the trade table never stored a close. Do not start live capital. Window runs through about 2026-12-04.
 
-LIVE is green `10.92.3.30` on v1.20.0 (`c49f8e0`). STANDBY is blue `10.92.3.29` on the same commit. `BROKER_VAULT_KEY` is set on both web nodes. Bot code on CT100 is `2b66857`: one process per book, no Redis promotion, stable order ids. The equity process journals the seven older strategies and still sends only the washout and the volatility break. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
+LIVE is blue `10.92.3.29` on `d05f654`. STANDBY is green `10.92.3.30` on `79f9683`. `BROKER_VAULT_KEY` is set on both web nodes. Bot code on CT100 is `2b66857`: one process per book, no Redis promotion, stable order ids. The equity process journals the seven older strategies and still sends only the washout and the volatility break. Equity decides from the last finished daily bar. Drawdown is the drop in account equity. CT101 bots stay stopped. The dashboard result is closed trades plus the open book, with an estimated cost beside it. That cost is not taken from the account. Crypto and Kraken use the database VIP `10.92.3.23`. Writable Postgres is `10.92.3.31`. `10.92.3.21` is stopped, so there is no replica. Equity runs the washout and the volatility break, long only, one decision per finished day. Coinbase is long only and no longer runs the band snap. Kraken may short, with no leverage, and still runs the band snap. Kraken Sprint is a separate $5,000 paper book. Open positions on the three validation books stay open.
 
 ### What I'm doing right now
 Equity is primary on the washout and the volatility break, long only. The contest is loaded. Shadows do not send orders. The personal desk stays on paper. CT100 was stopped after the prox1 restart and was started again on 2026-11-24. The paper clock stays on 2026-11-06. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
@@ -40,6 +40,7 @@ Equity is primary on the washout and the volatility break, long only. The contes
 - Equity pets the watchdog while it loads bars. A start that never reaches that loop can still be killed at 90 seconds. Coinbase startup can still exceed the watchdog.
 - Live Kraken has order identity and no strategy cycle. Both Kraken books stay `simulation_mode: true`.
 - CT101 is not a spare that can take the books. Code is `ab7c61e`, the sprint unit is missing, Redis is a read-only replica, and the bot units are disabled. The monitor only logs.
+- `deploy_to_standby` reported no PM2 process on green while `quantshift-green` was online. The build was already on disk. The process was restarted onto `79f9683`.
 
 ## Exact Next Command
 ```bash

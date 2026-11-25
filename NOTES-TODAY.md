@@ -1,7 +1,23 @@
 ---
-date: 2026-11-18
+date: 2026-11-25
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
+
+## 2026-11-25 mid-day
+
+### Discoveries / Notes
+- LIVE is blue `10.92.3.29` on `d05f654`. STANDBY is green `10.92.3.30` on `79f9683`.
+- A watched symbol shows the session graph and the live quote. Research loads headlines, day/week/month change, and volume. Neither places an order.
+- Contest remains loaded on CT100 at `2b66857`. Paper clock stays 2026-11-06. CT101 stayed stopped.
+- `deploy_to_standby` said green had no PM2 process. `quantshift-green` was online and was restarted onto the new build.
+- Urgent feedback: 0.
+
+### Decisions to Promote
+- None. Research stays off the house books.
+
+### Blockers / Risks
+- The public site does not have the research brief until a release.
+- The standby deploy check can miss a running PM2 process.
 
 ## 2026-11-24
 
