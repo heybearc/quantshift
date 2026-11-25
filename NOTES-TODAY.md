@@ -9,7 +9,7 @@ purpose: Scratchpad for today's discoveries (promote on /end-day)
 - CT100 was stopped. It was started again and fast-forwarded `57b3635` → `2b66857`. Equity, Coinbase, Kraken, and Kraken Sprint are active. CT101 stayed stopped.
 - Equity logged `strategy_contest_enabled` at 21:00 UTC. Live book is the washout and the volatility break. The seven older strategies are journaled only.
 - The paper clock stays on 2026-11-06. Paper cash files were not reset. The first two equity starts hit the 90-second watchdog; the third stayed up.
-- Symbols page can open a library name or a typed symbol and stream the latest quote. Saving a mark still does not place an order.
+- Symbols page can open a library name or a typed symbol and stream the latest quote. Research pulls headlines and the recent trend. Saving a mark still does not place an order.
 
 ## 2026-11-23 mid-day
 

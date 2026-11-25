@@ -15,7 +15,7 @@ LIVE is green `10.92.3.30` on v1.20.0 (`c49f8e0`). STANDBY is blue `10.92.3.29` 
 Equity is primary on the washout and the volatility break, long only. The contest is loaded. Shadows do not send orders. The personal desk stays on paper. CT100 was stopped after the prox1 restart and was started again on 2026-11-24. The paper clock stays on 2026-11-06. Kraken keeps the 15-minute band snap and stands it down when the hourly bar breaks out. A crypto setup with at least 30 closes, a hit rate under 35%, and a profit factor under 1 turns off.
 
 ### Recent completions
-- ✅ Symbols page streams a live quote for a library name or a typed symbol. A trade mark still only updates the personal book list.
+- ✅ A watched symbol shows the session graph with the live quote on the right edge. Research pulls headlines, the day, week, and month change, and recent volume. It does not place an order.
 - ✅ Shipped v1.20.0 (`c49f8e0`) to green LIVE and synced blue. A member can connect Alpaca, Coinbase, or Kraken, read a balance, and send a market order. Unknown brokers are review requests. Full gate passed 115 tests plus the broker-desk spec.
 - ✅ Shipped v1.19.2 (`09e0992`) to green LIVE and synced blue. Equity uses the last closed daily bar. Drawdown is account equity. A flat Kraken book stays valid. Trading gate passed 48 tests plus the closed-bar spec.
 - ✅ Shipped v1.19.1 (`473d88b`) to blue LIVE and synced green. Login returns a bearer token. The daily-loss latch clears when the book is back inside the limit. A Kraken restart keeps closed-trade cash.
