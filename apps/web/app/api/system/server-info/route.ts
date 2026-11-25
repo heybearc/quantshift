@@ -36,32 +36,35 @@ async function queryHAProxyConfig(): Promise<'BLUE' | 'GREEN' | null> {
   return null;
 }
 
+function localIdentity(): { server: 'BLUE' | 'GREEN'; container: number; ip: string } | null {
+  const addresses: string[] = [];
+  for (const entries of Object.values(os.networkInterfaces())) {
+    for (const entry of entries || []) {
+      if (entry.family === 'IPv4') addresses.push(entry.address);
+    }
+  }
+  const hostname = os.hostname();
+  if (addresses.includes('10.92.3.30') || hostname === 'quantshift-green') {
+    return { server: 'GREEN', container: 138, ip: '10.92.3.30' };
+  }
+  if (addresses.includes('10.92.3.29') || hostname === 'quantshift-blue') {
+    return { server: 'BLUE', container: 137, ip: '10.92.3.29' };
+  }
+  if (process.env.SERVER_NAME === 'GREEN') {
+    return { server: 'GREEN', container: 138, ip: '10.92.3.30' };
+  }
+  if (process.env.SERVER_NAME === 'BLUE') {
+    return { server: 'BLUE', container: 137, ip: '10.92.3.29' };
+  }
+  return null;
+}
+
 export async function GET() {
   try {
-    let server: 'BLUE' | 'GREEN' = 'BLUE';
-    let container = 137;
-    let ip = '10.92.3.29';
-    
-    try {
-      const { stdout } = await execAsync('hostname -I 2>/dev/null || hostname -i 2>/dev/null');
-      const localIp = stdout.trim().split(' ')[0];
-      
-      if (localIp.includes('10.92.3.30')) {
-        server = 'GREEN';
-        container = 138;
-        ip = '10.92.3.30';
-      } else if (localIp.includes('10.92.3.29')) {
-        server = 'BLUE';
-        container = 137;
-        ip = '10.92.3.29';
-      }
-    } catch (error) {
-      if (process.env.SERVER_NAME === 'GREEN') {
-        server = 'GREEN';
-        container = 138;
-        ip = '10.92.3.29';
-      }
-    }
+    const identity = localIdentity();
+    let server: 'BLUE' | 'GREEN' = identity?.server || 'BLUE';
+    let container = identity?.container || 137;
+    let ip = identity?.ip || '10.92.3.29';
     
     let status: 'LIVE' | 'STANDBY' = 'STANDBY';
     let statusSource = 'default';
