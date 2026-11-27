@@ -1,1 +1,0 @@
-../../.cloudy-work/.windsurf/workflows/sync-governance.md
