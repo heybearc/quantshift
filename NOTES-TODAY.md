@@ -1,7 +1,23 @@
 ---
-date: 2026-11-25
+date: 2026-11-27
 purpose: Scratchpad for today's discoveries (promote on /end-day)
 ---
+
+## 2026-11-27 mid-day
+
+### Discoveries / Notes
+- Shipped v1.21.0 (`24ff50d`). LIVE is green `10.92.3.30`. STANDBY is blue `10.92.3.29`. Research and the live quote do not place an order.
+- prox1 lost quorum at 7:04 AM ET on 2026-11-26 and the HA watchdog reset it twice. CT100 had no `onboot`, so the paper bots stayed stopped.
+- Guests left prox1 except Plex and Jellyfin. Bot containers are stopped on prox2. prox1 is Proxmox 9.3.1, kernel `7.0.14-30-pve`.
+- The NVIDIA driver did not build for that kernel. Jellyfin is stopped. Plex is running without the GPU.
+- Paper books froze at 2026-11-26 12:05 UTC. Equity $112,741, five open longs, about −$425. Crypto $10,044, Kraken $5,002, Kraken Sprint $4,897. Urgent feedback: 0.
+
+### Decisions to Promote
+- None.
+
+### Blockers / Risks
+- Paper validation is paused until the primary bot container is started on prox2.
+- GPU passthrough stays down until the NVIDIA driver matches kernel `7.0.14-30-pve`.
 
 ## 2026-11-25 mid-day
 
